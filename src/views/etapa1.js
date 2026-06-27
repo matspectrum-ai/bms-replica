@@ -31,11 +31,11 @@ export let etapa1State = {
 // (RESEARCH.md lines 336-342)
 // =============================================================================
 export function resetDownstream(fromStep) {
-  if (fromStep <= 1) etapa1State.empresa = null;
-  if (fromStep <= 2) etapa1State.dominio = '';
-  if (fromStep <= 3) etapa1State.metatag = '';
-  if (fromStep <= 4) etapa1State.htmlGerado = '';
-  if (fromStep <= 5) etapa1State.publicado = null;
+  if (fromStep < 1) etapa1State.empresa = null;
+  if (fromStep < 2) etapa1State.dominio = '';
+  if (fromStep < 3) etapa1State.metatag = '';
+  if (fromStep < 4) etapa1State.htmlGerado = '';
+  if (fromStep < 5) etapa1State.publicado = null;
 }
 
 // =============================================================================
@@ -109,6 +109,7 @@ export async function e1Buscar() {
 // ALTERAR EMPRESA — Reset and go back to CNPJ search
 // =============================================================================
 export function alterarEmpresa() {
+  etapa1State.empresa = null;
   resetDownstream(1);
   window.go('etapa1');
 }
