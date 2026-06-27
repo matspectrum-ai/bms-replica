@@ -1,12 +1,10 @@
 // src/utils/header.js — Header status pill refresh
 // Source: RECON.md §5.1 refreshHeaderStatus() (lines 223-235)
+// Matches original function signature exactly per D-04.
 //
-// MINIMAL STUB created by Plan 02-02 to unblock DataStore imports.
-// Full implementation completed in Task 02-02-03 (this same plan).
-//
-// The DataStore's saveSettings() calls refreshHeaderStatus() as a side effect.
-// This stub ensures the import works before Task 03 replaces it with the full
-// implementation (reading getSettings, updating #cf-status and #sms-status pills).
+// Called by: saveSettings() (side effect), bootstrap sequence
+// Reads settings via getSettings(), updates #cf-status and #sms-status pills.
+// Null-checks DOM elements — silently skips if header not in DOM (testing).
 
 import { getSettings } from '../stores/data.js';
 
