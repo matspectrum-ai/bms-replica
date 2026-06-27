@@ -128,61 +128,70 @@ Requisitos para o rebranding e nova identidade visual.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| RECON-01 | Phase 1 | Pending |
-| RECON-02 | Phase 1 | Pending |
-| RECON-03 | Phase 1 | Pending |
-| RECON-04 | Phase 1 | Pending |
-| RECON-05 | Phase 1 | Pending |
-| CORE-01 | Phase 2 | Pending |
-| CORE-02 | Phase 2 | Pending |
-| CORE-03 | Phase 2 | Pending |
-| CORE-04 | Phase 2 | Pending |
-| CORE-05 | Phase 2 | Pending |
-| CORE-06 | Phase 2 | Pending |
-| CORE-07 | Phase 2 | Pending |
-| CORE-08 | Phase 2 | Pending |
-| CORE-09 | Phase 2 | Pending |
-| DASH-01 | Phase 3 | Pending |
-| DASH-02 | Phase 3 | Pending |
-| DASH-03 | Phase 3 | Pending |
-| ETP1-01 | Phase 4 | Pending |
-| ETP1-02 | Phase 4 | Pending |
-| ETP1-03 | Phase 4 | Pending |
-| ETP1-04 | Phase 4 | Pending |
-| ETP1-05 | Phase 4 | Pending |
-| ETP2-01 | Phase 5 | Pending |
-| ETP2-02 | Phase 5 | Pending |
-| ETP2-03 | Phase 5 | Pending |
-| ETP2-04 | Phase 5 | Pending |
-| ETP2-05 | Phase 5 | Pending |
-| ETP3-01 | Phase 6 | Pending |
-| ETP3-02 | Phase 6 | Pending |
-| ETP3-03 | Phase 6 | Pending |
-| ETP3-04 | Phase 6 | Pending |
-| BANC-01 | Phase 7 | Pending |
-| BANC-02 | Phase 7 | Pending |
-| BANC-03 | Phase 7 | Pending |
-| PLAN-01 | Phase 8 | Pending |
-| PLAN-02 | Phase 8 | Pending |
-| PLAN-03 | Phase 8 | Pending |
-| PLAN-04 | Phase 8 | Pending |
-| CONF-01 | Phase 9 | Pending |
-| CONF-02 | Phase 9 | Pending |
-| CONF-03 | Phase 9 | Pending |
-| AJUD-01 | Phase 10 | Pending |
-| UI-01 | Phase 2 | Pending |
-| UI-02 | Phase 2 | Pending |
-| UI-03 | Phase 2 | Pending |
-| UI-04 | Phase 2 | Pending |
-| UI-05 | Phase 2 | Pending |
-| VAL-01 | Phase 11 | Pending |
-| VAL-02 | Phase 11 | Pending |
-| VAL-03 | Phase 11 | Pending |
-| VAL-04 | Phase 11 | Pending |
+| RECON-01 | Phase 1 — Reconnaissance & Extraction | Pending |
+| RECON-02 | Phase 1 — Reconnaissance & Extraction | Pending |
+| RECON-03 | Phase 1 — Reconnaissance & Extraction | Pending |
+| RECON-04 | Phase 1 — Reconnaissance & Extraction | Pending |
+| RECON-05 | Phase 1 — Reconnaissance & Extraction | Pending |
+| CORE-01 | Phase 2 — Foundation | Pending |
+| CORE-02 | Phase 2 — Foundation | Pending |
+| CORE-03 | Phase 2 — Foundation | Pending |
+| CORE-04 | Phase 2 — Foundation | Pending |
+| CORE-05 | Phase 2 — Foundation | Pending |
+| CORE-06 | Phase 2 — Foundation | Pending |
+| CORE-07 | Phase 2 — Foundation | Pending |
+| CORE-08 | Phase 2 — Foundation | Pending |
+| CORE-09 | Phase 2 — Foundation | Pending |
+| DASH-01 | Phase 3 — Views & Integrations | Pending |
+| DASH-02 | Phase 3 — Views & Integrations | Pending |
+| DASH-03 | Phase 3 — Views & Integrations | Pending |
+| ETP1-01 | Phase 3 — Views & Integrations | Pending |
+| ETP1-02 | Phase 3 — Views & Integrations | Pending |
+| ETP1-03 | Phase 3 — Views & Integrations | Pending |
+| ETP1-04 | Phase 3 — Views & Integrations | Pending |
+| ETP1-05 | Phase 3 — Views & Integrations | Pending |
+| ETP2-01 | Phase 3 — Views & Integrations | Pending |
+| ETP2-02 | Phase 3 — Views & Integrations | Pending |
+| ETP2-03 | Phase 3 — Views & Integrations | Pending |
+| ETP2-04 | Phase 3 — Views & Integrations | Pending |
+| ETP2-05 | Phase 3 — Views & Integrations | Pending |
+| ETP3-01 | Phase 3 — Views & Integrations | Pending |
+| ETP3-02 | Phase 3 — Views & Integrations | Pending |
+| ETP3-03 | Phase 3 — Views & Integrations | Pending |
+| ETP3-04 | Phase 3 — Views & Integrations | Pending |
+| BANC-01 | Phase 3 — Views & Integrations | Pending |
+| BANC-02 | Phase 3 — Views & Integrations | Pending |
+| BANC-03 | Phase 3 — Views & Integrations | Pending |
+| PLAN-01 | Phase 3 — Views & Integrations | Pending |
+| PLAN-02 | Phase 3 — Views & Integrations | Pending |
+| PLAN-03 | Phase 3 — Views & Integrations | Pending |
+| PLAN-04 | Phase 3 — Views & Integrations | Pending |
+| CONF-01 | Phase 3 — Views & Integrations | Pending |
+| CONF-02 | Phase 3 — Views & Integrations | Pending |
+| CONF-03 | Phase 3 — Views & Integrations | Pending |
+| AJUD-01 | Phase 3 — Views & Integrations | Pending |
+| UI-01 | Phase 2 — Foundation | Pending |
+| UI-02 | Phase 2 — Foundation | Pending |
+| UI-03 | Phase 2 — Foundation | Pending |
+| UI-04 | Phase 2 — Foundation | Pending |
+| UI-05 | Phase 2 — Foundation | Pending |
+| VAL-01 | Phase 4 — Validation | Pending |
+| VAL-02 | Phase 4 — Validation | Pending |
+| VAL-03 | Phase 4 — Validation | Pending |
+| VAL-04 | Phase 4 — Validation | Pending |
+| BRAND-01 | Phase 5 — Rebrand Foundation | Pending |
+| BRAND-02 | Phase 5 — Rebrand Foundation | Pending |
+| BRAND-03 | Phase 5 — Rebrand Foundation | Pending |
+| BRAND-04 | Phase 6 — Rebrand Polish | Pending |
+| BRAND-05 | Phase 5 — Rebrand Foundation | Pending |
+| BRAND-06 | Phase 6 — Rebrand Polish | Pending |
+| BRAND-07 | Phase 5 — Rebrand Foundation | Pending |
+| BRAND-08 | Phase 6 — Rebrand Polish | Pending |
+| BRAND-09 | Phase 6 — Rebrand Polish | Pending |
 
 **Coverage:**
-- v1 requirements: 49 total
-- Mapped to phases: 49
+- v1 requirements: 51 total — mapped: 51
+- v2 requirements: 9 total — mapped: 9
 - Unmapped: 0
 
 ---
