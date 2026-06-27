@@ -1,0 +1,35 @@
+/* Step cards — matches RECON.md §6.2.6 */
+
+.step-card {
+  position: relative;
+  padding: 1.5rem 1.5rem 1.5rem 5rem;
+  border-radius: 20px;
+  transition: opacity 0.3s;
+}
+
+.step-card.disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.step-card.done .step-num {
+  background: linear-gradient(160deg, #34d399, #10b981);
+  box-shadow: 0 6px 0 #065f46, inset 0 1px 0 rgba(255,255,255,.25);
+}
+
+.step-num {
+  position: absolute;
+  left: 1.2rem;
+  top: 1.2rem;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1.25rem;
+  color: white;
+  background: linear-gradient(160deg, #7c83ff, #4f46e5);
+  box-shadow: 0 6px 0 #312e81, inset 0 1px 0 rgba(255,255,255,.25);
+}

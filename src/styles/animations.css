@@ -1,0 +1,21 @@
+/* Animations & keyframes — matches RECON.md §6.4 */
+
+/* Float — gentle vertical bobbing */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+.floaty { animation: float 4s ease-in-out infinite; }
+
+/* Spin — continuous rotation (for spinners) */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Pulse ring — expanding cyan ring */
+@keyframes pulse-ring {
+  0%   { box-shadow: 0 0 0 0 rgba(34,211,238,.6); }
+  70%  { box-shadow: 0 0 0 14px rgba(34,211,238,0); }
+  100% { box-shadow: 0 0 0 0 rgba(34,211,238,0); }
+}
+.pulse-ring { animation: pulse-ring 2s infinite; }

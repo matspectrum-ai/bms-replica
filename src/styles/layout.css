@@ -1,0 +1,3 @@
+/* Layout styles — matches RECON.md §6.5 sidebar transition */
+
+.sidebar { transition: transform 0.25s ease; }

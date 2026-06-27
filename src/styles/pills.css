@@ -1,0 +1,43 @@
+/* Pill/badge system — matches RECON.md §6.2.4 */
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+/* === COLOR VARIANTS === */
+
+.pill.ok {
+  background: rgba(34,197,94,.15);
+  color: #86efac;
+  border: 1px solid rgba(34,197,94,.3);
+}
+
+.pill.todo {
+  background: rgba(245,158,11,.15);
+  color: #fcd34d;
+  border: 1px solid rgba(245,158,11,.3);
+}
+
+.pill.doing {
+  background: rgba(99,102,241,.15);
+  color: #a5b4fc;
+  border: 1px solid rgba(99,102,241,.3);
+}
+
+.pill.done {
+  background: rgba(16,185,129,.18);
+  color: #6ee7b7;
+  border: 1px solid rgba(16,185,129,.3);
+}
+
+.pill.danger {
+  background: rgba(239,68,68,.18);
+  color: #fda4af;
+  border: 1px solid rgba(239,68,68,.3);
+}

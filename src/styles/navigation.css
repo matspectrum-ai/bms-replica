@@ -1,0 +1,36 @@
+/* Navigation links — matches RECON.md §6.2.5 */
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.85rem 1rem;
+  border-radius: 14px;
+  color: #cfd5f2;
+  font-weight: 600;
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.nav-link:hover {
+  background: rgba(255,255,255,0.05);
+  color: white;
+  transform: translateX(2px);
+}
+
+.nav-link.active {
+  background: linear-gradient(135deg, rgba(99,102,241,.25), rgba(34,211,238,.1));
+  color: white;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.08);
+}
+
+.nav-link .nav-emoji {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: linear-gradient(160deg, rgba(255,255,255,.12), rgba(255,255,255,.04));
+  font-size: 18px;
+}
