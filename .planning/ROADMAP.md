@@ -8,7 +8,7 @@ Clone funcional 100% do front-end de gestão empresarial brasileira (https://lab
 
 ## Phases
 
-- [ ] **Phase 1: Reconnaissance & Extraction** — Extrair e documentar sistematicamente DOM, APIs, estado, rotas e lógica de negócio do sistema original
+- [x] **Phase 1: Reconnaissance & Extraction** — Extrair e documentar sistematicamente DOM, APIs, estado, rotas e lógica de negócio do sistema original (completed 2026-06-27)
 - [ ] **Phase 2: Foundation** — Infraestrutura completa: router SPA, persistência localStorage, widgets reutilizáveis, utilitários, layout, tema e proxy CORS
 - [ ] **Phase 3: Views & Integrations** — Todas as 8 rotas com integrações de API: Dashboard, Etapa 1-3, Banco, Planilha, Configurações, Ajuda
 - [ ] **Phase 4: Validation** — Validação de paridade: A/B testing, compatibilidade de storage, responsividade, bundle size
@@ -41,7 +41,7 @@ Plans:
 - [x] 01-02-PLAN.md — DOM & Route Mapping: static shell DOM, all 8 view DOM trees in all states, route system (ROUTES, VIEWS, go()) (RECON-01, RECON-04)
 - [x] 01-03-PLAN.md — API & Logic Extraction: all API contracts (success+error), ~60 business logic functions with signatures/call-graphs/side-effects, CORS proxy (RECON-02, RECON-05)
 - [x] 01-04-PLAN.md — CSS & Theme Documentation: custom properties, component classes (8 btn-3d + 5 icon-cube + 5 pill variants), animations, responsive breakpoints, Tailwind config (RECON-01)
-- [ ] 01-05-PLAN.md — RECON.md Assembly & Validation: compile all sections, reorder per D-01, build cross-reference appendix, completeness audit against all 5 success criteria (RECON-01, RECON-02, RECON-03, RECON-04, RECON-05)
+- [x] 01-05-PLAN.md — RECON.md Assembly & Validation: compile all sections, reorder per D-01, build cross-reference appendix, completeness audit against all 5 success criteria (RECON-01, RECON-02, RECON-03, RECON-04, RECON-05)
 
 ### Phase 2: Foundation
 
@@ -138,7 +138,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Reconnaissance & Extraction | 3/5 | In Progress|  |
+| 1. Reconnaissance & Extraction | 5/5 | Complete   | 2026-06-27 |
 | 2. Foundation | 0/0 | Not started | - |
 | 3. Views & Integrations | 0/0 | Not started | - |
 | 4. Validation | 0/0 | Not started | - |
