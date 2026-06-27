@@ -1,0 +1,23 @@
+/* Responsive breakpoints — matches RECON.md §6.5 */
+
+@media (max-width: 1024px) {
+  .sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 50;
+    transform: translateX(-100%);
+    width: 280px;
+  }
+  .sidebar.open { transform: translateX(0); }
+  .content-wrap { margin-left: 0 !important; }
+}
+
+/* Backdrop — hidden by default, shown when sidebar is open on mobile */
+.backdrop { display: none; }
+.backdrop.open {
+  display: block;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.55);
+  z-index: 40;
+}
