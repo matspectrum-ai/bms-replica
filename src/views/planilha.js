@@ -54,10 +54,7 @@ export function initPlanilha() {
   window.after_planilha = renderPlanilha;
   window.mudarStatus = mudarStatus;
   window.deletarSite = deletarSite;
-  // window.exportarCSV placeholder — full implementation in Task 3
-  window.exportarCSV = function() {
-    if (typeof window.toast !== 'undefined') window.toast('Exportação CSV será implementada em breve.', '📊');
-  };
+  // window.exportarCSV defined below (Task 3)
 }
 
 /**
@@ -182,5 +179,54 @@ function deletarSite(index) {
   renderPlanilha();
   if (typeof window.toast !== 'undefined') window.toast('Site removido', '🗑️');
 }
+
+// =============================================================================
+// Task 3: CSV Export — UTF-8 BOM, semicolon-delimited, 10 columns, Blob download
+// RESEARCH.md lines 724-749
+// =============================================================================
+
+/**
+ * Exports all sites from localStorage as a CSV file.
+ * UTF-8 BOM for Excel encoding detection. Semicolon separator for Brazilian locale.
+ * 10 columns matching Planilha display data. All values double-quoted with escaping.
+ * Creates a Blob download as 'planilha-laboratorio.csv'.
+ */
+window.exportarCSV = function exportarCSV() {
+  const db = getDB();
+  const sites = db.sites || [];
+  const BOM = '\uFEFF'; // UTF-8 Byte Order Mark — required for Excel
+  const headers = [
+    'Empresa', 'Razão Social', 'CNPJ', 'Domínio', 'URL',
+    'Tel Empresa', 'Nosso Tel', 'Meta-tag', 'Status', 'Atualizado'
+  ];
+  const sep = ';'; // Semicolon for Brazilian Excel (comma is decimal separator in pt-BR)
+
+  let csv = BOM + headers.join(sep) + '\n';
+
+  for (const s of sites) {
+    const row = [
+      s.fantasia || '',
+      s.razao || '',
+      fmtCNPJ(s.cnpj || ''),
+      s.dominio || '',
+      s.url || '',
+      s.telefoneEmpresa || '',
+      s.telefoneNosso || '',
+      s.metatag || '',
+      s.status || '',
+      fmtDate(s.atualizado)
+    ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(sep);
+    csv += row + '\n';
+  }
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'planilha-laboratorio.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+
+  if (typeof window.toast !== 'undefined') window.toast('CSV exportado!', '📊');
+};
 
 
