@@ -6,23 +6,241 @@
   <title>Validation Hub — Phase 04</title>
   <link rel="stylesheet" href="../src/styles/theme.css">
   <style>
-    /* Stub — RED phase (incomplete dashboard) */
-    body { font-family: system-ui, sans-serif; background: #111; color: #eee; padding: 2rem; }
-    #results { margin-top: 2rem; }
-    .placeholder { color: #888; font-style: italic; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #0a0a0f;
+      color: #e0e0e0;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+    h1 { font-size: 1.8rem; margin-bottom: 0.25rem; color: #fff; }
+    .subtitle { color: #888; margin-bottom: 2rem; font-size: 0.9rem; }
+
+    /* Summary bar */
+    #summary {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 2rem;
+    }
+    .summary-card {
+      background: #1a1a2e;
+      border: 1px solid #2a2a4a;
+      border-radius: 10px;
+      padding: 1rem 1.5rem;
+      min-width: 180px;
+      flex: 1;
+    }
+    .summary-card h3 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #888; margin-bottom: 0.5rem; }
+    .summary-card .status { font-size: 1.2rem; font-weight: 700; }
+    .status-pass { color: #4ade80; }
+    .status-fail { color: #f87171; }
+    .status-pending { color: #fbbf24; }
+
+    /* Buttons */
+    button {
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-bottom: 1.5rem;
+    }
+    button:hover { background: #1d4ed8; }
+    button:disabled { background: #374151; cursor: not-allowed; }
+
+    /* Results sections */
+    .results-section {
+      background: #1a1a2e;
+      border: 1px solid #2a2a4a;
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .results-section h2 {
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid #2a2a4a;
+      color: #ccc;
+    }
+
+    /* Test results table */
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th { text-align: left; padding: 0.5rem 0.75rem; border-bottom: 1px solid #2a2a4a; color: #888; font-weight: 600; text-transform: uppercase; font-size: 0.75rem; }
+    td { padding: 0.4rem 0.75rem; border-bottom: 1px solid #1f1f35; }
+    .pass-indicator { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 0.5rem; }
+    .pass-indicator.pass { background: #4ade80; }
+    .pass-indicator.fail { background: #f87171; }
+    tr.pass-row { color: #a3e635; }
+    tr.fail-row { color: #fca5a5; }
+
+    /* Bundle gauge */
+    .gauge-container { margin: 1rem 0; }
+    .gauge-label { display: flex; justify-content: space-between; margin-bottom: 0.25rem; font-size: 0.85rem; color: #aaa; }
+    .gauge-bar { height: 20px; background: #2a2a4a; border-radius: 10px; overflow: hidden; margin-bottom: 0.5rem; }
+    .gauge-fill { height: 100%; border-radius: 10px; transition: width 0.5s ease; }
+    .gauge-fill.pass { background: linear-gradient(90deg, #4ade80, #22c55e); }
+    .gauge-fill.fail { background: linear-gradient(90deg, #f87171, #ef4444); }
+    .gauge-fill.warn { background: linear-gradient(90deg, #fbbf24, #f59e0b); }
+
+    /* Stats row */
+    .stats-row { display: flex; gap: 1rem; flex-wrap: wrap; margin: 0.75rem 0; }
+    .stat-item { background: #0f0f1a; border-radius: 6px; padding: 0.5rem 0.75rem; font-size: 0.85rem; }
+    .stat-item strong { color: #fff; }
+
+    .placeholder-text { color: #666; font-style: italic; }
+    .error-text { color: #f87171; }
   </style>
 </head>
 <body>
-  <h1>🔬 Validation Hub</h1>
-  <p class="placeholder">RED phase — dashboard structure stub. Full implementation pending.</p>
-  <div id="results">
-    <section id="storage-results"><p class="placeholder">Storage tests: not yet implemented</p></section>
-    <section id="bundle-results"><p class="placeholder">Bundle check: not yet implemented</p></section>
-    <section id="visual-results"><p class="placeholder">Visual tests: pending Plan 04-02</p></section>
+  <h1>&#128300; Validation Hub</h1>
+  <p class="subtitle">Phase 04 — Validação de paridade funcional e performance</p>
+
+  <!-- Summary cards -->
+  <div id="summary">
+    <div class="summary-card">
+      <h3>VAL-02 &#183; Storage</h3>
+      <div class="status status-pending" id="val02-status">Aguardando...</div>
+    </div>
+    <div class="summary-card">
+      <h3>VAL-04 &#183; Bundle</h3>
+      <div class="status status-pending" id="val04-status">Aguardando...</div>
+    </div>
+    <div class="summary-card">
+      <h3>VAL-01 &#183; Funcional</h3>
+      <div class="status status-pending" id="val01-status">Plan 04-02</div>
+    </div>
+    <div class="summary-card">
+      <h3>VAL-03 &#183; Responsivo</h3>
+      <div class="status status-pending" id="val03-status">Plan 04-02</div>
+    </div>
   </div>
+
+  <!-- Action buttons -->
+  <button id="run-storage-btn" onclick="runStorageTestsHandler()">&#9654; Executar Testes de Storage</button>
+
+  <!-- Storage results section -->
+  <div class="results-section" id="storage-section">
+    <h2>&#128451; Storage Tests (VAL-02)</h2>
+    <div id="storage-results">
+      <p class="placeholder-text">Clique em "Executar Testes de Storage" para iniciar a validação.</p>
+    </div>
+  </div>
+
+  <!-- Bundle results section -->
+  <div class="results-section" id="bundle-section">
+    <h2>&#128230; Bundle Size (VAL-04)</h2>
+    <div id="bundle-results">
+      <p class="placeholder-text">Execute <code>bash tests/measure-bundle.sh</code> no terminal para popular os resultados.</p>
+      <div class="stats-row" style="margin-top:1rem;">
+        <div class="stat-item">Threshold: <strong>180 kB</strong> gzipped</div>
+        <div class="stat-item">Baseline original: <strong>~150 kB</strong></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Visual results section (placeholder for Plan 04-02) -->
+  <div class="results-section">
+    <h2>&#128065; Visual Tests (VAL-01, VAL-03)</h2>
+    <div id="visual-results">
+      <p class="placeholder-text">Testes visuais (A/B funcional e responsividade) serão implementados no Plan 04-02.</p>
+    </div>
+  </div>
+
   <script type="module">
-    // Stub — RED phase (will be fully wired in GREEN phase)
-    console.log('Validation Hub stub loaded');
+    import { runStorageTests } from './test_storage.js';
+
+    // Expor para o onclick inline (módulos ES têm escopo próprio)
+    window.runStorageTestsHandler = async function() {
+      const btn = document.getElementById('run-storage-btn');
+      btn.disabled = true;
+      btn.textContent = '⏳ Executando...';
+
+      const container = document.getElementById('storage-results');
+      container.innerHTML = '<p style="color:#888;">Executando testes de storage...</p>';
+
+      // Pequeno delay para permitir renderização do loading state
+      await new Promise(r => setTimeout(r, 50));
+
+      try {
+        const result = runStorageTests();
+        renderStorageResults(result);
+        updateVal02Status(result);
+      } catch (e) {
+        container.innerHTML = `<p class="error-text">Erro ao executar testes: ${e.message}</p>`;
+        console.error('Storage test error:', e);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '▶ Executar Testes de Storage';
+      }
+    };
+
+    function renderStorageResults(result) {
+      const { pass, fail, total, results } = result;
+
+      let html = '';
+
+      // Summary bar
+      const passPercent = total > 0 ? Math.round((pass / total) * 100) : 0;
+      const barColor = pass === total ? 'pass' : 'fail';
+      html += `<div class="gauge-container">
+        <div class="gauge-label"><span>${pass}/${total} aprovados (${passPercent}%)</span><span>${fail} falhas</span></div>
+        <div class="gauge-bar"><div class="gauge-fill ${barColor}" style="width:${passPercent}%"></div></div>
+      </div>`;
+
+      // Group by describe block
+      const groups = {};
+      results.forEach(r => {
+        const desc = r.describe || '(sem grupo)';
+        if (!groups[desc]) groups[desc] = [];
+        groups[desc].push(r);
+      });
+
+      for (const [group, items] of Object.entries(groups)) {
+        const groupPass = items.filter(i => i.status === 'PASS').length;
+        const groupFail = items.filter(i => i.status === 'FAIL').length;
+        html += `<h3 style="margin: 1rem 0 0.5rem; font-size:0.95rem; color:#aaa;">
+          ${group} <span style="font-size:0.8rem; color:#4ade80;">${groupPass} pass</span>
+          ${groupFail > 0 ? `<span style="font-size:0.8rem; color:#f87171;"> ${groupFail} fail</span>` : ''}
+        </h3>`;
+        html += '<table><thead><tr><th></th><th>Teste</th><th>Status</th></tr></thead><tbody>';
+        items.forEach(item => {
+          const cls = item.status === 'PASS' ? 'pass' : 'fail';
+          const rowCls = item.status === 'PASS' ? 'pass-row' : 'fail-row';
+          const icon = item.status === 'PASS' ? '✅' : '❌';
+          html += `<tr class="${rowCls}">
+            <td><span class="pass-indicator ${cls}"></span></td>
+            <td>${icon} ${item.name}</td>
+            <td>${item.status}</td>
+          </tr>`;
+          if (item.status === 'FAIL' && item.error) {
+            html += `<tr class="fail-row"><td></td><td colspan="2" style="font-size:0.8rem; padding-top:0;">${item.error}</td></tr>`;
+          }
+        });
+        html += '</tbody></table>';
+      }
+
+      container.innerHTML = html;
+    }
+
+    function updateVal02Status(result) {
+      const el = document.getElementById('val02-status');
+      if (result.fail === 0 && result.total > 0) {
+        el.className = 'status status-pass';
+        el.textContent = `PASS (${result.pass}/${result.total})`;
+      } else if (result.total > 0) {
+        el.className = 'status status-fail';
+        el.textContent = `FAIL (${result.fail} falhas)`;
+      } else {
+        el.className = 'status status-pending';
+        el.textContent = 'Sem testes';
+      }
+    }
   </script>
 </body>
 </html>
