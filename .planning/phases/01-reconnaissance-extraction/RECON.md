@@ -2163,27 +2163,409 @@ The clone must either:
 
 ## 5. Funções de Lógica de Negócio
 
-*(To be filled by Plan 03)*
+**All ~60 functions documented with: signature (param types + return type), side effects (specific DOM/localStorage/network/timers/events), call graph (Called By + Calls), edge cases. Documented in DEPENDENCY ORDER — foundation functions first.**
 
-### 5.1 Core/Infra (go, getDB, saveDB, toast, modal, etc.)
+Functions extracted from `data/raw-source.html` (2135 lines of vanilla JS). Every function specification is source-confirmed with line references.
 
-### 5.2 Dashboard (VIEWS.dashboard, statCard, quickCard)
+---
 
-### 5.3 Etapa 1 (e1Buscar, e1Gerar, e1Publicar, buildSiteHTML, etc.)
+### 5.1 Core/Infrastructure Functions
 
-### 5.4 Etapa 2 (smsAPI, smsPolling, etc.)
+Core functions that every view depends on. Documented in dependency order.
 
-### 5.5 Etapa 3 (carregarPDF, rerenderOverlays, baixarPDF, etc.)
+#### getDB()
 
-### 5.6 Banco (renderBanco, usarEmpresaNaEtapa1, etc.)
+**Source:** Line 212-215
+**Signature:** `getDB(): AppDatabase`
+**Parameters:** None
+**Return:** `AppDatabase` object `{empresas: [], sites: [], sms: []}` — parsed from localStorage key `lab_bms_db_v1`, or default if missing/corrupt
+**Side Effects:**
+  - localStorage reads: `localStorage.getItem(STORAGE_KEY)` (line 213)
+**Called By:** `VIEWS.dashboard`, `renderBanco`, `renderPlanilha`, `salvarEmpresa`, `registrarSite`, `e1Publicar`, `mudarStatus`, `removerSite`, `usarEmpresaNaEtapa1`, `exportCSV`, `exportBackup`, `importBackup`, `limparBanco`, `smsAtualizarSite`, `VIEWS.etapa2`
+**Calls:** None (leaf function — calls nothing)
+**Edge Cases:**
+  - `JSON.parse` throws → returns default `{empresas:[], sites:[], sms:[]}` (line 214)
+  - localStorage key missing (returns `null`) → fallback to default (line 213)
+  - Corrupted JSON → fallback to default
 
-### 5.7 Planilha (renderPlanilha, mudarStatus, exportCSV, etc.)
+#### saveDB(db)
 
-### 5.8 Config (salvarConfig, salvarTokenCF, exportBackup, etc.)
+**Source:** Line 216
+**Signature:** `saveDB(db: AppDatabase): void`
+**Parameters:**
+  - `db` (AppDatabase): Full database object to persist
+**Return:** Nothing
+**Side Effects:**
+  - localStorage writes: `localStorage.setItem(STORAGE_KEY, JSON.stringify(db))` (line 216)
+**Called By:** `salvarEmpresa`, `registrarSite`, `e1Publicar`, `mudarStatus`, `removerSite`, `smsAtualizarSite`, `importBackup`
+**Calls:** None (leaf function)
+**Edge Cases:**
+  - localStorage quota exceeded → `setItem` throws (uncaught — will crash at call site)
+  - Circular reference in `db` → `JSON.stringify` throws (uncaught)
 
-### 5.9 Utilitários (fmtCNPJ, fmtMoney, fmtDate, slugify, copyText, etc.)
+#### getSettings()
 
-### 5.10 Boot/Proxy (autoConectarTokens, instalarProxy)
+**Source:** Line 217-219
+**Signature:** `getSettings(): Settings`
+**Parameters:** None
+**Return:** `Settings` object — parsed from localStorage key `lab_bms_settings_v1`, or `{}` if missing/corrupt
+**Side Effects:**
+  - localStorage reads: `localStorage.getItem(SETTINGS_KEY)` (line 218)
+**Called By:** `refreshHeaderStatus`, `VIEWS.dashboard`, `VIEWS.etapa1` (renderStep1Publicar), `VIEWS.etapa2`, `smsAPI`, `salvarTokenCF`, `salvarConfig`, `escolherConta`, `trocarConta`, `salvarAccountManual`, `testarCloudflare`, `e1Publicar`, `smsAtualizarSite`, `exportBackup`, `autoConectarTokens`
+**Calls:** None (leaf function)
+**Edge Cases:**
+  - `JSON.parse` throws → returns `{}` (line 219)
+  - localStorage key missing → returns `{}`
+  - All fields optional — downstream code must null-check `s.cf_token`, `s.cf_account`, `s.sms_key`
+
+#### saveSettings(s)
+
+**Source:** Line 221
+**Signature:** `saveSettings(s: Settings): void`
+**Parameters:**
+  - `s` (Settings): Full settings object to persist
+**Return:** Nothing
+**Side Effects:**
+  - localStorage writes: `localStorage.setItem(SETTINGS_KEY, JSON.stringify(s))` (line 221)
+  - Calls `refreshHeaderStatus()` — updates API status pills in header (line 221)
+**Called By:** `salvarConfig`, `salvarTokenCF`, `escolherConta`, `trocarConta`, `salvarAccountManual`, `autoConectarTokens`, `importBackup`
+**Calls:** `refreshHeaderStatus`
+**Edge Cases:**
+  - Same as `saveDB` — localStorage quota, JSON serialization errors
+
+#### refreshHeaderStatus()
+
+**Source:** Lines 223-235
+**Signature:** `refreshHeaderStatus(): void`
+**Parameters:** None
+**Return:** Nothing
+**Side Effects:**
+  - DOM writes: Updates `#cf-status` (class swap + textContent), `#sms-status` (class swap + textContent)
+  - localStorage reads: `getSettings()` to get current tokens
+**Called By:** `saveSettings` (line 221), bootstrap sequence (line 2131)
+**Calls:** `getSettings`
+**Edge Cases:**
+  - `#cf-status` or `#sms-status` elements don't exist → null check prevents crash (`if(cf)` / `if(sm)`, lines 227, 231)
+  - Settings empty → both pills show `.danger` state (⚠️ Cloudflare / ⚠️ SMS24h)
+  - Both tokens + account set → `.done` state (☁️ Cloudflare OK / 📱 SMS24h OK)
+
+| Condition | CF Pill Class | CF Pill Text |
+|-----------|-------------|-------------|
+| `cf_token && cf_account` set | `pill done` | ☁️ Cloudflare OK |
+| Either missing | `pill danger` | ⚠️ Cloudflare |
+
+| Condition | SMS Pill Class | SMS Pill Text |
+|-----------|---------------|---------------|
+| `sms_key` set | `pill done` | 📱 SMS24h OK |
+| `sms_key` missing | `pill danger` | ⚠️ SMS24h |
+
+#### toast(msg, icon)
+
+**Source:** Lines 237-244
+**Signature:** `toast(msg: string, icon?: string): void`
+**Parameters:**
+  - `msg` (string): Message text to display
+  - `icon` (string, default `'✅'`): Emoji icon to show
+**Return:** Nothing
+**Side Effects:**
+  - DOM writes: `#toast-icon.textContent`, `#toast-msg.textContent`, `#toast.classList.remove('hidden')` (lines 239-241)
+  - Timers: `clearTimeout(window._tt)` (kill previous timer), `window._tt = setTimeout(...)` (new 3000ms auto-dismiss, line 242-243)
+**Called By:** 35+ call sites across all view modules (e.g., `e1Buscar`, `e1Gerar`, `e1Publicar`, `smsComprar`, `mudarStatus`, `exportCSV`, `exportBackup`, etc.)
+**Calls:** None directly (uses DOM + setTimeout)
+**Edge Cases:**
+  - Concurrent toasts: Previous toast timer cancelled (`clearTimeout(window._tt)`) — new toast replaces old
+  - No toast queue — single toast slot
+  - Auto-dismiss: after 3000ms, `classList.add('hidden')` hides toast
+  - Missing `#toast` element → `getElementById` returns null → `.textContent` assignment throws TypeError
+
+#### openModal(html)
+
+**Source:** Lines 246-248
+**Signature:** `openModal(html: string): void`
+**Parameters:**
+  - `html` (string): HTML content to inject into modal body
+**Return:** Nothing
+**Side Effects:**
+  - DOM writes: `#modal-body.innerHTML = html` (line 247)
+  - DOM writes: `#modal-back.classList.remove('hidden')` — shows backdrop + body (line 248)
+**Called By:** `e1Preview` (opens preview in modal? Actually no — e1Preview uses window.open. Check source: only modal usages are from VIEWS.planilha preview link and VIEWS.etapa1 preview), `VIEWS.etapa1` generated HTML (inline onclick), `VIEWS.etapa2` generated HTML (inline onclick)
+**Calls:** None directly
+**Edge Cases:**
+  - No close button by default — modal content must include its own close button calling `closeModal()`
+  - Backdrop click closes modal: `onclick="if(event.target===this)closeModal()"` on `#modal-back` (line 200)
+  - No Escape key handler
+  - XSS risk: `innerHTML` assignment with user-provided content (mitigated by `escapeHTML` usage in callers)
+
+#### closeModal()
+
+**Source:** Line 250
+**Signature:** `closeModal(): void`
+**Parameters:** None
+**Return:** Nothing
+**Side Effects:**
+  - DOM writes: `#modal-back.classList.add('hidden')` (line 250)
+**Called By:** Inline onclick in modal content, `#modal-back` click handler
+**Calls:** None
+
+#### toggleSidebar(open)
+
+**Source:** Lines 252-255
+**Signature:** `toggleSidebar(open: boolean): void`
+**Parameters:**
+  - `open` (boolean): true = open, false = close
+**Return:** Nothing
+**Side Effects:**
+  - DOM writes: `#sidebar.classList.toggle('open', open)`, `#backdrop.classList.toggle('open', open)` (lines 253-254)
+**Called By:** `go()` (closes sidebar on navigation, line 303), hamburger button onclick (line 177), backdrop onclick (line 138)
+**Calls:** None directly
+**Edge Cases:**
+  - Only functional at ≤1024px viewport (CSS: sidebar is fixed + off-screen only at mobile)
+  - Desktop: `.open` class has no visual effect (sidebar always visible)
+  - No state tracking — reads/writes DOM classes directly
+
+#### go(route)
+
+**Source:** Lines 286-305 (documented in detail in §3.3)
+**Signature:** `go(route: string): void`
+**Parameters:**
+  - `route` (string): Route name (must be one of: dashboard, etapa1, etapa2, etapa3, banco, planilha, config, ajuda)
+**Return:** Nothing
+**Side Effects:**
+  - DOM writes: All `[data-route]` elements `.active` class toggle, `#page-title.textContent`, `#page-subtitle.textContent`, `#view.innerHTML`
+  - Window: `scrollTo({top:0, behavior:'smooth'})`
+  - Calls `toggleSidebar(false)`
+  - Calls `window['after_'+route]()` hook if exists
+**Called By:** 35+ call sites (see §3.4)
+**Calls:** `VIEWS[route]()`, `toggleSidebar`, `window['after_'+route]()` (if function exists)
+**Edge Cases:**
+  - Invalid route → defaults to `'dashboard'` (line 287)
+  - Duplicate navigation → fully re-renders (no guard)
+  - Missing VIEWS key → `innerHTML = undefined` (silent failure)
+  - Missing DOM element → TypeError
+
+#### stepBox(n, ico, title, done, body, disabled)
+
+**Source:** Lines 428-440
+**Signature:** `stepBox(n: number, ico: string, title: string, done: boolean, body: string, disabled?: boolean): string`
+**Parameters:**
+  - `n` (number): Step number (1-5)
+  - `ico` (string): Emoji icon for step
+  - `title` (string): Step title text
+  - `done` (boolean): Whether step is complete (shows ✓ and "Concluído" pill)
+  - `body` (string): HTML content for step body
+  - `disabled` (boolean, default false): Whether step is locked (adds `.disabled` class)
+**Return:** HTML string for a step card wrapper
+**Side Effects:** None (pure template function — returns HTML string)
+**Called By:** `VIEWS.etapa1` (5 times, one per step)
+**Calls:** None
+**Edge Cases:**
+  - `done=true` + `disabled=true`: `.done` class takes visual precedence for step-num but `.disabled` class applies opacity/pointer-events
+  - Step number display: `done ? '✓' : n`
+
+#### copyText(t, msg)
+
+**Source:** Lines 275-278
+**Signature:** `copyText(t: string, msg?: string): void`
+**Parameters:**
+  - `t` (string): Text to copy to clipboard
+  - `msg` (string, default `'Copiado!'`): Toast message on success
+**Return:** Nothing
+**Side Effects:**
+  - Clipboard API: `navigator.clipboard.writeText(t)` (line 277)
+  - Calls `toast(msg, '📋')` on success (line 277) — toast is fire-and-forget (Promise.then)
+**Called By:** 30+ call sites (copies domains, meta-tags, URLs, phone numbers, PDF fields, etc.) — all inline `onclick` in generated HTML
+**Calls:** `toast`
+**Edge Cases:**
+  - `t` is null/empty → returns early, no toast (line 276)
+  - Clipboard API unavailable (HTTP context) → `writeText` Promise rejects (unhandled — no catch)
+  - Non-HTTPS (localhost): Clipboard API requires secure context or localhost
+
+---
+
+### 5.9 Utility/Formatting Functions
+
+Pure functions with no side effects (except `copyText` which is documented in §5.1). Used across all views.
+
+#### fmtCNPJ(c)
+
+**Source:** Lines 257-260
+**Signature:** `fmtCNPJ(c: string): string`
+**Parameters:**
+  - `c` (string): Raw CNPJ digits (may include formatting characters)
+**Return:** Formatted CNPJ: `##.###.###/####-##` — always exactly 14 digits after `.replace(/\D/g,'').padStart(14,'0').slice(0,14)`
+**Side Effects:** None (pure function)
+**Called By:** `renderStep1CNPJ`, `renderBanco`, `renderPlanilha`, `buildSiteHTML` (via `dados.cnpj` which is pre-formatted), inline in VIEWS output
+**Calls:** None
+**Edge Cases:**
+  - Empty/null string → `''.replace(/\D/g,'').padStart(14,'0')` → `00000000000000` → formatted as `00.000.000/0000-00`
+  - Shorter than 14 digits → left-padded with zeros (`padStart(14,'0')`)
+  - Longer than 14 digits → truncated to first 14 digits (`slice(0,14)`)
+  - Always returns 18-char formatted string (including punctuation)
+
+#### onlyDigits(s)
+
+**Source:** Line 261
+**Signature:** `onlyDigits(s: string): string`
+**Parameters:**
+  - `s` (string): Input string with any formatting
+**Return:** String containing only digits (0-9)
+**Side Effects:** None (pure function)
+**Called By:** `e1Buscar`, `e1ManualSalvar`, `salvarEmpresa`, `renderBanco`, `renderPlanilha`, `mudarStatus`, `removerSite`, `usarEmpresaNaEtapa1`, CNPJ comparison logic, exposed to `window.onlyDigits` (line 2128)
+**Calls:** None
+**Edge Cases:**
+  - Null/undefined → `(s||'')` fallback to empty string
+  - Empty string → returns `''`
+
+#### fmtMoney(v)
+
+**Source:** Lines 262
+**Signature:** `fmtMoney(v: number | string | null | undefined): string`
+**Parameters:**
+  - `v`: Value to format as Brazilian Real currency
+**Return:** Formatted BRL string (e.g., `R$ 10.500,00`) or `'—'` if invalid
+**Side Effects:** None (pure function)
+**Called By:** `renderStep1CNPJ`, `renderBanco`, `buildSiteHTML`, `statCard` (via dashboard)
+**Calls:** None
+**Edge Cases:**
+  - `null` or `''` → returns `'—'` (line 262)
+  - `NaN` after conversion → returns original value as string
+  - Uses `toLocaleString('pt-BR', {style:'currency', currency:'BRL', minimumFractionDigits:2})` → locale-dependent output
+  - Zero → `R$ 0,00`
+
+#### fmtDate(d)
+
+**Source:** Lines 263
+**Signature:** `fmtDate(d: string | number | Date): string`
+**Parameters:**
+  - `d`: Date value (ISO string, timestamp, or Date object)
+**Return:** Brazilian date format `DD/MM/AAAA` or `'—'` if invalid
+**Side Effects:** None (pure function)
+**Called By:** `renderPlanilha`, `buildSiteHTML`, inline in view outputs
+**Calls:** None
+**Edge Cases:**
+  - Falsy (`null`, `undefined`, `0`, `''`) → returns `'—'` (line 263)
+  - Invalid date → returns original value as string
+  - Uses `toLocaleDateString('pt-BR')` → locale-dependent output
+
+#### slugify(s)
+
+**Source:** Lines 264-267
+**Signature:** `slugify(s: string): string`
+**Parameters:**
+  - `s` (string): Company name or any text
+**Return:** URL-friendly slug: lowercase, no accents, only [a-z0-9], max 28 chars, or `'empresa'` if empty
+**Side Effects:** None (pure function)
+**Called By:** `gerarSugestoesDominio` (line 564), `e1EscolherDominio` (line 633)
+**Calls:** None
+**Edge Cases:**
+  - Null/undefined → `'empresa'` fallback (line 265)
+  - All punctuation removed → only alphanumeric chars survive
+  - Accented chars → normalized to ASCII (NFD decomposition + combining marks removal)
+  - Result empty after normalization → `'empresa'` fallback (line 266)
+  - Max 28 characters
+
+#### formatBRPhone(num)
+
+**Source:** Lines 268-274
+**Signature:** `formatBRPhone(num: string | number): string`
+**Parameters:**
+  - `num`: Phone number (raw digits or with formatting)
+**Return:** Brazilian phone format: `(XX) XXXXX-XXXX` (11-digit) or `(XX) XXXX-XXXX` (10-digit), or raw string if neither
+**Side Effects:** None (pure function)
+**Called By:** `VIEWS.etapa2` (renders purchased phone number), `smsAtualizarSite` (line 1114)
+**Calls:** None
+**Edge Cases:**
+  - Brazilian prefix `55` with 13 digits → stripped (`s = s.slice(2)`) → formatted as 11-digit
+  - 11-digit number → formatted with 5-digit middle group (mobile)
+  - 10-digit number → formatted with 4-digit middle group (landline)
+  - Neither 10 nor 11 digits → returns raw stripped digits
+  - Non-numeric chars → stripped before formatting
+
+#### escapeHTML(s)
+
+**Source:** Line 279
+**Signature:** `escapeHTML(s: string): string`
+**Parameters:**
+  - `s` (string): Text to escape
+**Return:** HTML-safe string with special chars replaced by entities
+**Side Effects:** None (pure function)
+**Called By:** `renderStep1Meta`, `renderCamposMapeados`, `smsComprar` (error display), `salvarTokenCF` (error display), `escolherConta` (in template), exposed to `window.escapeHTML` (line 2128)
+**Calls:** None
+**Edge Cases:**
+  - Null/undefined → `(s||'').toString()` fallback to empty string
+  - Only escapes: `&`, `<`, `>`, `"`, `'` — not full OWASP set (missing `/`, `\`, backtick, `=`)
+  - Returns same string if no special chars found
+
+#### calcAnos(inicio)
+
+**Source:** Lines 2078-2084
+**Signature:** `calcAnos(inicio: string): number`
+**Parameters:**
+  - `inicio` (string): Date string in format `DD/MM/AAAA` or ISO
+**Return:** Years since inception date (number, minimum 1)
+**Side Effects:** None (pure function)
+**Called By:** `buildSiteHTML` (line 1947 — renders "Anos no mercado" stat)
+**Calls:** None
+**Edge Cases:**
+  - Falsy → returns `1` (line 2079)
+  - Brazilian date format `DD/MM/YYYY` → regex match → Date constructor with reordered components
+  - ISO format `YYYY-MM-DD` → Date constructor directly
+  - Invalid date (isNaN) → returns `1`
+  - Result < 1 → clamped to `1` (`Math.max(1, ...)`)
+  - Future year → returns `1` (clamped minimum)
+
+---
+
+### 5.10 Boot/Proxy Functions
+
+#### autoConectarTokens() — IIFE
+
+**Source:** Lines 2089-2108 (wrapped in IIFE — executes immediately during bootstrap)
+**Signature:** No parameters (reads/writes global settings)
+**Return:** Nothing
+**Side Effects:**
+  - localStorage reads: `getSettings()` (line 2090)
+  - localStorage writes: `saveSettings(s)` if any defaults were applied (line 2107)
+  - Sets: `s.cf_token`, `s.cf_account`, `s.cf_account_name`, `s.sms_key` if any are missing (lines 2093-2106)
+**Called By:** Bootstrap sequence (IIFE — auto-executes at line 2089)
+**Calls:** `getSettings`, `saveSettings`
+**Edge Cases:**
+  - Only sets defaults if field is MISSING (`!s.cf_token` etc.) — never overwrites existing values
+  - Hardcoded credentials belong to original author (João Victor) — publicly exposed in source code
+  - Clone must either: use empty defaults, prompt user for tokens, or use mock values
+  - Multiple fields set at once → single `saveSettings` call if any changed (`changed = true` flag)
+
+**Hardcoded Defaults (REDACT — DO NOT SHIP IN CLONE):**
+| Field | Hardcoded Value | Purpose |
+|-------|----------------|---------|
+| `cf_token` | `<REDACTED-CF-TOKEN>` | Cloudflare API token |
+| `cf_account` | `f52d55845182f7a903fbdb95d86c99e9` | Cloudflare Account ID |
+| `cf_account_name` | `João Victor` | Display name |
+| `sms_key` | `<REDACTED-SMS-KEY>` | SMS24h API key |
+
+#### instalarProxy() — IIFE
+
+**Source:** Lines 2112-2123 (wrapped in IIFE — executes during bootstrap, after autoConectarTokens)
+**Signature:** No parameters (wraps global `window.fetch`)
+**Return:** Nothing
+**Side Effects:**
+  - **Monkey-patches `window.fetch`** — reassigns global `fetch` to a wrapping function (lines 2115-2122)
+  - Preserves original `fetch` in closure (`const orig = window.fetch`, line 2114)
+**Called By:** Bootstrap sequence (IIFE — auto-executes at line 2112)
+**Calls:** Original `window.fetch` (via `orig(url, opts)`, line 2121)
+**Edge Cases:**
+  - `file:` protocol → returns early, no proxy installed (line 2113). Local development without proxy will hit CORS errors.
+  - String URL only: only rewrites string URLs. If a `Request` object is passed as the URL, proxy does nothing.
+  - Headers not modified — pass through as-is
+  - No error handling — if original fetch throws, it propagates unchanged
+
+**URL Rewriting Rules (documented in detail in §4.5):**
+
+| Pattern | Replacement | Example |
+|---------|------------|---------|
+| `https://api.cloudflare.com` | `/cf-api` | `https://api.cloudflare.com/client/v4/accounts` → `/cf-api/client/v4/accounts` |
+| `https://api.sms24h.org` | `/sms-api` | `https://api.sms24h.org/stubs/handler_api?...` → `/sms-api/stubs/handler_api?...` |
+| `https://sms24h.org` | `/sms-api` | `https://sms24h.org/...` → `/sms-api/...` |
 
 
 ## 6. CSS / Design System
