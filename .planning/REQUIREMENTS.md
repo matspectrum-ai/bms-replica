@@ -89,10 +89,10 @@ Requisitos para clone fiel 100% do original. Sem alterações visuais na v1.
 
 ### Validação (VAL)
 
-- [ ] **VAL-01**: Teste A/B funcional — clone vs original lado a lado, mesmas ações = mesmos resultados
-- [ ] **VAL-02**: Teste de storage — clone lê dados gravados pelo original e vice-versa
-- [ ] **VAL-03**: Teste de responsividade — mesmos breakpoints e comportamentos
-- [ ] **VAL-04**: Teste de performance — bundle ≤ 20% maior que original
+- [x] **VAL-01**: Teste A/B funcional — clone vs original lado a lado, mesmas ações = mesmos resultados
+- [x] **VAL-02**: Teste de storage — clone lê dados gravados pelo original e vice-versa
+- [x] **VAL-03**: Teste de responsividade — mesmos breakpoints e comportamentos
+- [x] **VAL-04**: Teste de performance — bundle ≤ 20% maior que original
 
 ## v2 Requirements
 
@@ -175,10 +175,10 @@ Requisitos para o rebranding e nova identidade visual.
 | UI-03 | Phase 2 — Foundation | Complete |
 | UI-04 | Phase 2 — Foundation | Complete |
 | UI-05 | Phase 2 — Foundation | Complete |
-| VAL-01 | Phase 4 — Validation | Pending |
-| VAL-02 | Phase 4 — Validation | Pending |
-| VAL-03 | Phase 4 — Validation | Pending |
-| VAL-04 | Phase 4 — Validation | Pending |
+| VAL-01 | Phase 4 — Validation | Complete |
+| VAL-02 | Phase 4 — Validation | Complete |
+| VAL-03 | Phase 4 — Validation | Complete |
+| VAL-04 | Phase 4 — Validation | Complete |
 | BRAND-01 | Phase 5 — Rebrand Foundation | Pending |
 | BRAND-02 | Phase 5 — Rebrand Foundation | Pending |
 | BRAND-03 | Phase 5 — Rebrand Foundation | Pending |

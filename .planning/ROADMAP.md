@@ -11,7 +11,7 @@ Clone funcional 100% do front-end de gestão empresarial brasileira (https://lab
 - [x] **Phase 1: Reconnaissance & Extraction** — Extrair e documentar sistematicamente DOM, APIs, estado, rotas e lógica de negócio do sistema original (completed 2026-06-27)
 - [x] **Phase 2: Foundation** — Infraestrutura completa: router SPA, persistência localStorage, widgets reutilizáveis, utilitários, layout, tema e proxy CORS (completed 2026-06-27)
 - [x] **Phase 3: Views & Integrations** — Todas as 8 rotas com integrações de API: Dashboard, Etapa 1-3, Banco, Planilha, Configurações, Ajuda (completed 2026-06-27)
-- [ ] **Phase 4: Validation** — Validação de paridade: A/B testing, compatibilidade de storage, responsividade, bundle size
+- [x] **Phase 4: Validation** — Validação de paridade: A/B testing, compatibilidade de storage, responsividade, bundle size (completed 2026-06-27)
 - [ ] **Phase 5: Rebrand Foundation** — Nova identidade visual estrutural: paleta, tipografia, layout Header+Mega Menu, ícones, nome/logotipo
 - [ ] **Phase 6: Rebrand Polish** — Refinamentos visuais: cards glassmorphism+neumorphism, micro-animações, copywriting, site gerado rebrandeado
 
@@ -117,8 +117,9 @@ Plans:
 **Plans**: 2 plans in 2 waves
 
 Plans:
-- [ ] 04-01-PLAN.md — Storage & Bundle Size: automated localStorage bidirectional compatibility test suite + gzipped bundle size measurement + validation hub dashboard (VAL-02, VAL-04)
-- [ ] 04-02-PLAN.md — Visual & Responsive: automated view structure comparison for all 8 views + responsive breakpoint tests + structured A/B manual verification checklist (VAL-01, VAL-03)
+
+- [x] 04-01-PLAN.md — Storage & Bundle Size: automated localStorage bidirectional compatibility test suite + gzipped bundle size measurement + validation hub dashboard (VAL-02, VAL-04)
+- [x] 04-02-PLAN.md — Visual & Responsive: automated view structure comparison for all 8 views + responsive breakpoint tests + structured A/B manual verification checklist (VAL-01, VAL-03)
 
 ### Phase 5: Rebrand Foundation
 
@@ -163,6 +164,6 @@ Plans:
 | 1. Reconnaissance & Extraction | 5/5 | Complete   | 2026-06-27 |
 | 2. Foundation | 5/5 | Complete   | 2026-06-27 |
 | 3. Views & Integrations | 5/5 | Complete   | 2026-06-27 |
-| 4. Validation | 0/2 | Not started | - |
+| 4. Validation | 2/2 | Complete   | 2026-06-27 |
 | 5. Rebrand Foundation | 0/0 | Not started | - |
 | 6. Rebrand Polish | 0/0 | Not started | - |

@@ -4,14 +4,14 @@ milestone: v1.0
 milestone_name: milestone
 status: verifying
 stopped_at: Completed 02-foundation-05-PLAN.md
-last_updated: "2026-06-27T07:52:52.268Z"
+last_updated: "2026-06-27T08:28:14.139Z"
 last_activity: 2026-06-27 -- Phase 03 execution started
 progress:
   total_phases: 6
-  completed_phases: 3
-  total_plans: 15
-  completed_plans: 15
-  percent: 50
+  completed_phases: 4
+  total_plans: 17
+  completed_plans: 17
+  percent: 67
 ---
 
 # Project State
@@ -57,6 +57,8 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 03-views-integrations P01 | 2min | 3 tasks | 3 files |
 | Phase 03-views-integrations P02 | 2 min | 3 tasks | 2 files |
 | Phase 03-views-integrations P05 | 6min | 3 tasks | 3 files |
+| Phase 04-validation P01 | 5min | 3 tasks | 3 files |
+| Phase 04-validation P02 | 4min | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -90,6 +92,11 @@ Key decisions logged in PROJECT.md Key Decisions table. Summary of decisions aff
 - [Phase 03-views-integrations]: Post-render hook pattern for data-driven views
 - [Phase 03-views-integrations]: Cross-view state transfer via window._empresaParaEtapa1
 - [Phase 03-views-integrations]: CSV with UTF-8 BOM + semicolon for Brazilian Excel compatibility
+- [Phase ?]: Embedded static bundle JSON in validation-hub.html instead of dynamic fetch — simpler, works offline
+- [Phase ?]: Used python3 for JSON formatting in measure-bundle.sh — bash JSON is brittle
+- [Phase ?]: Backup/restore localStorage guard pattern — test suite never corrupts real user data
+- [Phase 04-validation]: Async test runners with bootstrap guard — waits for window.go to be defined before navigating, 5s timeout — ES module loading in main.js is async; tests need guard to prevent 'go is not a function' errors
+- [Phase 04-validation]: 80% threshold for visual test pass rate — some assertions depend on data state — Dashboard icon-cube count varies with empty vs populated localStorage data; structural markers unaffected
 
 ### Pending Todos
 
@@ -104,6 +111,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-27T07:52:52.239Z
+Last session: 2026-06-27T08:27:30.877Z
 Stopped at: Completed 02-foundation-05-PLAN.md
 Resume file: None
