@@ -1,0 +1,2135 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>🧪 Laboratório de BMs 🎈</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pdf-lib/dist/pdf-lib.min.js"></script>
+<script>
+tailwind.config = { theme: { extend: { fontFamily: { display: ['Sora','sans-serif'], sans: ['Inter','sans-serif'] } } } }
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b1020; --bg2:#0f172a; --card:#111a36; --soft:#1a2348;
+    --border:rgba(255,255,255,0.08);
+    --text:#e6e9f5; --muted:#9aa3c7;
+    --accent:#6366f1; --accent2:#22d3ee; --accent3:#a855f7;
+    --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444;
+  }
+  *{ -webkit-tap-highlight-color: transparent; }
+  html,body{ background:var(--bg); color:var(--text); font-family:Inter,sans-serif; }
+  .font-display{ font-family:Sora,sans-serif; }
+  .glass{ background:linear-gradient(145deg,rgba(255,255,255,0.04),rgba(255,255,255,0.01)); border:1px solid var(--border); backdrop-filter: blur(10px); }
+  .grad-text{ background:linear-gradient(120deg,#a5b4fc,#22d3ee 50%,#a855f7); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .grad-card{ background:radial-gradient(120% 120% at 0% 0%, #1d275a 0%, #0e1430 60%, #0b1020 100%); }
+  .neon{ box-shadow: 0 0 0 1px rgba(99,102,241,.3), 0 0 40px -10px rgba(99,102,241,.5); }
+
+  /* Botões 3D */
+  .btn-3d{
+    position:relative; display:inline-flex; align-items:center; justify-content:center; gap:.6rem;
+    padding:.95rem 1.4rem; border-radius:16px; font-weight:700; font-size:.98rem; letter-spacing:.2px;
+    color:white; background:linear-gradient(180deg,#6d72ff,#4f46e5);
+    box-shadow: 0 6px 0 #312e81, 0 12px 24px rgba(79,70,229,.45), inset 0 1px 0 rgba(255,255,255,.25);
+    transform:translateY(0); transition:transform .12s ease, box-shadow .12s ease, filter .12s ease;
+    user-select:none; cursor:pointer; border:none;
+  }
+  .btn-3d:hover{ filter:brightness(1.08); }
+  .btn-3d:active{ transform:translateY(4px); box-shadow:0 2px 0 #312e81, 0 6px 14px rgba(79,70,229,.4), inset 0 1px 0 rgba(255,255,255,.2); }
+  .btn-3d:disabled{ opacity:.45; cursor:not-allowed; filter:grayscale(.3); }
+  .btn-3d.success{ background:linear-gradient(180deg,#34d399,#10b981); box-shadow:0 6px 0 #065f46,0 12px 24px rgba(16,185,129,.4),inset 0 1px 0 rgba(255,255,255,.25); }
+  .btn-3d.success:active{ box-shadow:0 2px 0 #065f46, 0 6px 14px rgba(16,185,129,.4), inset 0 1px 0 rgba(255,255,255,.2); }
+  .btn-3d.warn{ background:linear-gradient(180deg,#fbbf24,#f59e0b); box-shadow:0 6px 0 #92400e,0 12px 24px rgba(245,158,11,.4),inset 0 1px 0 rgba(255,255,255,.3); color:#1f1300; }
+  .btn-3d.warn:active{ box-shadow:0 2px 0 #92400e, 0 6px 14px rgba(245,158,11,.4), inset 0 1px 0 rgba(255,255,255,.25); }
+  .btn-3d.danger{ background:linear-gradient(180deg,#fb7185,#ef4444); box-shadow:0 6px 0 #7f1d1d,0 12px 24px rgba(239,68,68,.4),inset 0 1px 0 rgba(255,255,255,.25); }
+  .btn-3d.danger:active{ box-shadow:0 2px 0 #7f1d1d, 0 6px 14px rgba(239,68,68,.4), inset 0 1px 0 rgba(255,255,255,.2); }
+  .btn-3d.cyan{ background:linear-gradient(180deg,#67e8f9,#06b6d4); box-shadow:0 6px 0 #155e75,0 12px 24px rgba(6,182,212,.4),inset 0 1px 0 rgba(255,255,255,.3); color:#001017; }
+  .btn-3d.cyan:active{ box-shadow:0 2px 0 #155e75, 0 6px 14px rgba(6,182,212,.4), inset 0 1px 0 rgba(255,255,255,.25); }
+  .btn-3d.purple{ background:linear-gradient(180deg,#c084fc,#a855f7); box-shadow:0 6px 0 #581c87,0 12px 24px rgba(168,85,247,.4),inset 0 1px 0 rgba(255,255,255,.25); }
+  .btn-3d.purple:active{ box-shadow:0 2px 0 #581c87, 0 6px 14px rgba(168,85,247,.4), inset 0 1px 0 rgba(255,255,255,.2); }
+  .btn-3d.ghost{ background:linear-gradient(180deg,#1f2a52,#111a36); box-shadow:0 6px 0 #0a0f23,0 12px 24px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.08); }
+  .btn-3d.ghost:active{ box-shadow:0 2px 0 #0a0f23, 0 6px 14px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.06); }
+  .btn-3d.sm{ padding:.55rem .85rem; font-size:.82rem; border-radius:12px; box-shadow:0 4px 0 #312e81, inset 0 1px 0 rgba(255,255,255,.25); }
+  .btn-3d.sm:active{ box-shadow:0 1px 0 #312e81, inset 0 1px 0 rgba(255,255,255,.2); transform:translateY(3px); }
+
+  .icon-cube{
+    width:64px; height:64px; border-radius:18px;
+    background:linear-gradient(160deg,#7c83ff,#4f46e5 60%,#312e81);
+    box-shadow:0 10px 24px rgba(79,70,229,.45), inset 0 2px 0 rgba(255,255,255,.25), inset 0 -6px 0 rgba(0,0,0,.25);
+    display:flex; align-items:center; justify-content:center; font-size:28px; color:white;
+  }
+  .icon-cube.cyan{ background:linear-gradient(160deg,#67e8f9,#06b6d4 60%,#155e75); box-shadow:0 10px 24px rgba(6,182,212,.45), inset 0 2px 0 rgba(255,255,255,.25), inset 0 -6px 0 rgba(0,0,0,.25); }
+  .icon-cube.green{ background:linear-gradient(160deg,#34d399,#10b981 60%,#065f46); box-shadow:0 10px 24px rgba(16,185,129,.45), inset 0 2px 0 rgba(255,255,255,.25), inset 0 -6px 0 rgba(0,0,0,.25); }
+  .icon-cube.purple{ background:linear-gradient(160deg,#c084fc,#a855f7 60%,#581c87); box-shadow:0 10px 24px rgba(168,85,247,.45), inset 0 2px 0 rgba(255,255,255,.25), inset 0 -6px 0 rgba(0,0,0,.25); }
+  .icon-cube.amber{ background:linear-gradient(160deg,#fbbf24,#f59e0b 60%,#92400e); box-shadow:0 10px 24px rgba(245,158,11,.45), inset 0 2px 0 rgba(255,255,255,.25), inset 0 -6px 0 rgba(0,0,0,.25); }
+  .icon-cube.rose{ background:linear-gradient(160deg,#fb7185,#ef4444 60%,#7f1d1d); box-shadow:0 10px 24px rgba(239,68,68,.45), inset 0 2px 0 rgba(255,255,255,.25), inset 0 -6px 0 rgba(0,0,0,.25); }
+
+  .nav-link{ display:flex; align-items:center; gap:.8rem; padding:.85rem 1rem; border-radius:14px; color:#cfd5f2; font-weight:600; transition:all .15s ease; cursor:pointer; }
+  .nav-link:hover{ background:rgba(255,255,255,0.05); color:white; transform:translateX(2px); }
+  .nav-link.active{ background:linear-gradient(135deg,rgba(99,102,241,.25),rgba(34,211,238,.1)); color:white; box-shadow:inset 0 0 0 1px rgba(255,255,255,.08); }
+  .nav-link .nav-emoji{ width:36px; height:36px; display:inline-flex; align-items:center; justify-content:center; border-radius:10px; background:linear-gradient(160deg,rgba(255,255,255,.12),rgba(255,255,255,.04)); font-size:18px; }
+
+  .pill{ display:inline-flex; align-items:center; gap:.4rem; padding:.3rem .65rem; border-radius:999px; font-size:.72rem; font-weight:700; }
+  .pill.ok{ background:rgba(34,197,94,.15); color:#86efac; border:1px solid rgba(34,197,94,.3); }
+  .pill.todo{ background:rgba(245,158,11,.15); color:#fcd34d; border:1px solid rgba(245,158,11,.3); }
+  .pill.doing{ background:rgba(99,102,241,.15); color:#a5b4fc; border:1px solid rgba(99,102,241,.3); }
+  .pill.done{ background:rgba(16,185,129,.18); color:#6ee7b7; border:1px solid rgba(16,185,129,.3); }
+  .pill.danger{ background:rgba(239,68,68,.18); color:#fda4af; border:1px solid rgba(239,68,68,.3); }
+
+  .input{ width:100%; padding:.95rem 1.1rem; border-radius:14px; background:#0b1330; border:1px solid var(--border); color:white; font-size:1rem; outline:none; transition:all .15s; font-family:Inter,sans-serif; }
+  .input:focus{ border-color:#6366f1; box-shadow:0 0 0 4px rgba(99,102,241,.18); }
+  .input::placeholder{ color:#6b7299; }
+  textarea.input{ min-height:90px; resize:vertical; }
+  select.input{ appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%239aa3c7' viewBox='0 0 16 16'%3E%3Cpath d='M3 5l5 6 5-6z'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 12px center; padding-right:36px; }
+
+  .step-card{ position:relative; padding:1.5rem 1.5rem 1.5rem 5rem; border-radius:20px; transition:opacity .3s; }
+  .step-card.disabled{ opacity:.45; pointer-events:none; }
+  .step-num{ position:absolute; left:1.2rem; top:1.2rem; width:48px; height:48px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:1.25rem; color:white; background:linear-gradient(160deg,#7c83ff,#4f46e5); box-shadow:0 6px 0 #312e81, inset 0 1px 0 rgba(255,255,255,.25); }
+  .step-card.done .step-num{ background:linear-gradient(160deg,#34d399,#10b981); box-shadow:0 6px 0 #065f46, inset 0 1px 0 rgba(255,255,255,.25); }
+
+  .scrollbar::-webkit-scrollbar{ width:8px; height:8px; }
+  .scrollbar::-webkit-scrollbar-thumb{ background:#2a3460; border-radius:6px; }
+  .scrollbar::-webkit-scrollbar-track{ background:transparent; }
+
+  @keyframes float{ 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+  .floaty{ animation: float 4s ease-in-out infinite; }
+  @keyframes spin{ to{ transform:rotate(360deg) } }
+  .spinner{ width:18px; height:18px; border-radius:50%; border:3px solid rgba(255,255,255,.2); border-top-color:white; animation:spin .8s linear infinite; display:inline-block; vertical-align:middle; }
+  @keyframes pulse-ring{ 0%{ box-shadow:0 0 0 0 rgba(34,211,238,.6) } 70%{ box-shadow:0 0 0 14px rgba(34,211,238,0) } 100%{ box-shadow:0 0 0 0 rgba(34,211,238,0) } }
+  .pulse-ring{ animation: pulse-ring 2s infinite; }
+
+  .sidebar{ transition:transform .25s ease; }
+  @media (max-width: 1024px){
+    .sidebar{ position:fixed; inset:0 auto 0 0; z-index:50; transform:translateX(-100%); width:280px; }
+    .sidebar.open{ transform:translateX(0); }
+    .content-wrap{ margin-left:0 !important; }
+  }
+  .backdrop{ display:none; }
+  .backdrop.open{ display:block; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:40; }
+
+  .empty{ border:2px dashed rgba(255,255,255,.1); border-radius:18px; padding:2rem; text-align:center; color:var(--muted); }
+
+  .switch-tab{ padding:.55rem 1rem; border-radius:10px; font-weight:600; font-size:.85rem; cursor:pointer; color:#9aa3c7; }
+  .switch-tab.active{ background:rgba(99,102,241,.2); color:white; box-shadow:inset 0 0 0 1px rgba(99,102,241,.4); }
+
+  .copy-row{ display:flex; align-items:center; gap:.5rem; padding:.85rem 1rem; border-radius:14px; background:#0b1330; border:1px solid var(--border); }
+  .copy-row .key{ font-size:.7rem; color:#9aa3c7; text-transform:uppercase; letter-spacing:.1em; min-width:120px; }
+  .copy-row .val{ flex:1; font-weight:700; word-break:break-word; }
+
+  .pdf-canvas-wrap{ position:relative; display:inline-block; max-width:100%; }
+  .pdf-canvas-wrap canvas{ display:block; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.4); }
+  .pdf-overlay-text{ position:absolute; min-width:60px; padding:2px 6px; font-size:14px; color:#000; background:rgba(255,235,59,.25); border:1px dashed #f59e0b; border-radius:4px; cursor:move; outline:none; }
+  .pdf-overlay-text:focus{ background:rgba(255,235,59,.45); border-style:solid; }
+  .pdf-overlay-text .del{ position:absolute; top:-8px; right:-8px; width:18px; height:18px; border-radius:50%; background:#ef4444; color:white; font-size:11px; display:flex; align-items:center; justify-content:center; cursor:pointer; border:1px solid white; }
+
+  .file-drop{ border:2px dashed rgba(99,102,241,.4); border-radius:20px; padding:2.5rem; text-align:center; cursor:pointer; transition:all .15s; background:rgba(99,102,241,.04); }
+  .file-drop:hover, .file-drop.dragover{ background:rgba(99,102,241,.1); border-color:rgba(99,102,241,.7); }
+
+  .ring-glow{ position:relative; }
+  .ring-glow::before{ content:""; position:absolute; inset:-4px; border-radius:inherit; padding:2px; background:linear-gradient(120deg,#22d3ee,#a855f7,#22d3ee); -webkit-mask:linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite:xor; mask-composite:exclude; opacity:.55; }
+</style>
+</head>
+<body class="min-h-screen">
+
+<div id="backdrop" class="backdrop" onclick="toggleSidebar(false)"></div>
+
+<div class="flex min-h-screen">
+
+  <aside id="sidebar" class="sidebar w-[280px] shrink-0 p-4 border-r border-white/5" style="background:linear-gradient(180deg,#0c1330,#0a0f24);">
+    <div class="flex items-center gap-3 px-2 py-4 mb-4">
+      <div class="icon-cube purple" style="width:52px;height:52px;font-size:26px;">🧪</div>
+      <div>
+        <div class="font-display text-lg font-extrabold leading-tight">LABORATÓRIO<br><span class="grad-text">DE BMS 🎈</span></div>
+        <div class="text-xs text-slate-400">ADM: João Victor</div>
+      </div>
+    </div>
+
+    <nav class="space-y-1.5">
+      <div onclick="go('dashboard')" data-route="dashboard" class="nav-link active"><span class="nav-emoji">🏠</span> Início</div>
+      <div class="text-[10px] uppercase tracking-widest text-slate-500 px-3 mt-4 mb-1">FLUXO PRINCIPAL</div>
+      <div onclick="go('etapa1')" data-route="etapa1" class="nav-link"><span class="nav-emoji">🧬</span> Etapa 1 — Criar Site</div>
+      <div onclick="go('etapa2')" data-route="etapa2" class="nav-link"><span class="nav-emoji">📱</span> Etapa 2 — Comprar Número</div>
+      <div onclick="go('etapa3')" data-route="etapa3" class="nav-link"><span class="nav-emoji">📄</span> Etapa 3 — Editor PDF</div>
+      <div class="text-[10px] uppercase tracking-widest text-slate-500 px-3 mt-4 mb-1">DADOS</div>
+      <div onclick="go('banco')" data-route="banco" class="nav-link"><span class="nav-emoji">💼</span> Banco de Empresas</div>
+      <div onclick="go('planilha')" data-route="planilha" class="nav-link"><span class="nav-emoji">📊</span> Planilha</div>
+      <div class="text-[10px] uppercase tracking-widest text-slate-500 px-3 mt-4 mb-1">SISTEMA</div>
+      <div onclick="go('config')" data-route="config" class="nav-link"><span class="nav-emoji">⚙️</span> Configurações</div>
+      <div onclick="go('ajuda')" data-route="ajuda" class="nav-link"><span class="nav-emoji">❓</span> Ajuda</div>
+    </nav>
+
+    <div class="glass mt-6 p-4 rounded-2xl">
+      <div class="flex items-center gap-2 mb-2">
+        <div class="icon-cube cyan" style="width:36px;height:36px;font-size:16px;">⭐</div>
+        <div class="font-bold">Dica</div>
+      </div>
+      <p class="text-sm text-slate-300 leading-relaxed">Capital social entre <b class="text-cyan-300">R$ 10k</b> e <b class="text-cyan-300">R$ 50k</b> é a faixa ideal.</p>
+    </div>
+  </aside>
+
+  <main class="content-wrap flex-1 min-w-0">
+    <header class="sticky top-0 z-30 px-4 sm:px-8 py-4 flex items-center justify-between border-b border-white/5" style="background:rgba(11,16,32,.85); backdrop-filter:blur(12px);">
+      <div class="flex items-center gap-3">
+        <button class="lg:hidden btn-3d ghost sm" onclick="toggleSidebar(true)">☰</button>
+        <div>
+          <div id="page-title" class="font-display text-xl sm:text-2xl font-extrabold">Início</div>
+          <div id="page-subtitle" class="text-xs text-slate-400 hidden sm:block">Bem-vindo, João Victor!</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <div id="cf-status" class="hidden sm:flex pill danger">⚠️ Cloudflare</div>
+        <div id="sms-status" class="hidden sm:flex pill danger">⚠️ SMS24h</div>
+        <div class="icon-cube purple" style="width:42px;height:42px;font-size:18px;">JV</div>
+      </div>
+    </header>
+
+    <section id="view" class="p-4 sm:p-8 max-w-7xl mx-auto"></section>
+  </main>
+</div>
+
+<div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 hidden z-[60] glass px-5 py-3 rounded-2xl flex items-center gap-3" style="background:rgba(15,23,55,.95);">
+  <span id="toast-icon">✅</span>
+  <span id="toast-msg">Pronto!</span>
+</div>
+
+<!-- Modal genérico -->
+<div id="modal-back" class="fixed inset-0 bg-black/60 hidden z-[70] flex items-center justify-center p-4" onclick="if(event.target===this)closeModal()">
+  <div id="modal-body" class="glass rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-auto scrollbar p-6" style="background:rgba(15,23,55,.95);"></div>
+</div>
+
+<script>
+/* =========================================================
+   🧪 LABORATÓRIO DE BMS — ADM João Victor
+   ========================================================= */
+
+const STORAGE_KEY = 'lab_bms_db_v1';
+const SETTINGS_KEY = 'lab_bms_settings_v1';
+
+function getDB(){
+  try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { empresas:[], sites:[], sms:[] }; }
+  catch(e){ return { empresas:[], sites:[], sms:[] }; }
+}
+function saveDB(db){ localStorage.setItem(STORAGE_KEY, JSON.stringify(db)); }
+function getSettings(){
+  try{ return JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {}; }
+  catch(e){ return {}; }
+}
+function saveSettings(s){ localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); refreshHeaderStatus(); }
+
+function refreshHeaderStatus(){
+  const s = getSettings();
+  const cf = document.getElementById('cf-status');
+  const sm = document.getElementById('sms-status');
+  if(cf){
+    if(s.cf_token && s.cf_account){ cf.className='hidden sm:flex pill done'; cf.textContent='☁️ Cloudflare OK'; }
+    else{ cf.className='hidden sm:flex pill danger'; cf.textContent='⚠️ Cloudflare'; }
+  }
+  if(sm){
+    if(s.sms_key){ sm.className='hidden sm:flex pill done'; sm.textContent='📱 SMS24h OK'; }
+    else{ sm.className='hidden sm:flex pill danger'; sm.textContent='⚠️ SMS24h'; }
+  }
+}
+
+function toast(msg, icon='✅'){
+  const t=document.getElementById('toast');
+  document.getElementById('toast-icon').textContent=icon;
+  document.getElementById('toast-msg').textContent=msg;
+  t.classList.remove('hidden');
+  clearTimeout(window._tt);
+  window._tt=setTimeout(()=>t.classList.add('hidden'), 3000);
+}
+
+function openModal(html){
+  document.getElementById('modal-body').innerHTML = html;
+  document.getElementById('modal-back').classList.remove('hidden');
+}
+function closeModal(){ document.getElementById('modal-back').classList.add('hidden'); }
+
+function toggleSidebar(open){
+  const s=document.getElementById('sidebar'); const b=document.getElementById('backdrop');
+  if(open){ s.classList.add('open'); b.classList.add('open'); } else { s.classList.remove('open'); b.classList.remove('open'); }
+}
+
+function fmtCNPJ(c){
+  c = (c||'').replace(/\D/g,'').padStart(14,'0').slice(0,14);
+  return c.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2}).*/, '$1.$2.$3/$4-$5');
+}
+function onlyDigits(s){ return (s||'').replace(/\D/g,''); }
+function fmtMoney(v){ if(v==null||v==='') return '—'; const n=Number(v); if(isNaN(n)) return v; return n.toLocaleString('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:2}); }
+function fmtDate(d){ if(!d) return '—'; const dt = new Date(d); if(isNaN(dt)) return d; return dt.toLocaleDateString('pt-BR'); }
+function slugify(s){
+  return (s||'empresa').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')
+    .replace(/[^a-z0-9]+/g,'').slice(0,28) || 'empresa';
+}
+function formatBRPhone(num){
+  let s = String(num||'').replace(/\D/g,'');
+  if(s.startsWith('55') && s.length===13) s = s.slice(2);
+  if(s.length===11) return `(${s.slice(0,2)}) ${s.slice(2,7)}-${s.slice(7)}`;
+  if(s.length===10) return `(${s.slice(0,2)}) ${s.slice(2,6)}-${s.slice(6)}`;
+  return s;
+}
+function copyText(t, msg){
+  if(!t) return;
+  navigator.clipboard.writeText(t).then(()=>toast(msg||'Copiado!','📋'));
+}
+function escapeHTML(s){ return (s||'').toString().replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* =========================================================
+   ROTAS
+   ========================================================= */
+const ROUTES = ['dashboard','etapa1','etapa2','etapa3','banco','planilha','config','ajuda'];
+
+function go(route){
+  if(!ROUTES.includes(route)) route='dashboard';
+  document.querySelectorAll('[data-route]').forEach(el=>{ el.classList.toggle('active', el.dataset.route===route); });
+  const titles = {
+    dashboard:['🏠 Início','Bem-vindo, João Victor!'],
+    etapa1:['🧬 Etapa 1 — Criar Site','Fluxo automático: CNPJ → Domínio → Meta → Site → Publicar'],
+    etapa2:['📱 Etapa 2 — Comprar Número','SMS24h integrado para verificação Facebook'],
+    etapa3:['📄 Etapa 3 — Editor PDF','Edite PDFs e mapeie campos do endereço'],
+    banco:['💼 Banco de Empresas','Histórico de CNPJs consultados'],
+    planilha:['📊 Planilha de Sites','Status de cada site publicado'],
+    config:['⚙️ Configurações','Tokens e chaves de API'],
+    ajuda:['❓ Ajuda','Como cada parte funciona']
+  };
+  document.getElementById('page-title').textContent = titles[route][0];
+  document.getElementById('page-subtitle').textContent = titles[route][1];
+  document.getElementById('view').innerHTML = VIEWS[route]();
+  window.scrollTo({top:0,behavior:'smooth'});
+  toggleSidebar(false);
+  if(typeof window['after_'+route]==='function') window['after_'+route]();
+}
+
+const VIEWS = {};
+
+/* =========================================================
+   DASHBOARD
+   ========================================================= */
+VIEWS.dashboard = () => {
+  const db = getDB();
+  const totalEmp = db.empresas.length;
+  const totalSites = db.sites.length;
+  const finalizados = db.sites.filter(s=>s.status==='finalizado').length;
+  const ativos = db.sites.filter(s=>s.url).length;
+  const settings = getSettings();
+  const cfOk = !!(settings.cf_token && settings.cf_account);
+  const smsOk = !!settings.sms_key;
+
+  return `
+  <div class="grad-card rounded-3xl p-6 sm:p-10 mb-6 relative overflow-hidden">
+    <div class="absolute -right-10 -top-10 floaty opacity-40 hidden sm:block">
+      <div class="icon-cube purple" style="width:180px;height:180px;font-size:90px;border-radius:40px;">🧪</div>
+    </div>
+    <div class="pill done mb-3">🎈 Laboratório aberto</div>
+    <h1 class="font-display text-3xl sm:text-5xl font-extrabold leading-tight">Bom dia, <span class="grad-text">João Victor</span></h1>
+    <p class="text-slate-300 mt-3 max-w-2xl">Painel central do <b>Laboratório de BMs</b>. Cadastra a empresa, cria o site automaticamente, verifica na Meta, compra número e edita PDF — tudo daqui.</p>
+    <div class="flex flex-wrap gap-3 mt-6">
+      <button class="btn-3d" onclick="go('etapa1')">🧬 Iniciar fluxo de site</button>
+      <button class="btn-3d cyan" onclick="go('etapa2')">📱 Comprar número</button>
+      <button class="btn-3d purple" onclick="go('etapa3')">📄 Editor de PDF</button>
+    </div>
+  </div>
+
+  ${(!cfOk || !smsOk) ? `
+    <div class="glass rounded-2xl p-5 mb-6 flex items-start gap-4" style="border-color:rgba(245,158,11,.4);">
+      <div class="icon-cube amber" style="width:48px;height:48px;font-size:22px;">⚠️</div>
+      <div class="flex-1">
+        <div class="font-bold">Configure as APIs para liberar a automação completa</div>
+        <div class="text-sm text-slate-300 mt-1">
+          ${!cfOk?'<span class="pill danger mr-1">Cloudflare</span> ':''}
+          ${!smsOk?'<span class="pill danger mr-1">SMS24h</span> ':''}
+        </div>
+      </div>
+      <button class="btn-3d warn sm" onclick="go('config')">Configurar →</button>
+    </div>` : ''}
+
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    ${statCard('💼','Empresas', totalEmp, 'brand')}
+    ${statCard('🎨','Sites criados', totalSites, 'cyan')}
+    ${statCard('🌐','No ar', ativos, 'green')}
+    ${statCard('🏁','Finalizados', finalizados, 'amber')}
+  </div>
+
+  <h2 class="font-display text-xl font-bold mb-4">🧪 Áreas do laboratório</h2>
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
+    ${quickCard('🧬','Etapa 1 — Criar Site','CNPJ + domínio + meta + site + publicar Cloudflare.', 'etapa1', 'cyan')}
+    ${quickCard('📱','Etapa 2 — Número SMS','Compra número SMS24h e atualiza site no ar.', 'etapa2', 'purple')}
+    ${quickCard('📄','Etapa 3 — Editor PDF','Edita PDF, mapeia campos do endereço, baixa.', 'etapa3', 'brand')}
+    ${quickCard('💼','Banco de Empresas','Histórico de CNPJs consultados.', 'banco', 'green')}
+    ${quickCard('📊','Planilha','Status, link, meta-tag, número.', 'planilha', 'amber')}
+    ${quickCard('⚙️','Configurações','Tokens Cloudflare e SMS24h.', 'config', 'rose')}
+  </div>
+  `;
+};
+function statCard(icon, label, value, color){
+  return `<div class="glass rounded-2xl p-4 sm:p-5 relative overflow-hidden">
+    <div class="icon-cube ${color}" style="width:46px;height:46px;font-size:20px;">${icon}</div>
+    <div class="text-3xl font-extrabold mt-3">${value}</div>
+    <div class="text-slate-400 text-sm">${label}</div>
+  </div>`;
+}
+function quickCard(icon, title, desc, route, color){
+  return `<div class="glass rounded-2xl p-5 hover:scale-[1.01] transition cursor-pointer" onclick="go('${route}')">
+    <div class="flex items-start gap-4">
+      <div class="icon-cube ${color}">${icon}</div>
+      <div class="min-w-0">
+        <div class="font-display font-bold text-lg">${title}</div>
+        <div class="text-sm text-slate-400 mt-1">${desc}</div>
+        <div class="mt-3 text-cyan-300 text-sm font-bold">Abrir →</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* =========================================================
+   ETAPA 1 — Fluxo completo de criação de site
+   ========================================================= */
+let etapa1State = {
+  empresa: null,
+  dominio: '',
+  metatag: '',
+  htmlGerado: '',
+  publicado: null  // {url, projectName, deploymentId}
+};
+
+VIEWS.etapa1 = () => {
+  const st = etapa1State;
+  const stepCnpj = !!st.empresa;
+  const stepDom = !!st.dominio;
+  const stepMeta = !!st.metatag;
+  const stepHTML = !!st.htmlGerado;
+  const stepPub = !!st.publicado;
+
+  return `
+  <div class="grad-card rounded-3xl p-6 sm:p-8 mb-6">
+    <div class="flex items-start gap-4 flex-wrap">
+      <div class="icon-cube floaty">🧬</div>
+      <div class="flex-1 min-w-0">
+        <div class="pill doing mb-2">FLUXO LINEAR</div>
+        <h2 class="font-display text-2xl sm:text-3xl font-extrabold">Crie um site do zero</h2>
+        <p class="text-slate-300">Siga as caixas abaixo em ordem. Cada uma libera a próxima.</p>
+      </div>
+      <button class="btn-3d ghost sm" onclick="resetEtapa1()">🔄 Resetar fluxo</button>
+    </div>
+  </div>
+
+  ${stepBox(1,'🔎','Buscar CNPJ', stepCnpj, renderStep1CNPJ())}
+  ${stepBox(2,'🌐','Gerar Domínio', stepDom, renderStep1Dominio(), !stepCnpj)}
+  ${stepBox(3,'🛡️','Adicionar Meta Tag', stepMeta, renderStep1Meta(), !stepDom)}
+  ${stepBox(4,'🎨','Gerar Site Completo', stepHTML, renderStep1Gerar(), !stepMeta)}
+  ${stepBox(5,'🚀','Publicar no Cloudflare', stepPub, renderStep1Publicar(), !stepHTML)}
+  `;
+};
+
+function stepBox(n, ico, title, done, body, disabled=false){
+  return `<div class="glass step-card mb-4 ${done?'done':''} ${disabled?'disabled':''}">
+    <div class="step-num">${done?'✓':n}</div>
+    <div class="flex items-start gap-3 mb-3 flex-wrap">
+      <div class="text-2xl">${ico}</div>
+      <div class="flex-1 min-w-0">
+        <div class="font-display font-bold text-lg">${title}</div>
+      </div>
+      ${done?'<span class="pill done">Concluído</span>':''}
+    </div>
+    ${body}
+  </div>`;
+}
+
+function renderStep1CNPJ(){
+  const e = etapa1State.empresa;
+  if(e){
+    return `<div class="glass rounded-2xl p-4 mb-3">
+      <div class="flex items-start gap-3 flex-wrap">
+        <div class="icon-cube green" style="width:48px;height:48px;font-size:20px;">🏢</div>
+        <div class="flex-1 min-w-0">
+          <div class="text-xs text-slate-400">${fmtCNPJ(e.cnpj)}</div>
+          <div class="font-bold">${e.razao_social||'—'}</div>
+          <div class="text-sm text-slate-300 truncate">${e.cnae_descricao||''}</div>
+          <div class="flex flex-wrap gap-1.5 mt-2">
+            ${e.situacao?`<span class="pill ok">${e.situacao}</span>`:''}
+            ${e.porte?`<span class="pill doing">${e.porte}</span>`:''}
+            ${e.capital_social?`<span class="pill ${(Number(e.capital_social)>=10000&&Number(e.capital_social)<=50000)?'done':'todo'}">${fmtMoney(e.capital_social)}</span>`:''}
+            ${e.municipio?`<span class="pill todo">${e.municipio}${e.uf?'/'+e.uf:''}</span>`:''}
+          </div>
+        </div>
+        <button class="btn-3d ghost sm" onclick="etapa1State.empresa=null;etapa1State.dominio='';etapa1State.metatag='';etapa1State.htmlGerado='';etapa1State.publicado=null;go('etapa1')">🔄 Trocar</button>
+      </div>
+    </div>`;
+  }
+  return `
+    <div class="grid sm:grid-cols-[1fr_auto] gap-3 mb-3">
+      <input id="e1_cnpj" inputmode="numeric" placeholder="Digite o CNPJ (ex: 34.578.472/0001-48)" class="input"
+        oninput="this.value=this.value.replace(/[^0-9./-]/g,''); if(onlyDigits(this.value).length===14)e1Buscar()" />
+      <button class="btn-3d cyan" onclick="e1Buscar()">🔍 Buscar</button>
+    </div>
+    <div id="e1_result"></div>
+    <details class="mt-3">
+      <summary class="text-sm text-slate-300 cursor-pointer">📝 Não tem CNPJ válido? Cadastrar manualmente</summary>
+      <div class="mt-3 grid sm:grid-cols-2 gap-2">
+        ${['cnpj','m_razao=Razão social','m_fantasia=Nome fantasia','m_capital=Capital social','m_cnae=CNAE principal','m_descricao=Descrição CNAE','m_logradouro=Endereço','m_municipio=Município','m_uf=UF','m_cep=CEP','m_telefone=Telefone','m_email=Email','m_inicio=Início','m_porte=Porte'].map(p=>{
+          const [id,ph] = p.includes('=')?p.split('='):['e1m_'+p, 'CNPJ (14 dígitos)'];
+          const idr = id==='cnpj'?'e1m_cnpj':id;
+          return `<input id="${idr}" class="input" placeholder="${ph}"/>`;
+        }).join('')}
+        <textarea id="e1m_cnaes" class="input sm:col-span-2" placeholder="CNAEs secundárias (uma por linha)"></textarea>
+        <button class="btn-3d success sm:col-span-2" onclick="e1ManualSalvar()">💾 Usar esta empresa</button>
+      </div>
+    </details>
+  `;
+}
+
+async function e1Buscar(){
+  const raw = document.getElementById('e1_cnpj').value;
+  const cnpj = onlyDigits(raw);
+  const box = document.getElementById('e1_result');
+  if(cnpj.length!==14){ toast('CNPJ precisa ter 14 números','⚠️'); return; }
+  box.innerHTML = `<div class="glass rounded-2xl p-4 text-center"><span class="spinner"></span> Consultando BrasilAPI...</div>`;
+  try{
+    const r = await fetch('https://brasilapi.com.br/api/cnpj/v1/'+cnpj);
+    if(!r.ok) throw new Error('Não encontrado');
+    const d = await r.json();
+    const e = normalizarBrasilAPI(d);
+    salvarEmpresa(e);
+    etapa1State.empresa = e;
+    toast('Empresa carregada!','✅');
+    go('etapa1');
+  }catch(err){
+    box.innerHTML = `<div class="glass rounded-2xl p-4 text-center text-rose-300">😕 Não consegui encontrar este CNPJ. Verifique ou cadastre manualmente.</div>`;
+  }
+}
+
+function e1ManualSalvar(){
+  const get = id => document.getElementById(id)?.value?.trim()||'';
+  const cnpj = onlyDigits(get('e1m_cnpj'));
+  if(cnpj.length!==14){ toast('CNPJ inválido','⚠️'); return; }
+  const cnaesText = get('e1m_cnaes');
+  const cnaes_sec = cnaesText.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{
+    const m = l.match(/^([0-9.\-/]+)\s*[-–:]?\s*(.*)$/); return {codigo:(m?.[1]||'').replace(/\D/g,''), descricao:m?.[2]||l};
+  });
+  const e = {
+    cnpj, razao_social:get('e1m_razao'), fantasia:get('e1m_fantasia')||get('e1m_razao'),
+    capital_social: Number(get('e1m_capital').replace(/\D/g,''))||null,
+    cnae_principal: onlyDigits(get('e1m_cnae')), cnae_descricao: get('e1m_descricao'),
+    cnaes_secundarios: cnaes_sec,
+    logradouro: get('e1m_logradouro'), municipio:get('e1m_municipio'), uf:get('e1m_uf'), cep:get('e1m_cep'),
+    telefone:get('e1m_telefone'), email:get('e1m_email'),
+    inicio: get('e1m_inicio'), porte:get('e1m_porte'), situacao:'ATIVA', socios:[]
+  };
+  salvarEmpresa(e);
+  etapa1State.empresa = e;
+  toast('Empresa adicionada!','💾');
+  go('etapa1');
+}
+
+function normalizarBrasilAPI(d){
+  return {
+    cnpj: d.cnpj,
+    razao_social: d.razao_social,
+    fantasia: d.nome_fantasia || d.razao_social,
+    capital_social: d.capital_social,
+    porte: d.porte || d.descricao_porte || '',
+    situacao: d.descricao_situacao_cadastral || (d.situacao_cadastral===2?'ATIVA':'') ,
+    inicio: d.data_inicio_atividade,
+    natureza: d.natureza_juridica,
+    cnae_principal: d.cnae_fiscal,
+    cnae_descricao: d.cnae_fiscal_descricao,
+    cnaes_secundarios: (d.cnaes_secundarios||[]).map(c=>({codigo:c.codigo, descricao:c.descricao})),
+    logradouro: [d.descricao_tipo_de_logradouro, d.logradouro, d.numero].filter(Boolean).join(' '),
+    complemento: d.complemento,
+    bairro: d.bairro,
+    municipio: d.municipio,
+    uf: d.uf,
+    cep: d.cep,
+    telefone: [d.ddd_telefone_1, d.ddd_telefone_2].filter(Boolean).join(' / '),
+    email: d.email,
+    socios: (d.qsa||[]).map(s=>({nome:s.nome_socio, qualif:s.qualificacao_socio})),
+    raw: d
+  };
+}
+
+function salvarEmpresa(e){
+  const db = getDB();
+  const idx = db.empresas.findIndex(x=>onlyDigits(x.cnpj)===onlyDigits(e.cnpj));
+  if(idx>=0) db.empresas[idx] = {...db.empresas[idx], ...e, _updated:Date.now()};
+  else db.empresas.push({...e, _created:Date.now()});
+  saveDB(db);
+}
+
+/* ---------- Sugestão de domínio (mistura letras, evita conflito) ---------- */
+function gerarSugestoesDominio(nome){
+  const base = slugify(nome);
+  if(!base) return ['empresa01'];
+  const sugestoes = new Set();
+  // 1) Base + letra dupla no final
+  sugestoes.add(base + base.charAt(base.length-1));
+  // 2) Truncar e dobrar a primeira consoante depois da primeira vogal
+  sugestoes.add(base.slice(0, Math.min(base.length, 16)) + 's');
+  // 3) Trocar vogais por outras parecidas
+  const swap = {a:'aa', e:'ee', i:'ii', o:'oo', u:'uu'};
+  let v = base; let didSwap = false;
+  for(const k in swap){ if(!didSwap && v.includes(k)){ v = v.replace(k, swap[k]); didSwap = true; } }
+  if(didSwap) sugestoes.add(v);
+  // 4) Adicionar prefixo "bm" ou número
+  sugestoes.add(base + '01');
+  sugestoes.add(base + 'oficial');
+  // 5) Sigla das duas primeiras palavras + base
+  const palavras = (nome||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').split(/\s+/).filter(Boolean);
+  if(palavras.length>=2){
+    const sigla = palavras.slice(0,2).map(p=>p.charAt(0)).join('');
+    sugestoes.add(sigla + base.replace(/^.{0,3}/,''));
+  }
+  // 6) Reordenar: trocar primeira sílaba pelas duas últimas
+  if(base.length>6){
+    sugestoes.add(base.slice(-4) + base.slice(0, base.length-4));
+  }
+  // 7) Misturar: pega metade e duplica
+  if(base.length>4){
+    sugestoes.add(base.slice(0, Math.ceil(base.length/2)) + base.slice(0,2));
+  }
+  // Limpar duplicatas e iguais ao base 100%
+  const finais = [...sugestoes].filter(s=>s && s!==base && /^[a-z0-9-]+$/.test(s) && s.length<=32 && s.length>=4);
+  return finais.slice(0, 6);
+}
+
+function renderStep1Dominio(){
+  const st = etapa1State;
+  if(!st.empresa) return '';
+  if(st.dominio){
+    return `<div class="glass rounded-2xl p-4 ring-glow">
+      <div class="flex items-center gap-3 flex-wrap">
+        <div class="icon-cube cyan" style="width:44px;height:44px;font-size:20px;">🌐</div>
+        <div class="flex-1 min-w-0">
+          <div class="text-xs text-slate-400">DOMÍNIO ESCOLHIDO</div>
+          <div class="font-display text-lg font-bold break-all">${st.dominio}.pages.dev</div>
+        </div>
+        <button class="btn-3d cyan sm" onclick="copyText('${st.dominio}.pages.dev','Domínio copiado! Cole na Meta BM')">📋 Copiar domínio</button>
+        <button class="btn-3d ghost sm" onclick="etapa1State.dominio='';etapa1State.metatag='';etapa1State.htmlGerado='';etapa1State.publicado=null;go('etapa1')">🔄 Trocar</button>
+      </div>
+      <div class="text-xs text-slate-400 mt-2">👆 Use este domínio na Meta BM (Adequação & Segurança → Domínios) para gerar a meta-tag</div>
+    </div>`;
+  }
+  const sugestoes = gerarSugestoesDominio(st.empresa.fantasia||st.empresa.razao_social);
+  return `<div>
+    <p class="text-sm text-slate-300 mb-3">Sugestões automáticas (misturadas, evitando nome 100% igual):</p>
+    <div class="grid sm:grid-cols-2 gap-2 mb-3">
+      ${sugestoes.map(s=>`<div class="glass rounded-xl p-3 flex items-center gap-2 cursor-pointer hover:bg-white/5" onclick="e1EscolherDominio('${s}')">
+        <div class="font-mono flex-1 truncate"><b class="text-cyan-300">${s}</b><span class="text-slate-500">.pages.dev</span></div>
+        <button class="btn-3d sm" onclick="event.stopPropagation();copyText('${s}.pages.dev','Domínio copiado!')">📋</button>
+        <button class="btn-3d cyan sm" onclick="event.stopPropagation();e1EscolherDominio('${s}')">Usar</button>
+      </div>`).join('')}
+    </div>
+    <div class="grid sm:grid-cols-[1fr_auto] gap-2">
+      <input id="e1_dom_custom" class="input" placeholder="Ou digite o seu (sem .pages.dev)" />
+      <button class="btn-3d success" onclick="e1EscolherDominio(document.getElementById('e1_dom_custom').value)">✅ Usar este</button>
+    </div>
+  </div>`;
+}
+
+function e1EscolherDominio(d){
+  d = slugify(d);
+  if(!d || d.length<4){ toast('Domínio precisa ter pelo menos 4 letras','⚠️'); return; }
+  etapa1State.dominio = d;
+  go('etapa1');
+}
+
+function renderStep1Meta(){
+  const st = etapa1State;
+  if(!st.dominio) return '';
+  if(st.metatag){
+    return `<div class="glass rounded-2xl p-4">
+      <div class="flex items-center gap-3 flex-wrap">
+        <div class="icon-cube purple" style="width:44px;height:44px;font-size:20px;">🛡️</div>
+        <div class="flex-1 min-w-0">
+          <div class="text-xs text-slate-400">META-TAG REGISTRADA</div>
+          <div class="font-mono text-xs sm:text-sm break-all bg-black/30 p-2 rounded-lg mt-1">${escapeHTML(st.metatag)}</div>
+        </div>
+        <button class="btn-3d ghost sm" onclick="etapa1State.metatag='';etapa1State.htmlGerado='';etapa1State.publicado=null;go('etapa1')">🔄 Trocar</button>
+      </div>
+    </div>`;
+  }
+  return `<div>
+    <p class="text-sm text-slate-300 mb-3">Vá na <a class="text-cyan-300 underline" target="_blank" href="https://business.facebook.com/settings/owned-domains">Meta BM → Adequação & Segurança → Domínios</a>, cole <code class="text-cyan-300">${st.dominio}.pages.dev</code> e copie o código <b>Meta-tag</b> que aparecer.</p>
+    <div class="grid sm:grid-cols-[1fr_auto] gap-2">
+      <input id="e1_meta" class="input" placeholder='<meta name="facebook-domain-verification" content="abc123xyz">' />
+      <button class="btn-3d success" onclick="e1SalvarMeta()">✅ Aplicar</button>
+    </div>
+    <details class="mt-2"><summary class="text-xs text-slate-400 cursor-pointer">Posso pular esse passo?</summary>
+    <p class="text-xs text-slate-400 mt-1">Pode. Mas aí o domínio não fica verificado na Meta. Clique em "Aplicar" sem preencher se quiser pular.</p></details>
+  </div>`;
+}
+
+function e1SalvarMeta(){
+  const v = document.getElementById('e1_meta').value.trim();
+  if(v && !v.includes('facebook-domain-verification')){
+    if(!confirm('A tag não parece ser do Facebook. Salvar mesmo assim?')) return;
+  }
+  etapa1State.metatag = v || '<!-- meta tag não fornecida -->';
+  toast('Meta-tag salva','🛡️');
+  go('etapa1');
+}
+
+function renderStep1Gerar(){
+  const st = etapa1State;
+  if(!st.metatag) return '';
+  if(st.htmlGerado){
+    return `<div class="glass rounded-2xl p-4">
+      <div class="flex items-center gap-3 flex-wrap">
+        <div class="icon-cube green" style="width:44px;height:44px;font-size:20px;">🎨</div>
+        <div class="flex-1 min-w-0">
+          <div class="text-xs text-slate-400">SITE GERADO</div>
+          <div class="font-bold">${(st.htmlGerado.length/1024).toFixed(1)} KB — index.html pronto</div>
+        </div>
+        <button class="btn-3d cyan sm" onclick="e1Preview()">👀 Pré-visualizar</button>
+        <button class="btn-3d success sm" onclick="e1Baixar()">⬇️ Baixar</button>
+        <button class="btn-3d ghost sm" onclick="etapa1State.htmlGerado='';etapa1State.publicado=null;go('etapa1')">🔄 Refazer</button>
+      </div>
+    </div>`;
+  }
+  return `<div>
+    <p class="text-sm text-slate-300 mb-3">Eu vou gerar o site SaaS moderno cheio de detalhes, com a meta-tag já injetada na linha 1 do head. Você pode personalizar:</p>
+    <div class="grid sm:grid-cols-2 gap-2">
+      <input id="e1g_slogan" class="input" placeholder="Slogan" value="Tradição, qualidade e compromisso." />
+      <input id="e1g_horario" class="input" placeholder="Horário (ex: Seg–Sex 8h–18h)" value="Segunda a sexta-feira, das 8h às 18h" />
+      <input id="e1g_whats" class="input" placeholder="WhatsApp (só dígitos, opcional)" />
+      <input id="e1g_email" class="input" placeholder="E-mail extra (opcional)" />
+    </div>
+    <button class="btn-3d success mt-3" onclick="e1Gerar()">🎨 Gerar Site Completo</button>
+  </div>`;
+}
+
+function e1Gerar(){
+  const st = etapa1State;
+  const e = st.empresa;
+  const slogan = document.getElementById('e1g_slogan')?.value || 'Tradição, qualidade e compromisso.';
+  const horario = document.getElementById('e1g_horario')?.value || '';
+  const whats = onlyDigits(document.getElementById('e1g_whats')?.value || '');
+  const emailExtra = document.getElementById('e1g_email')?.value || '';
+
+  const dados = {
+    cnpj: fmtCNPJ(e.cnpj),
+    razao: e.razao_social, fantasia: e.fantasia,
+    capital: e.capital_social?fmtMoney(e.capital_social):'',
+    porte: e.porte, situacao: e.situacao||'ATIVA', inicio: fmtDate(e.inicio),
+    natureza: e.natureza,
+    cnae: `${e.cnae_principal||''} — ${e.cnae_descricao||''}`,
+    cnaesSec: (e.cnaes_secundarios||[]).map(c=>`${c.codigo} - ${c.descricao}`),
+    slogan, horario,
+    sobre: `A ${e.razao_social||e.fantasia} atua no segmento de ${e.cnae_descricao||'sua atividade'}${e.inicio?' desde '+fmtDate(e.inicio):''}, oferecendo soluções de alta qualidade e atendimento personalizado para cada cliente. Localizada em ${e.municipio||''}${e.uf?'/'+e.uf:''}, somos referência no setor.`,
+    missao: `Oferecer ${(e.cnae_descricao||'serviços').toLowerCase()} com excelência, gerando confiança e satisfação para os clientes.`,
+    visao: `Ser referência${e.municipio?' em '+e.municipio:''}${e.uf?'/'+e.uf:''} no setor de ${(e.cnae_descricao||'atuação').toLowerCase()}.`,
+    valores: ['Compromisso','Transparência','Qualidade','Atendimento humano','Ética'],
+    diferenciais: ['Atendimento personalizado e próximo','Equipe experiente e atualizada','Preço justo e transparente','Qualidade comprovada em cada entrega'],
+    logradouro: e.logradouro, bairro:e.bairro, municipio:e.municipio, uf:e.uf, cep:e.cep,
+    telefone: e.telefone, telefoneNosso: '', // será preenchido na etapa 2
+    email: emailExtra||e.email, whats,
+    dominio: st.dominio
+  };
+  let html = buildSiteHTML(dados);
+  // Injetar meta-tag na linha 1 do <head>
+  if(st.metatag && !st.metatag.includes('<!-- meta tag não fornecida')){
+    html = html.replace('<head>', '<head>\n'+st.metatag);
+  }
+  etapa1State.htmlGerado = html;
+  // Salvar nos sites
+  registrarSite(dados, st.metatag, st.dominio, '');
+  toast('Site gerado com sucesso!','✨');
+  go('etapa1');
+}
+
+function e1Preview(){
+  if(!etapa1State.htmlGerado) return;
+  const w = window.open('about:blank','_blank');
+  w.document.open(); w.document.write(etapa1State.htmlGerado); w.document.close();
+}
+
+function e1Baixar(){
+  if(!etapa1State.htmlGerado) return;
+  const blob = new Blob([etapa1State.htmlGerado], {type:'text/html;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='index.html'; document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+  toast('index.html baixado','⬇️');
+}
+
+function registrarSite(dados, metatag, dominio, telefoneNosso){
+  const db = getDB();
+  const cnpj = onlyDigits(dados.cnpj);
+  const reg = {
+    cnpj, razao: dados.razao, fantasia: dados.fantasia,
+    dominio: dominio+'.pages.dev', metatag, telefoneEmpresa: dados.telefone, telefoneNosso,
+    status:'gerado', url:'', deploymentId:'',
+    dadosSnapshot: dados,
+    criado: Date.now(), atualizado: Date.now()
+  };
+  const idx = db.sites.findIndex(s=>onlyDigits(s.cnpj)===cnpj && s.dominio===reg.dominio);
+  if(idx>=0) db.sites[idx] = {...db.sites[idx], ...reg};
+  else db.sites.push(reg);
+  saveDB(db);
+}
+
+function renderStep1Publicar(){
+  const st = etapa1State;
+  if(!st.htmlGerado) return '';
+  if(st.publicado){
+    return `<div class="glass rounded-2xl p-4 neon">
+      <div class="flex items-center gap-3 flex-wrap">
+        <div class="icon-cube green pulse-ring" style="width:48px;height:48px;font-size:22px;">🌐</div>
+        <div class="flex-1 min-w-0">
+          <div class="text-xs text-slate-400">SITE NO AR ✅</div>
+          <a target="_blank" href="${st.publicado.url}" class="font-display text-lg font-bold break-all text-cyan-300 underline">${st.publicado.url}</a>
+        </div>
+        <button class="btn-3d cyan sm" onclick="copyText('${st.publicado.url}','Link copiado!')">📋 Copiar link</button>
+        <button class="btn-3d purple sm" onclick="window.open('${st.publicado.url}','_blank')">↗️ Abrir site</button>
+      </div>
+      <div class="mt-3 flex flex-wrap gap-2">
+        <button class="btn-3d success sm" onclick="go('etapa2')">📱 Próximo: Comprar número →</button>
+        <button class="btn-3d ghost sm" onclick="go('planilha')">📊 Ver na planilha</button>
+      </div>
+    </div>`;
+  }
+  const s = getSettings();
+  const podePublicar = s.cf_token && s.cf_account;
+  return `<div>
+    <p class="text-sm text-slate-300 mb-3">Subo direto para o Cloudflare Pages via API. Sem cliques manuais.</p>
+    ${!podePublicar?`<div class="glass rounded-2xl p-3 mb-3 text-sm" style="border-color:rgba(245,158,11,.4)">⚠️ <b>Configure o token Cloudflare</b> nas <button class="text-cyan-300 underline" onclick="go('config')">Configurações</button> antes.</div>`:''}
+    <div class="flex flex-wrap gap-2">
+      <button class="btn-3d success" id="btn-publish" onclick="e1Publicar()" ${!podePublicar?'disabled':''}>🚀 Publicar no Cloudflare</button>
+      <button class="btn-3d ghost" onclick="e1Baixar()">⬇️ Só baixar (manual)</button>
+    </div>
+    <div id="publish-log" class="mt-3"></div>
+  </div>`;
+}
+
+async function e1Publicar(){
+  const st = etapa1State;
+  const settings = getSettings();
+  const btn = document.getElementById('btn-publish');
+  const log = document.getElementById('publish-log');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Publicando...';
+  log.innerHTML = '';
+
+  const pushLog = (msg, ok=null)=>{
+    const colors = {true:'text-green-300', false:'text-rose-300'};
+    log.innerHTML += `<div class="text-sm ${colors[ok]||'text-slate-300'} font-mono">${ok===true?'✅ ':ok===false?'❌ ':'• '}${msg}</div>`;
+  };
+
+  try{
+    pushLog('Criando projeto no Cloudflare Pages...');
+    const projectName = st.dominio;
+    const r1 = await fetch(`https://api.cloudflare.com/client/v4/accounts/${settings.cf_account}/pages/projects`, {
+      method:'POST',
+      headers:{'Authorization':`Bearer ${settings.cf_token}`,'Content-Type':'application/json'},
+      body: JSON.stringify({ name: projectName, production_branch: 'main' })
+    });
+    const d1 = await r1.json();
+    if(!r1.ok && !(d1.errors||[]).some(e=>e.code===8000007 || e.code===8000031 || (e.message||'').toLowerCase().includes('exists'))){
+      throw new Error('CRIAR: '+JSON.stringify(d1.errors||d1));
+    }
+    pushLog('Projeto pronto: '+projectName, true);
+
+    pushLog('Pegando upload-token (JWT)...');
+    const r2 = await fetch(`https://api.cloudflare.com/client/v4/accounts/${settings.cf_account}/pages/projects/${projectName}/upload-token`, {
+      method:'GET',
+      headers:{'Authorization':`Bearer ${settings.cf_token}`}
+    });
+    const d2 = await r2.json();
+    if(!d2.result?.jwt) throw new Error('JWT: '+JSON.stringify(d2));
+    const jwt = d2.result.jwt;
+    pushLog('JWT recebido', true);
+
+    pushLog('Calculando hash blake3 (vai carregar biblioteca)...');
+    const { blake3 } = await import('https://esm.sh/@noble/hashes/blake3');
+    const html = st.htmlGerado;
+    // Cloudflare: hash = blake3(base64(content) + extension).hex.slice(0,32)
+    const b64 = btoa(unescape(encodeURIComponent(html)));
+    const toHash = new TextEncoder().encode(b64 + 'html');
+    const hashBytes = blake3(toHash);
+    const hex = Array.from(hashBytes).map(b=>b.toString(16).padStart(2,'0')).join('');
+    const fileHash = hex.slice(0,32);
+    pushLog('Hash: '+fileHash, true);
+
+    pushLog('Checando arquivos faltantes...');
+    await fetch('https://api.cloudflare.com/client/v4/pages/assets/check-missing', {
+      method:'POST',
+      headers:{'Authorization':`Bearer ${jwt}`,'Content-Type':'application/json'},
+      body: JSON.stringify({ hashes:[fileHash] })
+    });
+
+    pushLog('Fazendo upload do index.html...');
+    const upRes = await fetch('https://api.cloudflare.com/client/v4/pages/assets/upload', {
+      method:'POST',
+      headers:{'Authorization':`Bearer ${jwt}`,'Content-Type':'application/json'},
+      body: JSON.stringify([{
+        key: fileHash, value: b64, base64: true,
+        metadata: { contentType: 'text/html' }
+      }])
+    });
+    const upJson = await upRes.json();
+    if(!upRes.ok) throw new Error('UPLOAD: '+JSON.stringify(upJson));
+    pushLog('Upload concluído', true);
+
+    pushLog('Criando deployment...');
+    const fd = new FormData();
+    fd.append('manifest', JSON.stringify({ '/index.html': fileHash }));
+    const dep = await fetch(`https://api.cloudflare.com/client/v4/accounts/${settings.cf_account}/pages/projects/${projectName}/deployments`, {
+      method:'POST',
+      headers:{'Authorization':`Bearer ${settings.cf_token}`},
+      body: fd
+    });
+    const depJson = await dep.json();
+    if(!dep.ok) throw new Error('DEPLOY: '+JSON.stringify(depJson));
+    const url = depJson.result?.url || `https://${projectName}.pages.dev`;
+    const depId = depJson.result?.id;
+    pushLog('Deployment criado: '+url, true);
+
+    etapa1State.publicado = { url, projectName, deploymentId: depId };
+
+    // Atualiza site na planilha
+    const db = getDB();
+    const site = db.sites.find(s=>s.dominio===projectName+'.pages.dev');
+    if(site){ site.url = url; site.deploymentId = depId; site.status = 'deploy'; site.atualizado = Date.now(); saveDB(db); }
+
+    toast('🎉 Site publicado!','🚀');
+    setTimeout(()=>go('etapa1'), 800);
+  }catch(err){
+    pushLog('Erro: '+err.message, false);
+    pushLog('Dica: verifique se o token tem permissão "Cloudflare Pages — Edit" e o Account ID está certo. Se persistir, baixe o HTML e suba manual.', false);
+    btn.disabled = false;
+    btn.innerHTML = '🚀 Tentar novamente';
+  }
+}
+
+function resetEtapa1(){
+  etapa1State = { empresa:null, dominio:'', metatag:'', htmlGerado:'', publicado:null };
+  go('etapa1');
+}
+
+/* =========================================================
+   ETAPA 2 — SMS24h
+   ========================================================= */
+let etapa2State = { activationId:null, phone:'', code:'', timer:null };
+
+VIEWS.etapa2 = () => {
+  const s = getSettings();
+  const ok = !!s.sms_key;
+  const db = getDB();
+  const sitesAtivos = db.sites.filter(x=>x.url);
+
+  return `
+  <div class="grad-card rounded-3xl p-6 sm:p-8 mb-6">
+    <div class="flex items-start gap-4 flex-wrap">
+      <div class="icon-cube purple floaty">📱</div>
+      <div class="flex-1 min-w-0">
+        <div class="pill doing mb-2">SMS24H.ORG</div>
+        <h2 class="font-display text-2xl sm:text-3xl font-extrabold">Compre um número virtual</h2>
+        <p class="text-slate-300">Para receber o SMS de verificação do Facebook. Custos são debitados do seu saldo SMS24h.</p>
+      </div>
+      <button class="btn-3d ghost sm" onclick="smsVerSaldo()">💰 Ver saldo</button>
+    </div>
+  </div>
+
+  ${!ok?`<div class="glass rounded-2xl p-5 mb-4" style="border-color:rgba(245,158,11,.4)">
+    ⚠️ <b>Configure sua API key SMS24h</b> nas <button class="text-cyan-300 underline" onclick="go('config')">Configurações</button> antes de continuar.
+  </div>`:''}
+
+  <div class="glass step-card mb-4 ${!ok?'disabled':''}">
+    <div class="step-num">1</div>
+    <div class="flex items-start gap-3 mb-3 flex-wrap">
+      <div class="text-2xl">🛒</div>
+      <div class="flex-1"><div class="font-display font-bold text-lg">Comprar número para o Facebook</div></div>
+    </div>
+    <div class="grid sm:grid-cols-[1fr_1fr_auto] gap-2">
+      <select id="sms-service" class="input">
+        <option value="fb">Facebook</option>
+        <option value="ig">Instagram</option>
+        <option value="wa">WhatsApp</option>
+        <option value="go">Google</option>
+        <option value="tg">Telegram</option>
+        <option value="other">Outro</option>
+      </select>
+      <select id="sms-country" class="input">
+        <option value="73">🇧🇷 Brasil (73)</option>
+        <option value="0">🇷🇺 Rússia (0)</option>
+        <option value="187">🇺🇸 EUA (187)</option>
+        <option value="1">🇺🇦 Ucrânia (1)</option>
+        <option value="22">🇮🇳 Índia (22)</option>
+      </select>
+      <button class="btn-3d success" onclick="smsComprar()">🛒 Comprar agora</button>
+    </div>
+    <div id="sms-buy-log" class="mt-3 text-sm text-slate-300"></div>
+  </div>
+
+  <div class="glass step-card mb-4 ${!etapa2State.phone?'disabled':''}">
+    <div class="step-num">2</div>
+    <div class="flex items-start gap-3 mb-3 flex-wrap">
+      <div class="text-2xl">📞</div>
+      <div class="flex-1"><div class="font-display font-bold text-lg">Número comprado</div></div>
+    </div>
+    ${etapa2State.phone?`
+      <div class="copy-row mb-2">
+        <div class="key">Número (BR)</div>
+        <div class="val text-cyan-300 text-lg font-mono">${formatBRPhone(etapa2State.phone)}</div>
+        <button class="btn-3d cyan sm" onclick="copyText('${formatBRPhone(etapa2State.phone)}','Número copiado!')">📋 Copiar</button>
+      </div>
+      <div class="copy-row mb-2">
+        <div class="key">Sem formatação</div>
+        <div class="val font-mono">${etapa2State.phone}</div>
+        <button class="btn-3d ghost sm" onclick="copyText('${etapa2State.phone}','Copiado')">📋</button>
+      </div>
+      <div class="text-xs text-slate-400 mt-2">⏱️ Você tem ~20min para receber o SMS. Use esse número no cadastro do Facebook agora.</div>
+    `:`<div class="text-slate-400">Compre primeiro um número.</div>`}
+  </div>
+
+  <div class="glass step-card mb-4 ${!etapa2State.phone?'disabled':''}">
+    <div class="step-num">3</div>
+    <div class="flex items-start gap-3 mb-3 flex-wrap">
+      <div class="text-2xl">💬</div>
+      <div class="flex-1"><div class="font-display font-bold text-lg">Receber SMS</div></div>
+      ${etapa2State.phone&&!etapa2State.code?`<button class="btn-3d ghost sm" onclick="smsCancelar()">🚫 Cancelar</button>`:''}
+    </div>
+    <div id="sms-code-box">
+      ${etapa2State.code?`<div class="copy-row neon" style="border-color:rgba(16,185,129,.4)">
+        <div class="key">CÓDIGO SMS</div>
+        <div class="val text-green-300 text-2xl font-mono font-bold">${etapa2State.code}</div>
+        <button class="btn-3d success sm" onclick="copyText('${etapa2State.code}','Código copiado!')">📋 Copiar</button>
+      </div>
+      <button class="btn-3d cyan mt-3" onclick="smsConfirmar()">✅ Confirmar recebimento (fechar ativação)</button>`:
+      etapa2State.phone?`<div class="flex items-center gap-2 text-slate-300"><span class="spinner"></span> Aguardando o SMS chegar... <span id="sms-timer" class="text-xs text-slate-400"></span></div>`:
+      '<div class="text-slate-400">Aguardando compra do número.</div>'}
+    </div>
+  </div>
+
+  <div class="glass step-card mb-4 ${!etapa2State.phone?'disabled':''}">
+    <div class="step-num">4</div>
+    <div class="flex items-start gap-3 mb-3 flex-wrap">
+      <div class="text-2xl">🔄</div>
+      <div class="flex-1"><div class="font-display font-bold text-lg">Atualizar site com este número</div></div>
+    </div>
+    <p class="text-sm text-slate-300 mb-3">Escolha o site no ar onde quer adicionar o número (vira <code class="text-cyan-300">empresa /nosso</code>):</p>
+    <div class="grid sm:grid-cols-[1fr_auto] gap-2">
+      <select id="sms-site" class="input">
+        ${sitesAtivos.length?sitesAtivos.map(s=>`<option value="${s.cnpj}-${s.dominio}">${s.fantasia||s.razao} — ${s.dominio}</option>`).join(''):'<option value="">Nenhum site no ar ainda</option>'}
+      </select>
+      <button class="btn-3d purple" onclick="smsAtualizarSite()" ${!etapa2State.phone||!sitesAtivos.length?'disabled':''}>🔄 Atualizar e re-publicar</button>
+    </div>
+    <div id="sms-update-log" class="mt-3"></div>
+  </div>
+  `;
+};
+
+async function smsAPI(action, extra=''){
+  const k = getSettings().sms_key;
+  if(!k) throw new Error('Sem API key SMS24h. Configure primeiro.');
+  const url = `https://api.sms24h.org/stubs/handler_api?api_key=${encodeURIComponent(k)}&action=${encodeURIComponent(action)}${extra}`;
+  const r = await fetch(url, { method:'GET' });
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  return await r.text();
+}
+
+async function smsVerSaldo(){
+  try{
+    const t = await smsAPI('getBalance');
+    toast('Saldo: '+t,'💰');
+  }catch(e){
+    toast('Erro: '+e.message+' (Pode ser CORS — use proxy)','❌');
+  }
+}
+
+async function smsComprar(){
+  const service = document.getElementById('sms-service').value;
+  const country = document.getElementById('sms-country').value;
+  const log = document.getElementById('sms-buy-log');
+  log.innerHTML = '<span class="spinner"></span> Comprando número...';
+  try{
+    const t = await smsAPI('getNumber', `&service=${service}&country=${country}`);
+    if(t.startsWith('ACCESS_NUMBER:')){
+      const [,id,phone] = t.split(':');
+      etapa2State.activationId = id;
+      etapa2State.phone = phone;
+      etapa2State.code = '';
+      log.innerHTML = '<span class="text-green-300">✅ Número adquirido</span>';
+      go('etapa2');
+      iniciarPollingSMS();
+    }else{
+      log.innerHTML = '<span class="text-rose-300">❌ Resposta: '+escapeHTML(t)+'</span>';
+    }
+  }catch(e){
+    log.innerHTML = '<span class="text-rose-300">❌ '+e.message+'</span><div class="text-xs text-slate-400 mt-1">Se for CORS, configure proxy ou peça pra mim adicionar Worker.</div>';
+  }
+}
+
+function iniciarPollingSMS(){
+  if(etapa2State.timer) clearInterval(etapa2State.timer);
+  const start = Date.now();
+  etapa2State.timer = setInterval(async ()=>{
+    const elapsed = Math.floor((Date.now()-start)/1000);
+    const timer = document.getElementById('sms-timer'); if(timer) timer.textContent = `(${elapsed}s)`;
+    if(elapsed>1200){ clearInterval(etapa2State.timer); return; }
+    try{
+      const t = await smsAPI('getStatus', `&id=${etapa2State.activationId}`);
+      if(t.startsWith('STATUS_OK:')){
+        etapa2State.code = t.split(':')[1];
+        clearInterval(etapa2State.timer);
+        go('etapa2');
+      }
+    }catch(e){ /* ignore */ }
+  }, 5000);
+}
+
+async function smsCancelar(){
+  if(!confirm('Cancelar este número?')) return;
+  try{
+    await smsAPI('setStatus', `&status=8&id=${etapa2State.activationId}`);
+    if(etapa2State.timer) clearInterval(etapa2State.timer);
+    etapa2State = { activationId:null, phone:'', code:'', timer:null };
+    toast('Cancelado','🚫');
+    go('etapa2');
+  }catch(e){ toast('Erro: '+e.message,'❌'); }
+}
+
+async function smsConfirmar(){
+  try{
+    await smsAPI('setStatus', `&status=6&id=${etapa2State.activationId}`);
+    toast('Ativação finalizada','✅');
+  }catch(e){ /* ignore */ }
+}
+
+async function smsAtualizarSite(){
+  const sel = document.getElementById('sms-site').value;
+  if(!sel){ toast('Escolha um site','⚠️'); return; }
+  const [cnpj, dominio] = sel.split('-');
+  const log = document.getElementById('sms-update-log');
+  log.innerHTML = '<span class="spinner"></span> Recriando site com o número novo...';
+
+  const db = getDB();
+  const site = db.sites.find(s=>onlyDigits(s.cnpj)===onlyDigits(cnpj) && s.dominio===dominio);
+  if(!site){ log.innerHTML='<span class="text-rose-300">Site não encontrado</span>'; return; }
+
+  // Atualizar telefoneNosso e recriar HTML
+  const novoTelFormatado = formatBRPhone(etapa2State.phone);
+  site.telefoneNosso = novoTelFormatado;
+  const dadosAtt = {
+    ...site.dadosSnapshot,
+    telefone: site.dadosSnapshot.telefone,
+    telefoneNosso: novoTelFormatado
+  };
+  let html = buildSiteHTML(dadosAtt);
+  if(site.metatag && !site.metatag.includes('<!-- meta tag não fornecida')){
+    html = html.replace('<head>', '<head>\n'+site.metatag);
+  }
+
+  // Re-publicar
+  const settings = getSettings();
+  if(!settings.cf_token || !settings.cf_account){
+    log.innerHTML = '<span class="text-rose-300">⚠️ Configure Cloudflare nas Configurações primeiro</span>';
+    return;
+  }
+  const projectName = site.dominio.replace('.pages.dev','');
+  try{
+    log.innerHTML += '<div class="text-sm text-slate-300">Pegando upload-token...</div>';
+    const r2 = await fetch(`https://api.cloudflare.com/client/v4/accounts/${settings.cf_account}/pages/projects/${projectName}/upload-token`, {
+      method:'GET', headers:{'Authorization':`Bearer ${settings.cf_token}`}
+    });
+    const d2 = await r2.json();
+    const jwt = d2.result?.jwt;
+    if(!jwt) throw new Error('JWT vazio: '+JSON.stringify(d2));
+
+    log.innerHTML += '<div class="text-sm text-slate-300">Calculando hash...</div>';
+    const { blake3 } = await import('https://esm.sh/@noble/hashes/blake3');
+    const b64 = btoa(unescape(encodeURIComponent(html)));
+    const hashBytes = blake3(new TextEncoder().encode(b64 + 'html'));
+    const fileHash = Array.from(hashBytes).map(b=>b.toString(16).padStart(2,'0')).join('').slice(0,32);
+
+    await fetch('https://api.cloudflare.com/client/v4/pages/assets/check-missing', {
+      method:'POST', headers:{'Authorization':`Bearer ${jwt}`,'Content-Type':'application/json'},
+      body: JSON.stringify({ hashes:[fileHash] })
+    });
+    log.innerHTML += '<div class="text-sm text-slate-300">Subindo arquivo...</div>';
+    await fetch('https://api.cloudflare.com/client/v4/pages/assets/upload', {
+      method:'POST', headers:{'Authorization':`Bearer ${jwt}`,'Content-Type':'application/json'},
+      body: JSON.stringify([{ key:fileHash, value:b64, base64:true, metadata:{contentType:'text/html'} }])
+    });
+
+    log.innerHTML += '<div class="text-sm text-slate-300">Criando novo deployment...</div>';
+    const fd = new FormData();
+    fd.append('manifest', JSON.stringify({ '/index.html': fileHash }));
+    const dep = await fetch(`https://api.cloudflare.com/client/v4/accounts/${settings.cf_account}/pages/projects/${projectName}/deployments`, {
+      method:'POST', headers:{'Authorization':`Bearer ${settings.cf_token}`}, body: fd
+    });
+    const depJson = await dep.json();
+    if(!dep.ok) throw new Error(JSON.stringify(depJson));
+    const url = depJson.result?.url || site.url;
+    site.url = url; site.deploymentId = depJson.result?.id; site.status = 'meta-tag'; site.atualizado = Date.now();
+    site.dadosSnapshot = dadosAtt;
+    saveDB(db);
+
+    log.innerHTML = `<div class="glass rounded-xl p-3 neon" style="border-color:rgba(16,185,129,.4)">
+      ✅ <b>Site atualizado!</b> Acesse: <a class="text-cyan-300 underline" href="${url}" target="_blank">${url}</a>
+    </div>`;
+    toast('Site re-publicado com número adicionado','🔄');
+  }catch(err){
+    log.innerHTML = '<span class="text-rose-300">❌ '+err.message+'</span>';
+  }
+}
+
+/* =========================================================
+   ETAPA 3 — EDITOR PDF
+   ========================================================= */
+let pdfState = { fileBytes:null, pdfDoc:null, pages:[], overlays:[] }; // overlays: [{page, x, y, text, size}]
+
+VIEWS.etapa3 = () => `
+  <div class="grad-card rounded-3xl p-6 sm:p-8 mb-6">
+    <div class="flex items-start gap-4 flex-wrap">
+      <div class="icon-cube cyan floaty">📄</div>
+      <div class="flex-1 min-w-0">
+        <div class="pill doing mb-2">PDF EDITOR</div>
+        <h2 class="font-display text-2xl sm:text-3xl font-extrabold">Editor de PDF + Mapeador de Campos</h2>
+        <p class="text-slate-300">Importa o PDF, clica onde quer adicionar texto, mapeia endereço com botões de copiar.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="file-drop mb-4" onclick="document.getElementById('pdf-file').click()" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="event.preventDefault();this.classList.remove('dragover');if(event.dataTransfer.files[0])carregarPDF(event.dataTransfer.files[0])">
+    <div class="text-5xl mb-3 floaty">📤</div>
+    <div class="font-display text-lg font-bold">Clique aqui ou arraste o PDF</div>
+    <div class="text-sm text-slate-400 mt-1">Suporta múltiplas páginas</div>
+    <input type="file" id="pdf-file" accept="application/pdf" class="hidden" onchange="if(this.files[0])carregarPDF(this.files[0])">
+  </div>
+
+  <div id="pdf-toolbar" class="hidden glass rounded-2xl p-4 mb-4 flex flex-wrap gap-2 items-center sticky top-[88px] z-20" style="background:rgba(15,23,55,.95);">
+    <span class="text-sm text-slate-300 mr-2">📌 <b>Clique no PDF</b> para adicionar texto</span>
+    <input id="pdf-text-size" type="number" min="6" max="60" value="14" class="input" style="width:80px;padding:.5rem;font-size:.85rem;" title="Tamanho da fonte">
+    <button class="btn-3d cyan sm" onclick="mapearCampos()">🗺️ Mapear campos do endereço</button>
+    <button class="btn-3d ghost sm" onclick="pdfState.overlays=[];rerenderOverlays()">🧹 Limpar textos</button>
+    <button class="btn-3d success sm" onclick="baixarPDF()">⬇️ Baixar PDF editado</button>
+  </div>
+
+  <div id="campos-mapeados"></div>
+
+  <div id="pdf-viewer" class="text-center overflow-auto scrollbar" style="max-height:80vh;"></div>
+`;
+
+async function carregarPDF(file){
+  const buf = await file.arrayBuffer();
+  pdfState.fileBytes = new Uint8Array(buf);
+  pdfState.overlays = [];
+  document.getElementById('pdf-toolbar').classList.remove('hidden');
+  document.getElementById('campos-mapeados').innerHTML = '';
+
+  // Ler com pdf.js
+  const loadingTask = pdfjsLib.getDocument({ data: pdfState.fileBytes.slice() });
+  pdfState.pdfDoc = await loadingTask.promise;
+  pdfState.pages = [];
+  const viewer = document.getElementById('pdf-viewer');
+  viewer.innerHTML = '';
+  for(let i=1;i<=pdfState.pdfDoc.numPages;i++){
+    const page = await pdfState.pdfDoc.getPage(i);
+    const viewport = page.getViewport({ scale: 1.4 });
+    const wrap = document.createElement('div');
+    wrap.className = 'pdf-canvas-wrap mb-4';
+    wrap.dataset.page = i;
+    wrap.style.width = viewport.width+'px';
+    wrap.style.height = viewport.height+'px';
+    wrap.style.margin = '0 auto';
+    const canvas = document.createElement('canvas');
+    canvas.width = viewport.width; canvas.height = viewport.height;
+    wrap.appendChild(canvas);
+    viewer.appendChild(wrap);
+    await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+    wrap.addEventListener('click', (ev)=>{
+      if(ev.target!==wrap && ev.target!==canvas) return;
+      const rect = wrap.getBoundingClientRect();
+      const x = ev.clientX - rect.left, y = ev.clientY - rect.top;
+      const size = Number(document.getElementById('pdf-text-size').value) || 14;
+      pdfState.overlays.push({ page:i, x, y, text:'Texto', size, pageWidth:viewport.width, pageHeight:viewport.height });
+      rerenderOverlays();
+    });
+    pdfState.pages.push({ pageNum:i, viewport });
+  }
+  rerenderOverlays();
+  toast('PDF carregado ('+pdfState.pdfDoc.numPages+' páginas)','📄');
+}
+
+function rerenderOverlays(){
+  document.querySelectorAll('.pdf-overlay-text').forEach(el=>el.remove());
+  pdfState.overlays.forEach((ov,idx)=>{
+    const wrap = document.querySelector(`.pdf-canvas-wrap[data-page="${ov.page}"]`);
+    if(!wrap) return;
+    const el = document.createElement('div');
+    el.className = 'pdf-overlay-text';
+    el.contentEditable = true;
+    el.textContent = ov.text;
+    el.style.left = ov.x+'px';
+    el.style.top = ov.y+'px';
+    el.style.fontSize = ov.size+'px';
+    el.dataset.idx = idx;
+    el.addEventListener('input', ()=>{ ov.text = el.textContent; });
+    el.addEventListener('mousedown', e=>{
+      if(e.target.classList.contains('del')) return;
+      const sx = e.clientX, sy = e.clientY, ox = ov.x, oy = ov.y;
+      function mv(ev){
+        ov.x = ox + (ev.clientX-sx); ov.y = oy + (ev.clientY-sy);
+        el.style.left = ov.x+'px'; el.style.top = ov.y+'px';
+      }
+      function up(){ document.removeEventListener('mousemove',mv); document.removeEventListener('mouseup',up); }
+      document.addEventListener('mousemove', mv);
+      document.addEventListener('mouseup', up);
+    });
+    const del = document.createElement('span');
+    del.className='del'; del.textContent='×';
+    del.onclick = (e)=>{ e.stopPropagation(); pdfState.overlays.splice(idx,1); rerenderOverlays(); };
+    el.appendChild(del);
+    wrap.appendChild(el);
+  });
+}
+
+async function baixarPDF(){
+  if(!pdfState.fileBytes){ toast('Carregue um PDF primeiro','⚠️'); return; }
+  const { PDFDocument, StandardFonts, rgb } = PDFLib;
+  const pdfDoc = await PDFDocument.load(pdfState.fileBytes.slice());
+  const helv = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const pages = pdfDoc.getPages();
+  for(const ov of pdfState.overlays){
+    const page = pages[ov.page-1];
+    const pageH = page.getHeight();
+    const scale = page.getWidth() / ov.pageWidth;
+    const x = ov.x * scale;
+    const y = pageH - (ov.y * scale) - (ov.size * scale * 0.8);
+    page.drawText(ov.text||'', { x, y, size: ov.size*scale, font: helv, color: rgb(0,0,0) });
+  }
+  const out = await pdfDoc.save();
+  const blob = new Blob([out], {type:'application/pdf'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='pdf-editado.pdf'; document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+  toast('PDF baixado','⬇️');
+}
+
+async function mapearCampos(){
+  if(!pdfState.pdfDoc){ toast('Carregue um PDF primeiro','⚠️'); return; }
+  const box = document.getElementById('campos-mapeados');
+  box.innerHTML = '<div class="glass rounded-2xl p-4 mb-4"><span class="spinner"></span> Extraindo texto e procurando campos...</div>';
+  // Extrair texto completo
+  let allText = '';
+  for(let i=1;i<=pdfState.pdfDoc.numPages;i++){
+    const page = await pdfState.pdfDoc.getPage(i);
+    const tc = await page.getTextContent();
+    const lines = {};
+    tc.items.forEach(it=>{
+      const y = Math.round(it.transform[5]);
+      if(!lines[y]) lines[y] = [];
+      lines[y].push({ x: it.transform[4], s: it.str });
+    });
+    const yKeys = Object.keys(lines).map(Number).sort((a,b)=>b-a);
+    const pageText = yKeys.map(y=>lines[y].sort((a,b)=>a.x-b.x).map(o=>o.s).join(' ')).join('\n');
+    allText += pageText + '\n';
+  }
+  const campos = extrairCamposEndereco(allText);
+  renderCamposMapeados(campos, allText);
+}
+
+function extrairCamposEndereco(text){
+  const T = text.replace(/\s+/g,' ').toUpperCase();
+  const result = {
+    LOGRADOURO:'', NUMERO:'', COMPLEMENTO:'', CEP:'', BAIRRO:'', MUNICIPIO:'', UF:''
+  };
+  // CEP
+  const cep = text.match(/\b\d{5}-?\d{3}\b/);
+  if(cep) result.CEP = cep[0];
+  // UF
+  const uf = T.match(/\b(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\b(?!\w)/);
+  if(uf) result.UF = uf[1];
+  // Logradouro — tenta capturar após "LOGRADOURO" ou "ENDEREÇO"
+  const log = text.match(/(?:LOGRADOURO|ENDERE[ÇC]O)\s*[:\-]?\s*([^\n]+?)(?=\s+(?:N[ÚU]MERO|N[º°]|COMPLEMENTO|BAIRRO|CEP|MUNIC|UF)\b|\n|$)/i);
+  if(log) result.LOGRADOURO = log[1].trim();
+  // Número — exige iniciar com dígito após NUMERO/N° (evita falso match com "NUMERO" capturando "UMERO")
+  const num = text.match(/N[ÚU]MERO\s*[:\-]?\s*([0-9][0-9A-Za-z\-\/\.]*)/i)
+           || text.match(/N[º°]\s*[:\-]?\s*([0-9A-Za-z\-\/\.]+)/i);
+  if(num) result.NUMERO = num[1].trim().replace(/[—–\-]+$/,'');
+  // Complemento
+  const comp = text.match(/COMPLEMENTO\s*[:\-]?\s*([^\n]+?)(?=\s+(?:BAIRRO|CEP|MUNIC|UF)\b|\n|$)/i);
+  if(comp) result.COMPLEMENTO = comp[1].trim();
+  // Bairro
+  const bai = text.match(/BAIRRO\s*[:\-]?\s*([^\n]+?)(?=\s+(?:CEP|MUNIC|UF)\b|\n|$)/i);
+  if(bai) result.BAIRRO = bai[1].trim();
+  // Município
+  const mun = text.match(/MUNIC[ÍI]PIO\s*[:\-]?\s*([^\n]+?)(?=\s+(?:UF|ESTADO|CEP)\b|\n|$)/i) || text.match(/CIDADE\s*[:\-]?\s*([^\n]+?)(?=\s+(?:UF|ESTADO)\b|\n|$)/i);
+  if(mun) result.MUNICIPIO = mun[1].trim();
+  return result;
+}
+
+function renderCamposMapeados(campos, fullText){
+  const labels = {
+    LOGRADOURO:'📍 LOGRADOURO', NUMERO:'🔢 NÚMERO', COMPLEMENTO:'🏢 COMPLEMENTO',
+    BAIRRO:'🏘️ BAIRRO', CEP:'📮 CEP', MUNICIPIO:'🌆 MUNICÍPIO', UF:'🗺️ UF'
+  };
+  const html = `<div class="glass rounded-2xl p-5 mb-4">
+    <div class="flex items-center gap-3 mb-4 flex-wrap">
+      <div class="icon-cube green" style="width:44px;height:44px;font-size:20px;">🗺️</div>
+      <div class="flex-1">
+        <div class="font-display font-bold text-lg">Campos mapeados!</div>
+        <div class="text-sm text-slate-400">Clique nos botões para copiar cada valor</div>
+      </div>
+      <button class="btn-3d ghost sm" onclick="document.getElementById('campos-mapeados').innerHTML=''">✖️ Fechar</button>
+    </div>
+    <div class="grid sm:grid-cols-2 gap-2">
+      ${Object.keys(labels).map(k=>{
+        const v = campos[k] || '';
+        return `<div class="copy-row">
+          <div class="key">${labels[k]}</div>
+          <div class="val ${v?'text-cyan-300':'text-slate-500'}">${escapeHTML(v||'(vazio)')}</div>
+          <button class="btn-3d ${v?'cyan':'ghost'} sm" ${!v?'disabled':''} onclick="copyText('${escapeHTML(v).replace(/'/g,"\\'")}','${k} copiado!')">📋</button>
+        </div>`;
+      }).join('')}
+    </div>
+    <details class="mt-3"><summary class="text-xs text-slate-400 cursor-pointer">Ver texto bruto extraído</summary>
+      <pre class="text-xs text-slate-400 mt-2 max-h-48 overflow-auto bg-black/30 p-3 rounded-lg whitespace-pre-wrap">${escapeHTML(fullText.slice(0,3000))}</pre>
+    </details>
+  </div>`;
+  document.getElementById('campos-mapeados').innerHTML = html;
+}
+
+/* =========================================================
+   BANCO + PLANILHA
+   ========================================================= */
+VIEWS.banco = () => {
+  const db = getDB();
+  return `<div class="glass rounded-3xl p-5 mb-5 flex flex-wrap items-center gap-3">
+    <div class="icon-cube green">💼</div>
+    <div class="flex-1 min-w-[200px]">
+      <div class="font-display text-xl font-extrabold">${db.empresas.length} empresa(s) salvas</div>
+      <div class="text-sm text-slate-400">Banco local no navegador</div>
+    </div>
+    <input id="filter-q" oninput="renderBanco()" placeholder="🔎 Buscar..." class="input" style="max-width:300px;">
+    <select id="filter-faixa" onchange="renderBanco()" class="input" style="max-width:240px;">
+      <option value="">Todos</option>
+      <option value="ideal">Faixa ideal (R$ 10k–50k)</option>
+      <option value="abaixo">Abaixo de R$ 10k</option>
+      <option value="acima">Acima de R$ 50k</option>
+    </select>
+    <button class="btn-3d danger sm" onclick="limparBanco()">🗑️ Limpar</button>
+  </div>
+  <div id="banco-list" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>`;
+};
+window.after_banco = () => renderBanco();
+function renderBanco(){
+  const db = getDB();
+  const q = (document.getElementById('filter-q')?.value||'').toLowerCase();
+  const faixa = document.getElementById('filter-faixa')?.value || '';
+  let list = db.empresas.slice().reverse();
+  if(q) list = list.filter(e => (e.razao_social||'').toLowerCase().includes(q) || onlyDigits(e.cnpj).includes(onlyDigits(q)));
+  if(faixa){
+    list = list.filter(e=>{
+      const c = Number(e.capital_social)||0;
+      if(faixa==='ideal') return c>=10000 && c<=50000;
+      if(faixa==='abaixo') return c<10000;
+      if(faixa==='acima') return c>50000;
+      return true;
+    });
+  }
+  const el = document.getElementById('banco-list');
+  if(!list.length){ el.innerHTML = `<div class="empty col-span-full">Sem empresas ainda. <button class="text-cyan-300 underline" onclick="go('etapa1')">Iniciar Etapa 1 →</button></div>`; return; }
+  el.innerHTML = list.map(e=>{
+    const c = Number(e.capital_social)||0;
+    const ideal = c>=10000 && c<=50000;
+    return `<div class="glass rounded-2xl p-5 flex flex-col gap-2">
+      <div class="flex items-start gap-3">
+        <div class="icon-cube" style="width:46px;height:46px;font-size:20px;">🏢</div>
+        <div class="min-w-0 flex-1">
+          <div class="font-display font-bold leading-tight truncate">${e.razao_social||'—'}</div>
+          <div class="text-xs text-slate-400 truncate">${fmtCNPJ(e.cnpj)}</div>
+        </div>
+      </div>
+      <div class="flex flex-wrap gap-1.5">
+        ${e.situacao?`<span class="pill ok">${e.situacao}</span>`:''}
+        ${e.porte?`<span class="pill doing">${e.porte}</span>`:''}
+        <span class="pill ${ideal?'done':'todo'}">${fmtMoney(e.capital_social)}</span>
+      </div>
+      <div class="text-sm text-slate-300 truncate">${e.cnae_descricao||''}</div>
+      <div class="text-xs text-slate-400">${e.municipio||''} ${e.uf?'/ '+e.uf:''}</div>
+      <div class="flex gap-2 mt-2">
+        <button class="btn-3d success sm" onclick="usarEmpresaNaEtapa1('${e.cnpj}')">🧬 Usar na Etapa 1</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function limparBanco(){
+  if(!confirm('Apagar TUDO?')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  toast('Banco limpo','🧹');
+  go('banco');
+}
+function usarEmpresaNaEtapa1(cnpj){
+  const db = getDB();
+  const e = db.empresas.find(x=>onlyDigits(x.cnpj)===onlyDigits(cnpj));
+  if(!e) return;
+  etapa1State = { empresa:e, dominio:'', metatag:'', htmlGerado:'', publicado:null };
+  go('etapa1');
+}
+
+VIEWS.planilha = () => {
+  return `<div class="glass rounded-3xl p-5 mb-5 flex flex-wrap items-center gap-3">
+    <div class="icon-cube amber">📊</div>
+    <div class="flex-1 min-w-0">
+      <div class="font-display text-xl font-extrabold">Planilha de sites</div>
+      <div class="text-sm text-slate-400">Status, link, meta-tag e número.</div>
+    </div>
+    <button class="btn-3d success" onclick="exportCSV()">⬇️ Exportar CSV (Excel)</button>
+  </div>
+  <div class="glass rounded-2xl overflow-hidden">
+    <div class="overflow-x-auto scrollbar">
+      <table class="w-full text-sm min-w-[900px]">
+        <thead style="background:rgba(99,102,241,.1)">
+          <tr class="text-left">
+            <th class="p-3">Empresa</th>
+            <th class="p-3">CNPJ</th>
+            <th class="p-3">Domínio / URL</th>
+            <th class="p-3">Tel empresa</th>
+            <th class="p-3">Nosso tel</th>
+            <th class="p-3">Status</th>
+            <th class="p-3">Atualizado</th>
+            <th class="p-3 text-right">Ações</th>
+          </tr>
+        </thead>
+        <tbody id="planilha-body"></tbody>
+      </table>
+    </div>
+  </div>`;
+};
+window.after_planilha = () => renderPlanilha();
+function renderPlanilha(){
+  const db = getDB();
+  const body = document.getElementById('planilha-body');
+  if(!db.sites.length){
+    body.innerHTML = `<tr><td colspan="8" class="empty">Nenhum site ainda. <button class="text-cyan-300 underline" onclick="go('etapa1')">Criar primeiro →</button></td></tr>`;
+    return;
+  }
+  body.innerHTML = db.sites.slice().reverse().map(s=>{
+    return `<tr class="border-t border-white/5">
+      <td class="p-3"><b>${s.fantasia||s.razao||'—'}</b></td>
+      <td class="p-3 text-xs">${fmtCNPJ(s.cnpj)}</td>
+      <td class="p-3">${s.url?`<a class="text-cyan-300 underline" target="_blank" href="${s.url}">${s.dominio}</a>`:s.dominio}</td>
+      <td class="p-3 text-xs">${s.telefoneEmpresa||'—'}</td>
+      <td class="p-3 text-xs">${s.telefoneNosso||'—'}</td>
+      <td class="p-3"><select class="input" style="padding:.4rem .6rem;font-size:.8rem" onchange="mudarStatus('${s.cnpj}','${s.dominio}',this.value)">
+        ${['gerado','deploy','meta-tag','finalizado'].map(v=>`<option value="${v}" ${s.status===v?'selected':''}>${v}</option>`).join('')}
+      </select></td>
+      <td class="p-3 text-xs">${fmtDate(s.atualizado)}</td>
+      <td class="p-3 text-right whitespace-nowrap">
+        <button class="btn-3d ghost sm" onclick="removerSite('${s.cnpj}','${s.dominio}')">🗑️</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+function mudarStatus(cnpj, dominio, v){
+  const db = getDB();
+  const s = db.sites.find(x=>onlyDigits(x.cnpj)===onlyDigits(cnpj) && x.dominio===dominio);
+  if(!s) return;
+  s.status = v; s.atualizado = Date.now();
+  saveDB(db); renderPlanilha(); toast('Status atualizado','📌');
+}
+function removerSite(cnpj, dominio){
+  if(!confirm('Remover este site?')) return;
+  const db = getDB();
+  db.sites = db.sites.filter(x=>!(onlyDigits(x.cnpj)===onlyDigits(cnpj) && x.dominio===dominio));
+  saveDB(db); renderPlanilha(); toast('Removido','🗑️');
+}
+function exportCSV(){
+  const db = getDB();
+  if(!db.sites.length){ toast('Nada para exportar','⚠️'); return; }
+  const rows = [['Empresa','Razao Social','CNPJ','Dominio','URL','Tel empresa','Nosso tel','Meta-tag','Status','Atualizado']];
+  db.sites.forEach(s=>rows.push([s.fantasia||'', s.razao||'', fmtCNPJ(s.cnpj), s.dominio, s.url||'', s.telefoneEmpresa||'', s.telefoneNosso||'', s.metatag||'', s.status, new Date(s.atualizado).toLocaleString('pt-BR')]));
+  const csv = rows.map(r=>r.map(c=>`"${(c||'').toString().replace(/"/g,'""')}"`).join(';')).join('\n');
+  const blob = new Blob(["﻿"+csv], {type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='planilha-laboratorio.csv'; document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+  toast('CSV exportado','📥');
+}
+
+/* =========================================================
+   CONFIGURAÇÕES
+   ========================================================= */
+VIEWS.config = () => {
+  const s = getSettings();
+  const accountInfo = s.cf_account ? `<div class="glass rounded-xl p-3 mb-3 flex items-center gap-2"><span class="pill done">✓ Conta detectada</span> <span class="text-sm">${s.cf_account_name||s.cf_account}</span> <button class="btn-3d ghost sm ml-auto" onclick="trocarConta()">🔄 Trocar</button></div>` : '';
+  return `
+  <div class="grid lg:grid-cols-2 gap-4">
+    <div class="glass rounded-3xl p-6">
+      <div class="flex items-start gap-3 mb-4">
+        <div class="icon-cube cyan">☁️</div>
+        <div><div class="font-display text-xl font-bold">Cloudflare API</div><div class="text-sm text-slate-400">Cola só o token — a gente descobre o resto</div></div>
+      </div>
+      <label class="text-xs text-slate-400">API Token (precisa de permissão Cloudflare Pages:Edit)</label>
+      <input id="cfg_cf_token" class="input mt-1 mb-3" type="password" placeholder="cole o token aqui (cfut_... ou cfk_...)" value="${s.cf_token||''}"/>
+      ${accountInfo}
+      <div class="flex gap-2 flex-wrap">
+        <button class="btn-3d success" onclick="salvarTokenCF()">💾 Salvar e descobrir conta</button>
+        <button class="btn-3d cyan" onclick="testarCloudflare()" ${!s.cf_account?'disabled':''}>🧪 Testar Pages</button>
+        <a class="btn-3d ghost" href="https://dash.cloudflare.com/profile/api-tokens" target="_blank">🔑 Criar token</a>
+      </div>
+      <div id="cf-save-log" class="mt-3"></div>
+      <details class="mt-3"><summary class="text-sm text-cyan-300 cursor-pointer">Token sem permissão de listar contas? Cadastrar Account ID manual</summary>
+      <div class="text-sm text-slate-300 mt-2 space-y-2">
+        <input id="cfg_cf_account_manual" class="input" placeholder="ex: a1b2c3d4e5f6..." value="${s.cf_account||''}"/>
+        <button class="btn-3d ghost sm mt-2" onclick="salvarAccountManual()">Salvar Account ID</button>
+        <p class="text-xs text-slate-400 mt-2">Pegue em <a class="text-cyan-300 underline" target="_blank" href="https://dash.cloudflare.com">dash.cloudflare.com</a> → canto direito da tela (em "API").</p>
+      </div></details>
+      <details class="mt-3"><summary class="text-sm text-cyan-300 cursor-pointer">Como criar um token novo?</summary>
+      <p class="text-sm text-slate-300 mt-2">Vai em <a class="text-cyan-300 underline" target="_blank" href="https://dash.cloudflare.com/profile/api-tokens">Profile → API Tokens</a> → Create Token → Custom Token. Permissões: <code>Account → Cloudflare Pages → Edit</code> e <code>Account → Account Settings → Read</code> (essa segunda é só pra autodescobrir o ID).</p></details>
+    </div>
+
+    <div class="glass rounded-3xl p-6">
+      <div class="flex items-start gap-3 mb-4">
+        <div class="icon-cube purple">📱</div>
+        <div><div class="font-display text-xl font-bold">SMS24h.org API</div><div class="text-sm text-slate-400">Para comprar números virtuais</div></div>
+      </div>
+      <label class="text-xs text-slate-400">API Key</label>
+      <input id="cfg_sms_key" class="input mt-1 mb-3" type="password" placeholder="cole sua API key" value="${s.sms_key||''}"/>
+      <div class="flex gap-2 flex-wrap">
+        <button class="btn-3d success" onclick="salvarConfig()">💾 Salvar</button>
+        <button class="btn-3d purple" onclick="testarSMS()">🧪 Testar (saldo)</button>
+        <a class="btn-3d ghost" href="https://sms24h.org" target="_blank">🌐 Abrir SMS24h</a>
+      </div>
+      <details class="mt-3"><summary class="text-sm text-cyan-300 cursor-pointer">Como pegar?</summary>
+      <p class="text-sm text-slate-300 mt-2">Entre em <a class="text-cyan-300 underline" target="_blank" href="https://sms24h.org">sms24h.org</a> → Perfil → API. Lá tem a sua API Key pessoal.</p></details>
+    </div>
+
+    <div class="glass rounded-3xl p-6 lg:col-span-2">
+      <div class="flex items-start gap-3 mb-4">
+        <div class="icon-cube amber">🛟</div>
+        <div><div class="font-display text-xl font-bold">Backup / Restaurar</div><div class="text-sm text-slate-400">Exporte seus dados como arquivo</div></div>
+      </div>
+      <div class="flex gap-2 flex-wrap">
+        <button class="btn-3d cyan" onclick="exportBackup()">📤 Exportar backup</button>
+        <button class="btn-3d ghost" onclick="document.getElementById('imp-file').click()">📥 Importar backup</button>
+        <input type="file" id="imp-file" accept="application/json" class="hidden" onchange="if(this.files[0])importBackup(this.files[0])">
+      </div>
+    </div>
+  </div>`;
+};
+function salvarConfig(){
+  // Salva campos opcionais (sms_key, etc) sem mexer no token/account
+  const s = getSettings();
+  const get = id => document.getElementById(id)?.value?.trim();
+  if(document.getElementById('cfg_sms_key')) s.sms_key = get('cfg_sms_key');
+  saveSettings(s);
+  toast('Configurações salvas','💾');
+}
+
+async function salvarTokenCF(){
+  const token = document.getElementById('cfg_cf_token')?.value?.trim();
+  const log = document.getElementById('cf-save-log');
+  if(!token){ toast('Cole o token primeiro','⚠️'); return; }
+  log.innerHTML = '<div class="text-sm text-slate-300"><span class="spinner"></span> Salvando e descobrindo sua conta...</div>';
+  const s = getSettings();
+  s.cf_token = token;
+  saveSettings(s);
+  try{
+    const r = await fetch('https://api.cloudflare.com/client/v4/accounts', {
+      headers:{'Authorization':`Bearer ${token}`}
+    });
+    const d = await r.json();
+    if(!d.success){
+      const msg = d.errors?.[0]?.message || 'Erro desconhecido';
+      log.innerHTML = `<div class="glass rounded-xl p-3 text-sm" style="border-color:rgba(245,158,11,.4)">
+        ⚠️ Token salvo, mas não consegui listar suas contas: <b>${escapeHTML(msg)}</b><br>
+        <span class="text-xs text-slate-400">Adicione o Account ID manualmente abaixo (clique em "Token sem permissão...").</span>
+      </div>`;
+      return;
+    }
+    const contas = d.result || [];
+    if(contas.length === 0){
+      log.innerHTML = '<div class="text-rose-300">❌ Nenhuma conta encontrada nesse token.</div>';
+      return;
+    }
+    if(contas.length === 1){
+      s.cf_account = contas[0].id;
+      s.cf_account_name = contas[0].name;
+      saveSettings(s);
+      log.innerHTML = `<div class="glass rounded-xl p-3 text-sm neon" style="border-color:rgba(16,185,129,.4)">
+        ✅ Conta detectada e salva: <b>${escapeHTML(contas[0].name)}</b><br>
+        <span class="text-xs text-slate-400 font-mono">${contas[0].id}</span>
+      </div>`;
+      toast('Tudo configurado!','✅');
+      setTimeout(()=>go('config'), 1500);
+    }else{
+      log.innerHTML = `<div class="glass rounded-xl p-3 text-sm">
+        Você tem ${contas.length} contas. Escolha qual usar:
+        ${contas.map(c=>`<div class="flex items-center justify-between gap-2 mt-2 p-2 rounded-lg" style="background:rgba(255,255,255,.03);">
+          <div><b>${escapeHTML(c.name)}</b><div class="text-xs text-slate-400 font-mono">${c.id}</div></div>
+          <button class="btn-3d cyan sm" onclick="escolherConta('${c.id}','${escapeHTML(c.name).replace(/'/g,"\\'")}')">Usar essa</button>
+        </div>`).join('')}
+      </div>`;
+    }
+  }catch(e){
+    log.innerHTML = `<div class="text-rose-300">❌ Erro: ${escapeHTML(e.message)}</div>`;
+  }
+}
+
+function escolherConta(id, nome){
+  const s = getSettings();
+  s.cf_account = id;
+  s.cf_account_name = nome;
+  saveSettings(s);
+  toast('Conta selecionada: '+nome,'✅');
+  go('config');
+}
+
+function trocarConta(){
+  const s = getSettings();
+  delete s.cf_account; delete s.cf_account_name;
+  saveSettings(s);
+  go('config');
+}
+
+function salvarAccountManual(){
+  const id = document.getElementById('cfg_cf_account_manual')?.value?.trim();
+  if(!id){ toast('Cole o Account ID','⚠️'); return; }
+  const s = getSettings();
+  s.cf_account = id;
+  s.cf_account_name = 'Conta '+id.slice(0,8);
+  saveSettings(s);
+  toast('Account ID salvo','💾');
+  go('config');
+}
+
+async function testarCloudflare(){
+  const s = getSettings();
+  if(!s.cf_token){ toast('Salve o token primeiro','⚠️'); return; }
+  if(!s.cf_account){ toast('Account ID não detectado. Salve o token primeiro.','⚠️'); return; }
+  try{
+    const r = await fetch(`https://api.cloudflare.com/client/v4/accounts/${s.cf_account}/pages/projects`, {
+      headers:{'Authorization':`Bearer ${s.cf_token}`}
+    });
+    const d = await r.json();
+    if(d.success){ toast(`✅ OK! Você tem ${d.result_info?.total_count||d.result.length} projeto(s) Pages`,'☁️'); }
+    else{ toast('❌ '+(d.errors?.[0]?.message||'Erro'),'❌'); }
+  }catch(e){ toast('Erro: '+e.message,'❌'); }
+}
+async function testarSMS(){
+  salvarConfig();
+  try{
+    const t = await smsAPI('getBalance');
+    toast('Saldo: '+t,'💰');
+  }catch(e){ toast('Erro: '+e.message,'❌'); }
+}
+function exportBackup(){
+  const data = { db: getDB(), settings: getSettings(), exportedAt: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='laboratorio-bms-backup.json'; document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+  toast('Backup baixado','📤');
+}
+async function importBackup(file){
+  try{
+    const txt = await file.text();
+    const data = JSON.parse(txt);
+    if(data.db) saveDB(data.db);
+    if(data.settings) saveSettings(data.settings);
+    toast('Backup restaurado','📥');
+    go('dashboard');
+  }catch(e){ toast('Arquivo inválido','❌'); }
+}
+
+/* =========================================================
+   AJUDA
+   ========================================================= */
+VIEWS.ajuda = () => `
+<div class="grad-card rounded-3xl p-6 sm:p-8 mb-6">
+  <div class="flex items-start gap-4 flex-wrap">
+    <div class="icon-cube amber floaty">❓</div>
+    <div class="flex-1">
+      <h2 class="font-display text-2xl font-extrabold">Como o Laboratório funciona</h2>
+      <p class="text-slate-300">Fluxo João Victor — sequencial, do começo ao fim.</p>
+    </div>
+  </div>
+</div>
+
+<div class="grid gap-4">
+  ${ajuda('🧬','Etapa 1 — Criar Site', `
+    <ol class="list-decimal list-inside space-y-1 text-slate-300">
+      <li>Busca o CNPJ na BrasilAPI (gratuito)</li>
+      <li>Gera 6 sugestões de domínio com letras misturadas — você escolhe uma</li>
+      <li>Cola a meta-tag do Facebook (vai injetar na linha 1 do head)</li>
+      <li>Gera o HTML completo com todos os dados</li>
+      <li>Publica direto no Cloudflare Pages via API (sem cliques manuais)</li>
+    </ol>`)}
+  ${ajuda('📱','Etapa 2 — Comprar Número', `
+    <ol class="list-decimal list-inside space-y-1 text-slate-300">
+      <li>Escolhe serviço (Facebook) e país (Brasil)</li>
+      <li>Compra o número via SMS24h API</li>
+      <li>Mostra o número formatado <code>(31) 99088-5354</code> com botão copiar</li>
+      <li>Faz polling automático aguardando o SMS</li>
+      <li>Mostra o código quando chega, com botão copiar</li>
+      <li>Botão "Atualizar Site" adiciona <code>empresa /nosso</code> e re-deploya</li>
+    </ol>`)}
+  ${ajuda('📄','Etapa 3 — Editor PDF', `
+    <ul class="list-disc list-inside space-y-1 text-slate-300">
+      <li>Arrasta o PDF → renderiza no app</li>
+      <li>Clica em qualquer ponto → adiciona campo de texto editável e movível</li>
+      <li>"Mapear Campos" extrai LOGRADOURO, NÚMERO, COMPLEMENTO, CEP, MUNICÍPIO, UF, BAIRRO</li>
+      <li>Cada campo tem botão de copiar</li>
+      <li>Baixa PDF editado com pdf-lib</li>
+    </ul>`)}
+</div>
+`;
+function ajuda(ico, title, body){
+  return `<div class="glass rounded-2xl p-5 flex gap-4">
+    <div class="icon-cube">${ico}</div>
+    <div><div class="font-display font-bold text-lg">${title}</div><div class="text-slate-300 mt-1">${body}</div></div>
+  </div>`;
+}
+
+/* =========================================================
+   TEMPLATE DO SITE GERADO (com suporte a dois números)
+   ========================================================= */
+function buildSiteHTML(d){
+  const fantasia = (d.fantasia || d.razao || 'Empresa').toUpperCase();
+  const titulo = `${fantasia} — ${(d.cnae||'').split('—')[1]?.trim() || 'Empresa'}`;
+  const descricaoMeta = `${fantasia} — ${(d.cnae||'').split('—')[1]?.trim() || 'Empresa'}. Atendimento em ${d.municipio||''}${d.uf?'/'+d.uf:''}.`;
+  const cnaeCodigo = ((d.cnae||'').split('—')[0]||'').trim();
+  const cnaeDesc = ((d.cnae||'').split('—')[1]||'').trim();
+  const enderecoCompleto = [d.logradouro, d.bairro, d.municipio?d.municipio+(d.uf?'/'+d.uf:''):'', d.cep?'CEP '+d.cep:''].filter(Boolean).join(' • ');
+  const tel = d.telefone||'';
+  const whats = d.whats || onlyDigits(tel);
+  const wppLink = whats? `https://wa.me/${whats.length===10||whats.length===11?'55'+whats:whats}` : '#contato';
+
+  // Combinar telefones: empresa + nosso
+  let telefonesCombinados = tel || '';
+  if(d.telefoneNosso){
+    telefonesCombinados = (tel||'(empresa)') + ' /'+d.telefoneNosso;  // sem espaço entre / e nosso
+  }
+
+  const cnaeCards = (d.cnaesSec||[]).map((linha,i)=>{
+    const m = linha.match(/^([\d./-]+)\s*[-–:]?\s*(.*)$/);
+    const cod = (m?.[1]||'').replace(/\D/g,'') || (i+1);
+    const desc = (m?.[2]||linha).trim();
+    return `<article class="card cnae-card">
+      <div class="cnae-num">${i+1}</div>
+      <div class="cnae-tag">CNAE ${cod}</div>
+      <h3>${desc}</h3>
+      <a class="btn-link" href="#contato">Saiba mais →</a>
+    </article>`;
+  }).join('');
+
+  const valoresHTML = (d.valores||[]).map((v,i)=>`<div class="value-card"><div class="value-ico">${['🤝','✨','🏆','💎','⭐','🚀','💡','🎯'][i%8]}</div><h4>${v}</h4></div>`).join('');
+  const diferenciaisHTML = (d.diferenciais||[]).map((v,i)=>`<div class="diff-card"><div class="diff-ico">${['🏅','⚡','💎','🎯','🛡️','🌟','📈','✅'][i%8]}</div><div><h4>${v.split('.')[0]||v}</h4><p>${v}</p></div></div>`).join('');
+
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${titulo}</title>
+<meta name="description" content="${descricaoMeta}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0b1020;--card:#111a36;--border:rgba(255,255,255,.08);--text:#e6e9f5;--muted:#9aa3c7}
+html,body{background:var(--bg);color:var(--text);font-family:Inter,sans-serif;line-height:1.6;scroll-behavior:smooth}
+.container{max-width:1200px;margin:0 auto;padding:0 24px}
+h1,h2,h3,h4{font-family:Sora,sans-serif;letter-spacing:-.02em;line-height:1.15}
+a{color:inherit;text-decoration:none}
+.grad-text{background:linear-gradient(120deg,#a5b4fc,#22d3ee 50%,#a855f7);-webkit-background-clip:text;background-clip:text;color:transparent}
+.pill{display:inline-flex;align-items:center;gap:.4rem;padding:.35rem .85rem;border-radius:999px;font-size:.75rem;font-weight:700;background:rgba(34,197,94,.15);color:#86efac;border:1px solid rgba(34,197,94,.3)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.6rem;padding:.95rem 1.5rem;border-radius:16px;font-weight:700;cursor:pointer;border:none;transition:transform .12s,box-shadow .12s,filter .12s;font-size:1rem;font-family:Inter}
+.btn-primary{color:#fff;background:linear-gradient(180deg,#6d72ff,#4f46e5);box-shadow:0 6px 0 #312e81,0 12px 24px rgba(79,70,229,.45),inset 0 1px 0 rgba(255,255,255,.25)}
+.btn-primary:hover{filter:brightness(1.08)}
+.btn-primary:active{transform:translateY(4px);box-shadow:0 2px 0 #312e81,0 6px 14px rgba(79,70,229,.4)}
+.btn-secondary{color:#fff;background:linear-gradient(180deg,#1f2a52,#111a36);box-shadow:0 6px 0 #0a0f23,inset 0 1px 0 rgba(255,255,255,.08)}
+.btn-success{color:#fff;background:linear-gradient(180deg,#34d399,#10b981);box-shadow:0 6px 0 #065f46,inset 0 1px 0 rgba(255,255,255,.25)}
+.icon-cube{width:54px;height:54px;border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-size:24px;color:#fff;background:linear-gradient(160deg,#7c83ff,#4f46e5 60%,#312e81);box-shadow:0 10px 24px rgba(79,70,229,.45),inset 0 2px 0 rgba(255,255,255,.25),inset 0 -6px 0 rgba(0,0,0,.25)}
+.icon-cube.cyan{background:linear-gradient(160deg,#67e8f9,#06b6d4 60%,#155e75);box-shadow:0 10px 24px rgba(6,182,212,.45),inset 0 2px 0 rgba(255,255,255,.25),inset 0 -6px 0 rgba(0,0,0,.25)}
+.icon-cube.green{background:linear-gradient(160deg,#34d399,#10b981 60%,#065f46);box-shadow:0 10px 24px rgba(16,185,129,.45),inset 0 2px 0 rgba(255,255,255,.25),inset 0 -6px 0 rgba(0,0,0,.25)}
+.icon-cube.purple{background:linear-gradient(160deg,#c084fc,#a855f7 60%,#581c87);box-shadow:0 10px 24px rgba(168,85,247,.45),inset 0 2px 0 rgba(255,255,255,.25),inset 0 -6px 0 rgba(0,0,0,.25)}
+.card{background:linear-gradient(145deg,rgba(255,255,255,.04),rgba(255,255,255,.01));border:1px solid var(--border);border-radius:20px;padding:1.5rem;transition:transform .2s,border-color .2s}
+.card:hover{transform:translateY(-4px);border-color:rgba(99,102,241,.4)}
+header.nav{position:sticky;top:0;z-index:50;background:rgba(11,16,32,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;padding:14px 0}
+.logo{display:flex;align-items:center;gap:12px;font-family:Sora;font-weight:800;font-size:1.1rem}
+.logo-mark{width:42px;height:42px;border-radius:12px;background:linear-gradient(160deg,#7c83ff,#4f46e5);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;box-shadow:0 6px 14px rgba(79,70,229,.4)}
+.nav-menu{display:flex;gap:24px;align-items:center}
+.nav-menu a{color:#cfd5f2;font-weight:600;font-size:.95rem}
+.nav-menu a:hover{color:#fff}
+.menu-toggle{display:none;background:none;border:none;color:#fff;font-size:1.5rem;cursor:pointer}
+.hero{padding:80px 0 60px;position:relative;overflow:hidden}
+.hero::before{content:"";position:absolute;inset:0;background:radial-gradient(70% 60% at 80% 20%,rgba(99,102,241,.25),transparent 60%),radial-gradient(50% 50% at 0% 100%,rgba(168,85,247,.15),transparent 60%);pointer-events:none}
+.hero h1{font-size:clamp(2rem,5vw,3.75rem);font-weight:800;margin:1rem 0 1.25rem}
+.hero p.lead{font-size:1.15rem;color:#cfd5f2;max-width:640px;margin-bottom:1.75rem}
+.hero-actions{display:flex;gap:12px;flex-wrap:wrap}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-top:48px}
+.stat{background:linear-gradient(145deg,rgba(255,255,255,.04),rgba(255,255,255,.01));border:1px solid var(--border);padding:18px;border-radius:16px}
+.stat .num{font-family:Sora;font-size:1.7rem;font-weight:800}
+.stat .lbl{color:var(--muted);font-size:.9rem}
+section{padding:72px 0;position:relative}
+.section-eyebrow{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.15em;color:#a5b4fc;margin-bottom:.6rem}
+h2.section-title{font-size:clamp(1.6rem,3.4vw,2.4rem);font-weight:800;margin-bottom:.6rem}
+p.section-sub{color:var(--muted);max-width:640px;margin-bottom:2.5rem;font-size:1.02rem}
+.about-grid{display:grid;grid-template-columns:1.2fr 1fr;gap:32px;align-items:start}
+.about-card{padding:24px}
+.about-meta{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:20px}
+.about-meta .kv{padding:12px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid var(--border)}
+.about-meta .kv .k{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.about-meta .kv .v{font-weight:700;margin-top:2px}
+.values-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px}
+.value-card{padding:24px;text-align:center;background:linear-gradient(160deg,rgba(99,102,241,.08),rgba(255,255,255,.02));border:1px solid var(--border);border-radius:18px;transition:transform .2s}
+.value-card:hover{transform:translateY(-4px) scale(1.02)}
+.value-ico{font-size:42px;margin-bottom:8px;display:inline-block;filter:drop-shadow(0 6px 14px rgba(99,102,241,.4))}
+.value-card h4{font-size:1rem}
+.diff-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}
+.diff-card{display:flex;gap:16px;padding:20px;border:1px solid var(--border);border-radius:18px;background:linear-gradient(145deg,rgba(255,255,255,.04),rgba(255,255,255,.01))}
+.diff-ico{font-size:30px;flex-shrink:0;width:56px;height:56px;display:flex;align-items:center;justify-content:center;border-radius:14px;background:linear-gradient(160deg,rgba(34,211,238,.2),rgba(99,102,241,.1));border:1px solid rgba(99,102,241,.25)}
+.diff-card h4{margin-bottom:4px}
+.diff-card p{color:var(--muted);font-size:.92rem}
+.cnae-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.cnae-card{position:relative;padding-top:34px}
+.cnae-num{position:absolute;top:-18px;left:18px;width:38px;height:38px;border-radius:12px;background:linear-gradient(160deg,#7c83ff,#4f46e5);display:flex;align-items:center;justify-content:center;font-weight:800;font-family:Sora;box-shadow:0 6px 14px rgba(79,70,229,.4);color:#fff}
+.cnae-tag{font-size:.7rem;color:#a5b4fc;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;display:block}
+.cnae-card h3{font-size:1.05rem;margin-bottom:14px;min-height:48px}
+.btn-link{color:#22d3ee;font-weight:700;font-size:.9rem}
+.data-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.data-card{padding:18px;background:linear-gradient(145deg,rgba(255,255,255,.04),rgba(255,255,255,.01));border:1px solid var(--border);border-radius:16px}
+.data-card .lbl{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px}
+.data-card .val{font-weight:700;font-size:1rem;word-break:break-word}
+.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:32px}
+.contact-list{display:grid;gap:14px}
+.contact-item{display:flex;align-items:center;gap:16px;padding:16px;border-radius:16px;background:linear-gradient(145deg,rgba(255,255,255,.04),rgba(255,255,255,.01));border:1px solid var(--border)}
+.contact-item .ico{font-size:26px;width:48px;height:48px;display:flex;align-items:center;justify-content:center;border-radius:12px;background:linear-gradient(160deg,#7c83ff,#4f46e5);box-shadow:0 6px 14px rgba(79,70,229,.4)}
+.contact-item .lbl{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em}
+.contact-form{padding:24px}
+.contact-form input,.contact-form textarea{width:100%;padding:.9rem 1rem;border-radius:12px;background:#0b1330;border:1px solid var(--border);color:#fff;font-size:1rem;outline:none;margin-bottom:10px;font-family:Inter}
+.contact-form input:focus,.contact-form textarea:focus{border-color:#6366f1;box-shadow:0 0 0 4px rgba(99,102,241,.18)}
+.contact-form textarea{min-height:120px;resize:vertical}
+footer{padding:48px 0 28px;border-top:1px solid var(--border);background:rgba(0,0,0,.2)}
+.footer-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:32px;margin-bottom:32px}
+.footer-grid h4{margin-bottom:12px;font-size:1rem}
+.footer-grid p,.footer-grid li{color:var(--muted);font-size:.9rem;margin-bottom:6px;list-style:none}
+.footer-copy{text-align:center;color:var(--muted);font-size:.85rem;padding-top:20px;border-top:1px solid var(--border)}
+@media (max-width:900px){.nav-menu{display:none;position:absolute;top:100%;left:0;right:0;flex-direction:column;background:#0c1330;padding:16px 24px;gap:14px;border-bottom:1px solid var(--border)}.nav-menu.open{display:flex}.menu-toggle{display:block}.about-grid,.contact-grid,.footer-grid{grid-template-columns:1fr}.hero{padding:48px 0 36px}section{padding:48px 0}.container{padding:0 18px}}
+.float-wpp{position:fixed;bottom:22px;right:22px;width:64px;height:64px;border-radius:50%;background:linear-gradient(160deg,#25d366,#128c7e);box-shadow:0 10px 30px rgba(37,211,102,.5),inset 0 2px 0 rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-size:32px;z-index:60;animation:pulse 2.4s infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+</style>
+</head>
+<body>
+<header class="nav">
+  <div class="container nav-inner">
+    <a class="logo" href="#"><span class="logo-mark">${(fantasia||'E').slice(0,2)}</span><span>${fantasia}</span></a>
+    <nav class="nav-menu" id="navMenu">
+      <a href="#sobre">Sobre</a>
+      <a href="#valores">Valores</a>
+      <a href="#diferencial">Diferencial</a>
+      <a href="#servicos">Serviços</a>
+      <a href="#empresa">Empresa</a>
+      <a href="#contato">Contato</a>
+      <a href="#contato" class="btn btn-primary" style="padding:.55rem 1rem;font-size:.85rem">Fale conosco →</a>
+    </nav>
+    <button class="menu-toggle" onclick="document.getElementById('navMenu').classList.toggle('open')">☰</button>
+  </div>
+</header>
+<section class="hero">
+  <div class="container">
+    <span class="pill">⭐ ${d.situacao||'EMPRESA ATIVA'}</span>
+    <h1>Bem-vindo à <span class="grad-text">${fantasia}</span></h1>
+    <p class="lead">${cnaeDesc?cnaeDesc+'. ':''}Atendimento de excelência${d.municipio?' em '+d.municipio:''}${d.uf?'/'+d.uf:''}.</p>
+    <div class="hero-actions">
+      <a href="#servicos" class="btn btn-primary">🛠️ Ver Serviços</a>
+      <a href="#contato" class="btn btn-secondary">💬 Solicitar Orçamento</a>
+      ${whats?`<a href="${wppLink}" class="btn btn-success" target="_blank">📱 WhatsApp</a>`:''}
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="num">${calcAnos(d.inicio)}+</div><div class="lbl">Anos no mercado</div></div>
+      <div class="stat"><div class="num">${Math.max(1, (d.cnaesSec||[]).length)}</div><div class="lbl">Serviços</div></div>
+      <div class="stat"><div class="num">100%</div><div class="lbl">Confiança</div></div>
+      <div class="stat"><div class="num" style="font-size:1rem">${d.cnpj||''}</div><div class="lbl">CNPJ</div></div>
+    </div>
+  </div>
+</section>
+<section id="sobre">
+  <div class="container">
+    <div class="section-eyebrow">Sobre nós</div>
+    <h2 class="section-title">${d.slogan||'Tradição, qualidade e compromisso.'}</h2>
+    <div class="about-grid">
+      <div class="card about-card">
+        <p style="color:#cfd5f2;font-size:1.04rem;line-height:1.75">${(d.sobre||'').replace(/\n/g,'<br>')}</p>
+        ${d.missao?`<div style="margin-top:18px"><b class="grad-text" style="font-family:Sora">🎯 Nossa Missão</b><p style="color:#cfd5f2;margin-top:6px">${d.missao}</p></div>`:''}
+        ${d.visao?`<div style="margin-top:14px"><b class="grad-text" style="font-family:Sora">🔭 Nossa Visão</b><p style="color:#cfd5f2;margin-top:6px">${d.visao}</p></div>`:''}
+      </div>
+      <div class="card about-card">
+        <div style="display:flex;gap:14px;align-items:center;margin-bottom:8px">
+          <div class="icon-cube purple">🏆</div>
+          <div><b style="font-family:Sora">Empresa de confiança</b><div style="color:var(--muted);font-size:.9rem">Dados oficiais Receita Federal</div></div>
+        </div>
+        <div class="about-meta">
+          <div class="kv"><div class="k">Natureza Jurídica</div><div class="v">${d.natureza||'—'}</div></div>
+          <div class="kv"><div class="k">Porte</div><div class="v">${d.porte||'—'}</div></div>
+          <div class="kv"><div class="k">Situação</div><div class="v">${d.situacao||'ATIVA'}</div></div>
+          <div class="kv"><div class="k">Início</div><div class="v">${d.inicio||'—'}</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+${(d.valores||[]).length?`
+<section id="valores" style="background:linear-gradient(180deg,transparent,rgba(99,102,241,.04))">
+  <div class="container">
+    <div class="section-eyebrow">Nossos Valores</div>
+    <h2 class="section-title">O que nos move todos os dias</h2>
+    <p class="section-sub">Princípios que guiam cada decisão e atendimento.</p>
+    <div class="values-grid">${valoresHTML}</div>
+  </div>
+</section>`:''}
+${(d.diferenciais||[]).length?`
+<section id="diferencial">
+  <div class="container">
+    <div class="section-eyebrow">Nosso Diferencial</div>
+    <h2 class="section-title">Por que escolher a ${fantasia}?</h2>
+    <p class="section-sub">Experiência, transparência e atendimento humano.</p>
+    <div class="diff-grid">${diferenciaisHTML}</div>
+  </div>
+</section>`:''}
+${(d.cnaesSec||[]).length?`
+<section id="servicos" style="background:linear-gradient(180deg,transparent,rgba(168,85,247,.05))">
+  <div class="container">
+    <div class="section-eyebrow">Nossos Serviços</div>
+    <h2 class="section-title">Soluções completas para você</h2>
+    <p class="section-sub">Atividades classificadas conforme CNAE oficial.</p>
+    <div class="cnae-grid">${cnaeCards}</div>
+  </div>
+</section>`:''}
+<section id="empresa">
+  <div class="container">
+    <div class="section-eyebrow">Dados Oficiais</div>
+    <h2 class="section-title">Empresa registrada e verificada</h2>
+    <p class="section-sub">Informações da Receita Federal.</p>
+    <div class="data-grid">
+      <div class="data-card"><div class="lbl">CNPJ</div><div class="val">${d.cnpj||'—'}</div></div>
+      <div class="data-card"><div class="lbl">Razão Social</div><div class="val">${d.razao||'—'}</div></div>
+      <div class="data-card"><div class="lbl">Nome Fantasia</div><div class="val">${d.fantasia||'—'}</div></div>
+      <div class="data-card"><div class="lbl">CNAE Principal</div><div class="val">${cnaeCodigo?cnaeCodigo+' — ':''}${cnaeDesc||'—'}</div></div>
+      <div class="data-card"><div class="lbl">Capital Social</div><div class="val">${d.capital||'—'}</div></div>
+      <div class="data-card"><div class="lbl">Porte</div><div class="val">${d.porte||'—'}</div></div>
+      <div class="data-card"><div class="lbl">Natureza Jurídica</div><div class="val">${d.natureza||'—'}</div></div>
+      <div class="data-card"><div class="lbl">Situação</div><div class="val">${d.situacao||'ATIVA'}</div></div>
+      <div class="data-card"><div class="lbl">Início das Atividades</div><div class="val">${d.inicio||'—'}</div></div>
+      <div class="data-card"><div class="lbl">Endereço</div><div class="val">${d.logradouro||'—'}${d.bairro?', '+d.bairro:''}</div></div>
+      <div class="data-card"><div class="lbl">Município / UF</div><div class="val">${d.municipio||'—'} ${d.uf?'/'+d.uf:''}</div></div>
+      <div class="data-card"><div class="lbl">CEP</div><div class="val">${d.cep||'—'}</div></div>
+    </div>
+  </div>
+</section>
+<section id="contato" style="background:linear-gradient(180deg,transparent,rgba(34,211,238,.04))">
+  <div class="container">
+    <div class="section-eyebrow">Contato</div>
+    <h2 class="section-title">Vamos conversar?</h2>
+    <p class="section-sub">Entre em contato pelos canais oficiais.</p>
+    <div class="contact-grid">
+      <div class="contact-list">
+        <div class="contact-item"><div class="ico">📍</div><div><div class="lbl">Endereço</div><div style="font-weight:700">${enderecoCompleto||'—'}</div></div></div>
+        ${telefonesCombinados?`<div class="contact-item"><div class="ico">📞</div><div><div class="lbl">Telefone</div><div style="font-weight:700">${telefonesCombinados}</div></div></div>`:''}
+        ${d.email?`<div class="contact-item"><div class="ico">✉️</div><div><div class="lbl">E-mail</div><div style="font-weight:700">${d.email}</div></div></div>`:''}
+        ${whats?`<div class="contact-item"><div class="ico" style="background:linear-gradient(160deg,#25d366,#128c7e)">💬</div><div><div class="lbl">WhatsApp</div><a href="${wppLink}" style="font-weight:700;color:#86efac" target="_blank">Conversar agora →</a></div></div>`:''}
+        ${d.horario?`<div class="contact-item"><div class="ico" style="background:linear-gradient(160deg,#fbbf24,#f59e0b)">🕐</div><div><div class="lbl">Horário</div><div style="font-weight:700">${d.horario}</div></div></div>`:''}
+      </div>
+      <form class="card contact-form" onsubmit="event.preventDefault();const tel='${whats||''}';const t=document.getElementById('cf_msg').value;const n=document.getElementById('cf_nome').value;const u='https://wa.me/'+(tel.length===10||tel.length===11?'55'+tel:tel)+'?text='+encodeURIComponent('Olá, sou '+n+'. '+t);window.open(u,'_blank')">
+        <h3 style="margin-bottom:14px">✍️ Envie uma mensagem</h3>
+        <input id="cf_nome" placeholder="Seu nome" required>
+        <input id="cf_email" type="email" placeholder="Seu e-mail">
+        <input id="cf_tel" placeholder="Seu telefone">
+        <textarea id="cf_msg" placeholder="Como podemos ajudar?" required></textarea>
+        <button class="btn btn-primary" style="width:100%" type="submit">📩 Enviar mensagem</button>
+      </form>
+    </div>
+  </div>
+</section>
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <div class="logo" style="margin-bottom:10px"><span class="logo-mark">${(fantasia||'E').slice(0,2)}</span><span>${fantasia}</span></div>
+        <p>${d.razao||fantasia}${d.cnpj?' — CNPJ '+d.cnpj:''}</p>
+        <p style="margin-top:8px">${enderecoCompleto||''}</p>
+      </div>
+      <div>
+        <h4>Links</h4>
+        <ul><li><a href="#sobre">Sobre</a></li><li><a href="#servicos">Serviços</a></li><li><a href="#empresa">Empresa</a></li><li><a href="#contato">Contato</a></li></ul>
+      </div>
+      <div>
+        <h4>Contato</h4>
+        ${telefonesCombinados?`<p>📞 ${telefonesCombinados}</p>`:''}
+        ${d.email?`<p>✉️ ${d.email}</p>`:''}
+        ${d.horario?`<p>🕐 ${d.horario}</p>`:''}
+      </div>
+    </div>
+    <div class="footer-copy">© ${new Date().getFullYear()} ${fantasia}. Todos os direitos reservados.</div>
+  </div>
+</footer>
+${whats?`<a href="${wppLink}" class="float-wpp" target="_blank" aria-label="WhatsApp">💬</a>`:''}
+</body>
+</html>`;
+}
+
+function calcAnos(inicio){
+  if(!inicio) return 1;
+  const m = inicio.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+  let dt; if(m) dt = new Date(`${m[3]}-${m[2]}-${m[1]}`); else dt = new Date(inicio);
+  if(isNaN(dt)) return 1;
+  return Math.max(1, new Date().getFullYear() - dt.getFullYear());
+}
+
+/* =========================================================
+   BOOT — Auto-conexão dos tokens (apenas na primeira execução)
+   ========================================================= */
+(function autoConectarTokens(){
+  const s = getSettings();
+  let changed = false;
+  // Pré-carrega Cloudflare se ainda não estiver configurado
+  if(!s.cf_token){
+    s.cf_token = '<REDACTED-CF-TOKEN>';
+    changed = true;
+  }
+  if(!s.cf_account){
+    s.cf_account = '<REDACTED-CF-ACCOUNT>';
+    s.cf_account_name = 'João Victor';
+    changed = true;
+  }
+  // Pré-carrega SMS24h se ainda não estiver configurado
+  if(!s.sms_key){
+    s.sms_key = '<REDACTED-SMS-KEY>';
+    changed = true;
+  }
+  if(changed) saveSettings(s);
+})();
+
+/* PROXY CORS via Netlify — substitui chamadas pra api.cloudflare.com e sms24h.org
+   pelos paths /cf-api/ e /sms-api/ que o arquivo _redirects do Netlify intermedia */
+(function instalarProxy(){
+  if(location.protocol === 'file:') return; // local: não precisa
+  const orig = window.fetch;
+  window.fetch = function(url, opts){
+    if(typeof url === 'string'){
+      if(url.startsWith('https://api.cloudflare.com')) url = url.replace('https://api.cloudflare.com', '/cf-api');
+      else if(url.startsWith('https://api.sms24h.org')) url = url.replace('https://api.sms24h.org', '/sms-api');
+      else if(url.startsWith('https://sms24h.org')) url = url.replace('https://sms24h.org', '/sms-api');
+    }
+    return orig(url, opts);
+  };
+})();
+
+if(typeof pdfjsLib !== 'undefined'){
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+window.onlyDigits = onlyDigits; window.copyText = copyText; window.escapeHTML = escapeHTML;
+window.go = go; window.toggleSidebar = toggleSidebar;
+window.PDFLib = window.PDFLib || {};
+refreshHeaderStatus();
+go('dashboard');
+</script>
+</body>
+</html>
