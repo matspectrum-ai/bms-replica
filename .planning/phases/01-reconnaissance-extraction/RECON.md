@@ -3004,23 +3004,108 @@ Pure functions with no side effects (except `copyText` which is documented in §
 
 ## 6. CSS / Design System
 
-*(To be filled by Plan 04)*
+**Source:** `<style>` block lines 16-134 of `raw-source.html` (main application CSS) + `<style>` block lines 1833-1918 (site generator CSS template).
+**Architecture:** Single inline `<style>` block in `<head>` — no external CSS files. Tailwind CDN (v3) loaded via `<script>` for utility classes. Component classes are custom CSS, not Tailwind `@apply` compositions.
 
-### 6.1 CSS Custom Properties (:root)
+---
 
-### 6.2 Component Classes (.glass, .grad-card, .btn-3d, .icon-cube, etc.)
+### 6.1 CSS Custom Properties (:root) — Main App
 
-### 6.3 Utility Variants (8 btn-3d colors, 5 icon-cube colors, 5 pill variants)
+**Source:** `raw-source.html` line 17-22.
 
-### 6.4 Animations & Keyframes
+```css
+:root {
+  --bg: #0b1020;
+  --bg2: #0f172a;
+  --card: #111a36;
+  --soft: #1a2348;
+  --border: rgba(255,255,255,0.08);
+  --text: #e6e9f5;
+  --muted: #9aa3c7;
+  --accent: #6366f1;
+  --accent2: #22d3ee;
+  --accent3: #a855f7;
+  --ok: #22c55e;
+  --warn: #f59e0b;
+  --bad: #ef4444;
+}
+```
 
-### 6.5 Responsive Breakpoints (1024px)
+**Total:** 13 custom properties defined on `:root`.
 
-### 6.6 Tailwind CDN Version & Configuration
+#### 6.1.1 Background Colors
 
-**Tailwind CDN URL:** `https://cdn.tailwindcss.com` (unversioned, resolves to latest v3 CDN build)
+| Propriedade | Valor | Propósito | Consumido Por |
+|-------------|-------|-----------|--------------|
+| `--bg` | `#0b1020` | Fundo principal da aplicação (deep navy) | `html, body { background:var(--bg) }` |
+| `--bg2` | `#0f172a` | Fundo secundário (Slate 900) | Inline styles (ex: `style="background:rgba(15,23,55,.95)"` no modal e toast) |
 
-**Tailwind Config:**
+#### 6.1.2 Surface / Card Colors
+
+| Propriedade | Valor | Propósito | Consumido Por |
+|-------------|-------|-----------|--------------|
+| `--card` | `#111a36` | Cor base de cards/superfícies | Inline styles via `rgba()` approximations; JS template strings |
+| `--soft` | `#1a2348` | Fundo de superfície alternativa (tom mais claro) | JS template strings para backgrounds sutis |
+
+#### 6.1.3 Text Colors
+
+| Propriedade | Valor | Propósito | Consumido Por |
+|-------------|-------|-----------|--------------|
+| `--text` | `#e6e9f5` | Cor de texto principal (branco azulado) | `html, body { color:var(--text) }` — todos os textos padrão |
+| `--muted` | `#9aa3c7` | Cor de texto secundário/muted (azul acinzentado) | `.empty { color:var(--muted) }` |
+
+#### 6.1.4 Accent / Brand Colors
+
+| Propriedade | Valor | Propósito | Consumido Por |
+|-------------|-------|-----------|--------------|
+| `--accent` | `#6366f1` | Cor de destaque primária (Indigo 500) | `.input:focus { border-color:#6366f1 }` (hardcoded); `.neon` box-shadow; `.switch-tab.active` |
+| `--accent2` | `#22d3ee` | Cor de destaque secundária (Cyan 400) | `.grad-text` gradient; `@keyframes pulse-ring` box-shadow color |
+| `--accent3` | `#a855f7` | Cor de destaque terciária (Purple 500) | `.grad-text` gradient; `.ring-glow::before` gradient |
+
+**Nota:** `--accent`, `--accent2`, e `--accent3` são definidos como custom properties mas NÃO são consumidos via `var()` — seus valores hex são hardcoded diretamente nas regras CSS que os usam.
+
+#### 6.1.5 Border Colors
+
+| Propriedade | Valor | Propósito | Consumido Por |
+|-------------|-------|-----------|--------------|
+| `--border` | `rgba(255,255,255,0.08)` | Borda sutil de elementos glass (8% branco) | `.glass`, `.input`, `.copy-row` |
+
+#### 6.1.6 Status Colors
+
+| Propriedade | Valor | Propósito | Consumido Por |
+|-------------|-------|-----------|--------------|
+| `--ok` | `#22c55e` | Sucesso/concluído (Green 500) | `.pill.ok` backgrounds; `.step-card.done .step-num`; JS templates |
+| `--warn` | `#f59e0b` | Aviso/atenção (Amber 500) | `.pill.todo` backgrounds; glass cards com `border-color:rgba(245,158,11,.4)`; JS templates |
+| `--bad` | `#ef4444` | Erro/perigo (Red 500) | `.pdf-overlay-text .del { background:#ef4444 }`; `.pill.danger`; JS templates |
+
+**Nota:** `--ok`, `--warn`, e `--bad` são definidos como custom properties mas NÃO são consumidos via `var()` — seus valores hex são hardcoded diretamente nas regras CSS dos componentes que os usam.
+
+#### 6.1.7 Color Palette Summary (Organized by Purpose)
+
+| Categoria | Props | Paleta |
+|-----------|-------|--------|
+| **Background** | `--bg`, `--bg2` | Deep navy: `#0b1020` → `#0f172a` |
+| **Surface/Card** | `--card`, `--soft` | Dark blue: `#111a36` → `#1a2348` |
+| **Text** | `--text`, `--muted` | White-blue: `#e6e9f5` → `#9aa3c7` |
+| **Accent** | `--accent`, `--accent2`, `--accent3` | Indigo-Cyan-Purple: `#6366f1` → `#22d3ee` → `#a855f7` |
+| **Border** | `--border` | 8% white: `rgba(255,255,255,0.08)` |
+| **Status** | `--ok`, `--warn`, `--bad` | Green-Amber-Red: `#22c55e` → `#f59e0b` → `#ef4444` |
+
+#### 6.1.8 Typography / Font Tokens
+
+**Google Fonts import (line 15):**
+```
+https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap
+```
+
+**Font families:**
+| Token | Font Stack | Weights | Usage |
+|-------|-----------|---------|-------|
+| Body font | `Inter, sans-serif` | 400, 500, 600, 700, 800 | `html,body { font-family:Inter,sans-serif }` — todo texto padrão |
+| Display/heading | `Sora, sans-serif` | 600, 700, 800 | `.font-display { font-family:Sora,sans-serif }` — títulos, headings |
+| Monospace | Browser default | — | Não definido explicitamente; não usado no original |
+
+**Tailwind font config (line 11):**
 ```javascript
 tailwind.config = {
   theme: {
@@ -3034,7 +3119,79 @@ tailwind.config = {
 }
 ```
 
-The Tailwind CDN is loaded via `<script>` tag. The config extends the default theme with two custom font families: `display` (Sora) for headings and `sans` (Inter) for body text. No other Tailwind configuration customizations detected (no custom colors, spacing, or breakpoints).
+**Font size scale (from CSS rules — não há custom properties para font-size):**
+| Size | Value | Usage |
+|------|-------|-------|
+| xs | `0.72rem` / `0.75rem` | `.pill`, `.key`, labels |
+| sm | `0.82rem` / `0.85rem` | `.btn-3d.sm`, `.switch-tab`, helper text |
+| base | `0.95rem`–`1rem` | `.btn-3d`, `.input`, body text |
+| lg | `1.1rem` | Logo text, card titles |
+| xl | `1.25rem` | `.step-num` |
+| 2xl | — | via Tailwind `text-2xl` utility |
+| 3xl | — | via Tailwind `text-3xl` utility (statCard values) |
+
+**Font weight scale:**
+| Weight | Value | Usage |
+|--------|-------|-------|
+| Normal | 400 | Body text (Inter) |
+| Medium | 500 | Inter weight only; não usado explicitamente em CSS |
+| Semibold | 600 | `.nav-link`, `.switch-tab`, headings (Sora) |
+| Bold | 700 | `.btn-3d`, `.pill`, `.step-num`, headings (Sora), labels |
+| Extrabold | 800 | `.stat .num`, `.step-num`, headings (Sora) |
+
+**Line height:**
+| Value | Usage |
+|-------|-------|
+| `line-height: 1.15` | Site generator: `h1,h2,h3,h4 { line-height:1.15 }` |
+| `line-height: 1.6` | Site generator: `html,body { line-height:1.6 }` |
+| Browser default | Main app (sem `line-height` declarado — usa browser default ≈1.2) |
+
+#### 6.1.9 Spacing & Border Radius Tokens
+
+**Não há custom properties para spacing/border-radius.** Todos os valores são hardcoded nas regras CSS:
+
+**Border radius scale:**
+| Token | Value | Usage |
+|-------|-------|-------|
+| `rounded-sm` | `4px` | `.pdf-overlay-text` (pseudo-element) |
+| `rounded` (md) | `6px` | `.scrollbar::-webkit-scrollbar-thumb` |
+| `rounded-lg` (10px) | `10px` | `.nav-link .nav-emoji`, `.switch-tab` |
+| `rounded-xl` (12px) | `12px` | `.btn-3d.sm` |
+| `rounded-2xl` (14px) | `14px` | `.nav-link`, `.input`, `.copy-row`, `.step-num` |
+| `rounded-2xl` (16px) | `16px` | `.btn-3d`, `.glass` (via Tailwind `rounded-2xl` = `1rem`) |
+| `rounded-3xl` (18px) | `18px` | `.icon-cube`, `.empty` |
+| `rounded-3xl` (20px) | `20px` | `.step-card`, `.file-drop` |
+| `rounded-full` | `999px` | `.pill` (pill shape) |
+| `rounded-[40px]` | `40px` | Logo icon-cube via Tailwind utility `rounded-[40px]` |
+
+**Common spacing values (from CSS rules):**
+| Context | Padding | Usage |
+|---------|---------|-------|
+| `.btn-3d` | `0.95rem 1.4rem` | Botão padrão |
+| `.btn-3d.sm` | `0.55rem 0.85rem` | Botão pequeno |
+| `.input` | `0.95rem 1.1rem` | Input padrão |
+| `.nav-link` | `0.85rem 1rem` | Link de navegação |
+| `.pill` | `0.3rem 0.65rem` | Badge/pill |
+| `.step-card` | `1.5rem 1.5rem 1.5rem 5rem` | Card do wizard (left padding para step-num) |
+| `.glass` | via Tailwind `p-4`/`p-5`/`p-6` | Cards glass |
+| `.empty` | `2rem` | Estado vazio |
+| `.copy-row` | `0.85rem 1rem` | Linha de cópia |
+| `.switch-tab` | `0.55rem 1rem` | Tab de switch |
+| `.file-drop` | `2.5rem` | Área de drop de arquivo |
+
+#### 6.1.10 Icon Cube Size Variants (via inline styles)
+
+O `.icon-cube` base tem `width:64px; height:64px` mas é frequentemente sobrescrito via inline `style=""`:
+
+| Size | inline style | Usage |
+|------|-------------|-------|
+| 36×36 | `width:36px; height:36px; font-size:16px` | Tip card da sidebar |
+| 42×42 | `width:42px; height:42px; font-size:18px` | Admin avatar no header |
+| 44×44 | `width:44px; height:44px; font-size:20px` | quickCard icons |
+| 46×46 | `width:46px; height:46px; font-size:20px` | statCard icons, banco icons |
+| 48×48 | `width:48px; height:48px; font-size:20-22px` | Step icons, etapa cards |
+| 52×52 | `width:52px; height:52px; font-size:26px` | Logo da sidebar |
+| 180×180 | `width:180px; height:180px; font-size:90px; border-radius:40px` | Logo grande (dashboard hero)
 
 
 ## 7. Apêndice: Referências Cruzadas por View
