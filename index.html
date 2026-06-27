@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Laboratório de BMS</title>
+
+  <!-- Google Fonts: Inter (400,500,600,700,800) + Sora (600,700,800) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+
+  <!-- CSS: theme.css first (custom properties), then component CSS, layout last -->
+  <link rel="stylesheet" href="src/styles/theme.css">
+  <link rel="stylesheet" href="src/styles/components.css">
+  <link rel="stylesheet" href="src/styles/buttons.css">
+  <link rel="stylesheet" href="src/styles/icon-cube.css">
+  <link rel="stylesheet" href="src/styles/navigation.css">
+  <link rel="stylesheet" href="src/styles/pills.css">
+  <link rel="stylesheet" href="src/styles/inputs.css">
+  <link rel="stylesheet" href="src/styles/steps.css">
+  <link rel="stylesheet" href="src/styles/layout.css">
+  <link rel="stylesheet" href="src/styles/misc.css">
+  <link rel="stylesheet" href="src/styles/animations.css">
+  <link rel="stylesheet" href="src/styles/responsive.css">
+
+  <!-- Tailwind v3 CDN config (MUST be before CDN script per RESEARCH.md) -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['Sora', 'sans-serif'],
+            sans: ['Inter', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Tailwind CSS v3.4.0 pinned for stability (Pitfall 3) -->
+  <script src="https://cdn.tailwindcss.com/3.4.0"></script>
+</head>
+
+<body class="min-h-screen">
+
+  <!-- Backdrop (mobile overlay) -->
+  <div id="backdrop" class="backdrop" onclick="toggleSidebar(false)"></div>
+
+  <!-- Sidebar Navigation -->
+  <aside id="sidebar" class="sidebar w-[280px] shrink-0 p-4 border-r border-white/5" style="background:linear-gradient(180deg,#0c1330,#0a0f24);">
+
+    <!-- Logo -->
+    <div>
+      <div class="icon-cube purple" style="width:52px;height:52px;font-size:22px;border-radius:16px;">🧪</div>
+      <div>
+        <div class="font-display text-lg">LABORATÓRIO<br><span class="grad-text">DE BMS 🎈</span></div>
+        <div class="text-xs text-slate-400">ADM: João Victor</div>
+      </div>
+    </div>
+
+    <!-- Navigation Links -->
+    <nav class="space-y-1.5">
+      <!-- Dashboard (default active) -->
+      <div class="nav-link active" data-route="dashboard" onclick="go('dashboard')">
+        <span class="nav-emoji">🏠</span>
+        Início
+      </div>
+
+      <!-- FLUXO PRINCIPAL -->
+      <div class="text-[10px] uppercase tracking-widest text-slate-500 px-3 mt-4 mb-1">FLUXO PRINCIPAL</div>
+      <div class="nav-link" data-route="etapa1" onclick="go('etapa1')">
+        <span class="nav-emoji">🧬</span>
+        Etapa 1 — Criar Site
+      </div>
+      <div class="nav-link" data-route="etapa2" onclick="go('etapa2')">
+        <span class="nav-emoji">📱</span>
+        Etapa 2 — Comprar Número
+      </div>
+      <div class="nav-link" data-route="etapa3" onclick="go('etapa3')">
+        <span class="nav-emoji">📄</span>
+        Etapa 3 — Editor PDF
+      </div>
+
+      <!-- DADOS -->
+      <div class="text-[10px] uppercase tracking-widest text-slate-500 px-3 mt-4 mb-1">DADOS</div>
+      <div class="nav-link" data-route="banco" onclick="go('banco')">
+        <span class="nav-emoji">💼</span>
+        Banco de Empresas
+      </div>
+      <div class="nav-link" data-route="planilha" onclick="go('planilha')">
+        <span class="nav-emoji">📊</span>
+        Planilha
+      </div>
+
+      <!-- SISTEMA -->
+      <div class="text-[10px] uppercase tracking-widest text-slate-500 px-3 mt-4 mb-1">SISTEMA</div>
+      <div class="nav-link" data-route="config" onclick="go('config')">
+        <span class="nav-emoji">⚙️</span>
+        Configurações
+      </div>
+      <div class="nav-link" data-route="ajuda" onclick="go('ajuda')">
+        <span class="nav-emoji">❓</span>
+        Ajuda
+      </div>
+    </nav>
+
+    <!-- Tip Card -->
+    <div class="glass mt-6 p-4 rounded-2xl">
+      <div class="icon-cube cyan" style="width:36px;height:36px;font-size:16px;">⭐</div>
+      <div class="font-bold">Dica</div>
+      <p class="text-sm">Capital social entre <span class="text-cyan-300">R$ 10k</span> e <span class="text-cyan-300">R$ 50k</span> é a faixa ideal.</p>
+    </div>
+  </aside>
+
+  <!-- Content Area -->
+  <main class="content-wrap flex-1 min-w-0">
+
+    <!-- Sticky Header -->
+    <header class="sticky top-0 z-30 px-4 sm:px-8 py-4 flex items-center justify-between border-b border-white/5" style="background:rgba(11,16,32,.85); backdrop-filter:blur(12px);">
+      <!-- Left: hamburger + title -->
+      <div class="flex items-center gap-3">
+        <button class="lg:hidden btn-3d ghost sm" onclick="toggleSidebar(true)">☰</button>
+        <div>
+          <div id="page-title" class="font-display text-xl">🏠 Início</div>
+          <div id="page-subtitle" class="text-xs text-slate-400 hidden sm:block">Bem-vindo, João Victor!</div>
+        </div>
+      </div>
+
+      <!-- Right: status pills + avatar -->
+      <div class="flex items-center gap-2">
+        <div id="cf-status" class="pill danger hidden sm:flex">⚠️ Cloudflare</div>
+        <div id="sms-status" class="pill danger hidden sm:flex">⚠️ SMS24h</div>
+        <div class="icon-cube purple" style="width:42px;height:42px;font-size:18px;">JV</div>
+      </div>
+    </header>
+
+    <!-- View Container (innerHTML injected by go()) -->
+    <section id="view" class="p-4 sm:p-8 max-w-7xl mx-auto"></section>
+
+  </main>
+
+  <!-- Toast Notification System -->
+  <div id="toast" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] glass px-5 py-3 rounded-2xl flex items-center gap-3 shadow-2xl" style="background:rgba(15,23,55,.95);">
+    <span id="toast-icon">✅</span>
+    <span id="toast-msg">Pronto!</span>
+  </div>
+
+  <!-- Modal System -->
+  <div id="modal-back" class="hidden fixed inset-0 bg-black/60 z-[70] flex items-center justify-center p-4" onclick="if(event.target===this)closeModal()">
+    <div id="modal-body" class="glass rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-auto scrollbar p-6" style="background:rgba(15,23,55,.95);"></div>
+  </div>
+
+  <!-- Application Entry Point (ES module) -->
+  <script type="module" src="src/main.js"></script>
+
+</body>
+</html>

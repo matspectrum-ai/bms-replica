@@ -1,1 +1,11 @@
-.planning/phases/01-reconnaissance-extraction/data/raw-source.html
+# GSD planning directory (internal tooling)
+.planning/
+
+# Dependencies
+node_modules/
+
+# OS files
+.DS_Store
+
+# Logs
+*.log
