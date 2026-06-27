@@ -672,17 +672,504 @@ The static HTML shell contains 6 persistent elements that exist in the HTML sour
 
 ### 2.3 Etapa 1 View (5-step wizard)
 
-### 2.4 Etapa 2 View
+**View Function:** `VIEWS.etapa1` (linhas 399-426)
+**Source:** Entire Etapa 1 section, linhas 388-910
+**Route:** `etapa1`
+**State Object:** `etapa1State` (linha 391)
 
-### 2.5 Etapa 3 View (PDF editor)
+#### Element Hierarchy
+
+```
+VIEWS.etapa1 output:
+├── div.grad-card (hero, linha 408)
+│   ├── div.icon-cube.floaty (🧬 emoji)
+│   ├── div.flex-1
+│   │   ├── div.pill.doing: "FLUXO LINEAR"
+│   │   ├── h2.font-display: "Crie um site do zero"
+│   │   └── p.text-slate-300: "Siga as caixas abaixo..."
+│   └── button.btn-3d.ghost.sm: "🔄 Resetar fluxo" (onclick: resetEtapa1())
+│
+├── div.glass.step-card (Step 1: Buscar CNPJ)
+│   └── renderStep1CNPJ() output (linhas 442-483)
+│       ├── [cond: empresa exists] company display card
+│       │   ├── div.icon-cube.green (🏢)
+│       │   ├── div.flex-1 (CNPJ, razao_social, cnae)
+│       │   ├── span.pill.ok (situacao)
+│       │   ├── span.pill.doing (porte)
+│       │   ├── span.pill.done/todo (capital_social)
+│       │   └── button.btn-3d.ghost: "🔄 Trocar" (inline onclick cascade reset)
+│       └── [cond: no empresa] search form
+│           ├── input#e1_cnpj.input (CNPJ input, oninput auto-fetch)
+│           ├── button.btn-3d.cyan: "🔍 Buscar" (onclick: e1Buscar())
+│           ├── div#e1_result (result/error container)
+│           └── details (manual registration form, 14 fields)
+│
+├── div.glass.step-card (Step 2: Gerar Domínio)
+│   └── renderStep1Dominio() output (linhas 598-630)
+│       ├── [cond: dominio exists] selected domain display
+│       │   ├── div.icon-cube.cyan (🌐)
+│       │   ├── div.flex-1: "{dominio}.pages.dev"
+│       │   ├── button: "📋 Copiar domínio" (copyText)
+│       │   └── button: "🔄 Trocar" (cascade reset)
+│       └── [cond: no dominio] domain suggestions
+│           ├── div.glass (suggestion cards, 6 max)
+│           │   └── per suggestion: font-mono domain + 📋 copy + Usar buttons
+│           └── input#e1_dom_custom.input + button: "✅ Usar este"
+│
+├── div.glass.step-card (Step 3: Meta Tag)
+│   └── renderStep1Meta() output (linhas 639-663)
+│       ├── [cond: metatag exists] tag display
+│       │   ├── div.icon-cube.purple (🛡️)
+│       │   ├── div.flex-1: tag HTML in monospace
+│       │   └── button: "🔄 Trocar" (cascade reset)
+│       └── [cond: no metatag] input form
+│           ├── input#e1_meta.input (meta-tag paste)
+│           ├── button: "✅ Aplicar" (onclick: e1SalvarMeta())
+│           └── details: "Posso pular?" (skip option)
+│
+├── div.glass.step-card (Step 4: Gerar Site)
+│   └── renderStep1Gerar() output (linhas 675-702)
+│       ├── [cond: htmlGerado exists] generated site display
+│       │   ├── div.icon-cube.green (🎨)
+│       │   ├── div.flex-1: "{size} KB — index.html pronto"
+│       │   ├── button: "👀 Pré-visualizar" (e1Preview)
+│       │   ├── button: "⬇️ Baixar" (e1Baixar)
+│       │   └── button: "🔄 Refazer" (reset)
+│       └── [cond: no htmlGerado] generation form
+│           ├── input#e1g_slogan.input (slogan, default value)
+│           ├── input#e1g_horario.input (hours)
+│           ├── input#e1g_whats.input (WhatsApp)
+│           ├── input#e1g_email.input (extra email)
+│           └── button.btn-3d.success: "🎨 Gerar Site Completo"
+│
+└── div.glass.step-card (Step 5: Publicar)
+    └── renderStep1Publicar() output (linhas 774-805)
+        ├── [cond: publicado exists] success display (.neon glow)
+        │   ├── div.icon-cube.green.pulse-ring (🌐)
+        │   ├── a.link: published URL (target=_blank)
+        │   ├── button: "📋 Copiar link"
+        │   ├── button: "↗️ Abrir site"
+        │   ├── button: "📱 Próximo: Comprar número →"
+        │   └── button: "📊 Ver na planilha"
+        └── [cond: not published] publish form
+            ├── [cond: !cf_token] warning card (requires Cloudflare config)
+            ├── button#btn-publish.btn-3d.success: "🚀 Publicar no Cloudflare"
+            ├── button.btn-3d.ghost: "⬇️ Só baixar (manual)"
+            └── div#publish-log (step-by-step deploy log)
+```
+
+#### stepBox() Component (linhas 428-440)
+- **Wrapper:** `<div class="glass step-card mb-4 {done? 'done' : ''} {disabled? 'disabled' : ''}">`
+- **Step number:** `<div class="step-num">` — shows step number or ✓ when done. CSS (linhas 91-92): gradient background, `.done .step-num` gets green variant
+- **Header:** emoji icon (text-2xl) + title (font-display font-bold) + optional `.pill.done` "Concluído"
+- **Body:** injected render function HTML
+- **Disabled CSS (linha 90):** `.step-card.disabled { opacity:.45; pointer-events:none; }`
+
+#### Conditional Visibility Rules (per step)
+
+| Element | Condition to Show | Condition to Hide | State Variable |
+|---------|------------------|-------------------|----------------|
+| Step 2 body | `!stepCnpj` (empresa exists) | `etapa1State.empresa === null` | etapa1State.empresa |
+| Step 3 body | `!stepDom` (dominio set) | `etapa1State.dominio === ''` | etapa1State.dominio |
+| Step 4 body | `!stepMeta` (metatag set) | `etapa1State.metatag === ''` | etapa1State.metatag |
+| Step 5 body | `!stepHTML` (htmlGerado set) | `etapa1State.htmlGerado === ''` | etapa1State.htmlGerado |
+| Company display card | `empresa !== null` | `empresa === null` | etapa1State.empresa |
+| Domain selected display | `dominio !== ''` | `dominio === ''` | etapa1State.dominio |
+| Meta-tag display | `metatag !== ''` | `metatag === ''` | etapa1State.metatag |
+| Site generated display | `htmlGerado !== ''` | `htmlGerado === ''` | etapa1State.htmlGerado |
+| Published display | `publicado !== null` | `publicado === null` | etapa1State.publicado |
+| Cloudflare warning | `!podePublicar` | `cf_token && cf_account` exists | getSettings() |
+| Cloudflare config callout | `!podePublicar` | same as above | getSettings() |
+
+**Cascade reset pattern:** Clicking "Trocar" on any earlier step clears ALL downstream state fields. Example: Trocar on Step 1 clears `empresa=null, dominio='', metatag='', htmlGerado='', publicado=null` and re-renders via `go('etapa1')`.
+
+**Domain suggestions (7 algorithms, linhas 563-596):**
+1. Base + double last letter
+2. Truncate + add 's'
+3. Vowel swap (e.g., 'a'→'aa')
+4. Add '01' or 'oficial' suffix
+5. First-letters sigla + base
+6. Reorder: last 4 chars + remainder
+7. Half + first 2 chars duplicate
+
+### 2.4 Etapa 2 View (SMS Purchase)
+
+**View Function:** `VIEWS.etapa2` (linhas 917-1023)
+**Source:** Entire Etapa 2 section, linhas 912-1178
+**Route:** `etapa2`
+**State Object:** `etapa2State` (linha 915)
+
+#### Element Hierarchy
+
+```
+VIEWS.etapa2 output:
+├── div.grad-card (hero, linha 924)
+│   ├── div.icon-cube.purple.floaty (📱)
+│   ├── div.flex-1
+│   │   ├── div.pill.doing: "SMS24H.ORG"
+│   │   ├── h2.font-display: "Compre um número virtual"
+│   │   └── p.text-slate-300: "Para receber o SMS de verificação..."
+│   └── button.btn-3d.ghost.sm: "💰 Ver saldo" (onclick: smsVerSaldo())
+│
+├── [cond: !sms_key] div.glass warning (line 936)
+│   └── "⚠️ Configure sua API key SMS24h nas Configurações"
+│
+├── div.glass.step-card (Step 1: Buy Number)
+│   ├── select#sms-service.input (service: fb/ig/wa/go/tg/other)
+│   ├── select#sms-country.input (country: BR/RU/US/UA/IN)
+│   ├── button.btn-3d.success: "🛒 Comprar agora" (onclick: smsComprar())
+│   └── div#sms-buy-log (purchase status)
+│
+├── div.glass.step-card (Step 2: Number Display)
+│   ├── [cond: phone exists] phone info
+│   │   ├── div.copy-row: formatted phone (BR format)
+│   │   │   └── button.btn-3d.cyan.sm: "📋 Copiar"
+│   │   ├── div.copy-row: raw phone number
+│   │   │   └── button.btn-3d.ghost.sm: "📋"
+│   │   └── div.text-xs: "⏱️ Você tem ~20min para receber..."
+│   └── [cond: !phone] div.text-slate-400: "Compre primeiro um número."
+│
+├── div.glass.step-card (Step 3: Receive SMS)
+│   ├── div#sms-code-box
+│   │   ├── [cond: code received] code display
+│   │   │   ├── div.copy-row.neon (green border)
+│   │   │   │   ├── div.key: "CÓDIGO SMS"
+│   │   │   │   ├── div.val: code in green monospace
+│   │   │   │   └── button: "📋 Copiar"
+│   │   │   └── button.btn-3d.cyan: "✅ Confirmar recebimento"
+│   │   └── [cond: phone, no code] polling display
+│   │       └── div.flex: spinner + "Aguardando o SMS chegar..." + span#sms-timer
+│   └── button.btn-3d.ghost.sm: "🚫 Cancelar" (smsCancelar)
+│
+└── div.glass.step-card (Step 4: Update Site)
+    ├── p.text-sm: "Escolha o site no ar..."
+    ├── select#sms-site.input (all live sites with URLs)
+    ├── button.btn-3d.purple: "🔄 Atualizar e re-publicar" (smsAtualizarSite)
+    └── div#sms-update-log (deploy log)
+```
+
+#### Conditional Visibility Rules
+
+| Element | Condition to Show | Condition to Hide | State Variable |
+|---------|------------------|-------------------|----------------|
+| SMS key warning | `!settings.sms_key` | `settings.sms_key` exists | getSettings().sms_key |
+| Step cards disabled | `!ok` (no SMS key) | `ok` | getSettings().sms_key |
+| Phone display copy-row | `etapa2State.phone !== ''` | `phone === ''` | etapa2State.phone |
+| SMS code box | `etapa2State.code !== ''` | `code === ''` | etapa2State.code |
+| Polling spinner | `phone !== '' && code === ''` | code received or no phone | etapa2State.phone + .code |
+| Site selector disabled | `!sitesAtivos.length` | sites with URLs exist | getDB().sites.filter |
+| Update button disabled | `!phone \|\| !sitesAtivos.length` | phone and sites exist | etapa2State.phone + sites |
+
+**Important sub-elements:**
+- `#sms-timer` — displays elapsed seconds during polling (updated every 5s by `iniciarPollingSMS()`)
+- `#sms-buy-log` — shows purchase progress/errors
+- Country select: 🇧🇷 Brasil (73), 🇷🇺 Rússia (0), 🇺🇸 EUA (187), 🇺🇦 Ucrânia (1), 🇮🇳 Índia (22)
+
+### 2.5 Etapa 3 View (PDF Editor)
+
+**View Function:** `VIEWS.etapa3` (linhas 1185-1215)
+**Source:** Entire Etapa 3 section, linhas 1180-1395
+**Route:** `etapa3`
+**State Object:** `pdfState` (linha 1183)
+
+#### Element Hierarchy
+
+```
+VIEWS.etapa3 output:
+├── div.grad-card (hero, linha 1186)
+│   ├── div.icon-cube.cyan.floaty (📄)
+│   └── div.flex-1
+│       ├── div.pill.doing: "PDF EDITOR"
+│       ├── h2.font-display: "Editor de PDF + Mapeador de Campos"
+│       └── p.text-slate-300: "Importa o PDF..."
+│
+├── div.file-drop (drop zone, linha 1197)
+│   ├── div.text-5xl.floaty: 📤
+│   ├── div.font-display: "Clique aqui ou arraste o PDF"
+│   ├── div.text-sm: "Suporta múltiplas páginas"
+│   └── input#pdf-file[type=file].hidden (accept="application/pdf")
+│   Events: onclick → open file picker, ondragover/ondragleave/ondrop → drag handling
+│
+├── div#pdf-toolbar.glass.hidden (toolbar, linha 1204, initially hidden)
+│   ├── span: "📌 Clique no PDF para adicionar texto"
+│   ├── input#pdf-text-size.input (font size, min=6 max=60, default=14)
+│   ├── button.btn-3d.cyan.sm: "🗺️ Mapear campos do endereço" (mapearCampos)
+│   ├── button.btn-3d.ghost.sm: "🧹 Limpar textos" (pdfState.overlays=[]; rerenderOverlays)
+│   └── button.btn-3d.success.sm: "⬇️ Baixar PDF editado" (baixarPDF)
+│
+├── div#campos-mapeados (address fields output, initially empty)
+│   └── [when populated] div.glass.rounded-2xl
+│       ├── div.icon-cube.green (🗺️)
+│       ├── div.flex-1: "Campos mapeados!" + description
+│       ├── button: "✖️ Fechar"
+│       ├── div.grid (7 field copy-rows)
+│       │   └── per field: div.copy-row with key, val, 📋 copy button
+│       └── details: raw extracted text (≤3000 chars)
+│
+└── div#pdf-viewer (page render area, linha 1214)
+    └── [after carregarPDF] per page:
+        └── div.pdf-canvas-wrap (datasets: page=N)
+            ├── canvas (page render from pdf.js)
+            └── div.pdf-overlay-text[] (click-to-add overlays)
+                ├── contentEditable text
+                └── span.del (× delete button)
+```
+
+#### Canvas Click Handler (linhas 1244-1251)
+- Creates overlay at click position: `{page, x, y, text:'Texto', size, pageWidth, pageHeight}`
+- Pushes to `pdfState.overlays[]`
+- Calls `rerenderOverlays()`
+
+#### Overlay DOM Elements (dynamically created by rerenderOverlays, linhas 1258-1289)
+- **Element:** `<div class="pdf-overlay-text" contentEditable="true">`
+- **CSS (linhas 125-127):** `position:absolute; min-width:60px; padding:2px 6px; font-size:14px; color:#000; background:rgba(255,235,59,.25); border:1px dashed #f59e0b; border-radius:4px; cursor:move; outline:none`
+- **Focus state:** `.pdf-overlay-text:focus { background:rgba(255,235,59,.45); border-style:solid; }`
+- **Input handler:** `oninput` → updates `pdfState.overlays[idx].text`
+- **Drag handler:** mousedown → mousemove (reposition) → mouseup. Updates `x, y` in overlay object
+- **Delete button:** `<span class="del">×</span>` — `onclick` splices overlay from array and re-renders. CSS (linha 127): `position:absolute; top:-8px; right:-8px; width:18px; height:18px; border-radius:50%; background:#ef4444; color:white; font-size:11px;`
+
+#### Address Field Mapper (mapearCampos, linhas 1313-1395)
+- Extracts text from ALL PDF pages via pdf.js `getTextContent()`
+- Regex-based extraction of 7 Brazilian address fields (CEPO, UF, LOGRADOURO, NUMERO, COMPLEMENTO, BAIRRO, MUNICIPIO)
+- Renders results in `#campos-mapeados` with copy buttons for each field
+- Each field has `btn-3d.cyan` (if value found) or `btn-3d.ghost` (if empty)
 
 ### 2.6 Banco de Empresas View
 
+**View Function:** `VIEWS.banco` (linhas 1400-1418)
+**Source:** Banco + Planilha section, linhas 1397-1473
+**Route:** `banco`
+**Post-render hook:** `window.after_banco = () => renderBanco()` (linha 1419)
+
+#### Element Hierarchy
+
+```
+VIEWS.banco output:
+├── div.glass.rounded-3xl (header bar, linha 1402)
+│   ├── div.icon-cube.green (💼)
+│   ├── div.flex-1: count + description
+│   ├── input#filter-q.input (search, oninput: renderBanco(), max-width:300px)
+│   ├── select#filter-faixa.input (capital filter, onchange: renderBanco())
+│   │   ├── option: "Todos"
+│   │   ├── option: "Faixa ideal (R$ 10k–50k)"
+│   │   ├── option: "Abaixo de R$ 10k"
+│   │   └── option: "Acima de R$ 50k"
+│   └── button.btn-3d.danger.sm: "🗑️ Limpar" (onclick: limparBanco())
+│
+└── div#banco-list.grid (company card grid, sm:2 lg:3 columns)
+    └── per company (renderBanco, linhas 1420-1459):
+        └── div.glass.rounded-2xl.p-5
+            ├── div.flex (header)
+            │   ├── div.icon-cube (🏢, 46×46px)
+            │   └── div.min-w-0
+            │       ├── div.font-display.font-bold: razao_social
+            │       └── div.text-xs: formatted CNPJ (fmtCNPJ)
+            ├── div.flex.flex-wrap (pills)
+            │   ├── span.pill.ok: situacao
+            │   ├── span.pill.doing: porte
+            │   └── span.pill.done/todo: capital_social (fmtMoney)
+            ├── div.text-sm: cnae_descricao
+            ├── div.text-xs: municipio/UF
+            └── button.btn-3d.success.sm: "🧬 Usar na Etapa 1"
+                · onclick: usarEmpresaNaEtapa1(cnpj) — sets etapa1State.empresa, resets other fields, go('etapa1')
+```
+
+**Empty state:** When no companies exist, renders a centered `.empty` div with "Sem empresas ainda." and a link to start Etapa 1.
+
+**Search logic (renderBanco, linhas 1420-1434):**
+1. Gets full `db.empresas` array, reverses (newest first)
+2. Filters by `#filter-q` text (matches razao_social or CNPJ digits)
+3. Filters by `#filter-faixa` (capital_social range: ideal 10k-50k, abaixo <10k, acima >50k)
+
 ### 2.7 Planilha View
+
+**View Function:** `VIEWS.planilha` (linhas 1475-1503)
+**Route:** `planilha`
+**Post-render hook:** `window.after_planilha = () => renderPlanilha()` (linha 1504)
+
+#### Element Hierarchy
+
+```
+VIEWS.planilha output:
+├── div.glass.rounded-3xl (header bar, linha 1476)
+│   ├── div.icon-cube.amber (📊)
+│   ├── div.flex-1: "Planilha de sites" + description
+│   └── button.btn-3d.success: "⬇️ Exportar CSV (Excel)" (onclick: exportCSV())
+│
+└── div.glass.rounded-2xl (table container, linha 1484)
+    └── div.overflow-x-auto.scrollbar
+        └── table.w-full (min-width: 900px)
+            ├── thead (background: rgba(99,102,241,.1))
+            │   └── tr (8 columns, linha 1488)
+            │       ├── th.p-3: "Empresa"
+            │       ├── th.p-3: "CNPJ"
+            │       ├── th.p-3: "Domínio / URL"
+            │       ├── th.p-3: "Tel empresa"
+            │       ├── th.p-3: "Nosso tel"
+            │       ├── th.p-3: "Status"
+            │       ├── th.p-3: "Atualizado"
+            │       └── th.p-3.text-right: "Ações"
+            │
+            └── tbody#planilha-body (rendered by renderPlanilha, linhas 1505-1527)
+                └── per site:
+                    └── tr.border-t.border-white/5
+                        ├── td.p-3: fantasia/razao (bold)
+                        ├── td.p-3.text-xs: formatted CNPJ
+                        ├── td.p-3: url link or domain text
+                        ├── td.p-3.text-xs: telefoneEmpresa or "—"
+                        ├── td.p-3.text-xs: telefoneNosso or "—"
+                        ├── td.p-3: select.input (inline status editor)
+                        │   · onchange: mudarStatus(cnpj, dominio, this.value)
+                        │   · options: gerado, deploy, meta-tag, finalizado
+                        ├── td.p-3.text-xs: formatted date (fmtDate)
+                        └── td.p-3.text-right
+                            └── button.btn-3d.ghost.sm: "🗑️" (onclick: removerSite)
+```
+
+**Empty state:** Table body shows single row with `.empty` class spanning all 8 columns: "Nenhum site ainda. Criar primeiro →"
+
+**Status dropdown (inline editor):**
+- **Element:** `<select class="input" onchange="mudarStatus(cnpj, dominio, this.value)">`
+- **Options:** `gerado`, `deploy`, `meta-tag`, `finalizado` — from source line 1520
+- **Side effect:** Updates `db.sites[idx].status`, sets `atualizado = Date.now()`, saves DB, re-renders, shows toast
+
+**CSV Export (`exportCSV()`, linhas 1542-1552):**
+- Headers: Empresa, Razao Social, CNPJ, Dominio, URL, Tel empresa, Nosso tel, Meta-tag, Status, Atualizado
+- Format: UTF-8 BOM prefix (`﻿`), semicolon separator, double-quote escaping
+- Filename: `planilha-laboratorio.csv`
 
 ### 2.8 Configurações View
 
+**View Function:** `VIEWS.config` (linhas 1557-1613)
+**Source:** Config section, linhas 1554-1737
+**Route:** `config`
+
+#### Element Hierarchy
+
+```
+VIEWS.config output:
+└── div.grid.lg:grid-cols-2.gap-4
+    ├── div.glass.rounded-3xl.p-6 (Cloudflare API card, linha 1562)
+    │   ├── div.flex: icon-cube.cyan (☁️) + "Cloudflare API" description
+    │   ├── label: "API Token"
+    │   ├── input#cfg_cf_token.input[type=password] (pre-filled if exists)
+    │   ├── [cond: cf_account exists] account detected display
+    │   │   └── div.glass.rounded-xl: ✓ Conta detectada + name + "🔄 Trocar" button
+    │   ├── div.flex.gap-2
+    │   │   ├── button.btn-3d.success: "💾 Salvar e descobrir conta" (salvarTokenCF)
+    │   │   ├── button.btn-3d.cyan: "🧪 Testar Pages" (testarCloudflare)
+    │   │   └── a.btn-3d.ghost: "🔑 Criar token" (→ Cloudflare dashboard)
+    │   ├── div#cf-save-log (success/error/multi-account display)
+    │   └── details (2 expandable sections)
+    │       ├── "Token sem permissão? Cadastrar Account ID manual"
+    │       │   ├── input#cfg_cf_account_manual.input
+    │       │   └── button.btn-3d.ghost.sm: "Salvar Account ID"
+    │       └── "Como criar um token novo?" (instructions)
+    │
+    ├── div.glass.rounded-3xl.p-6 (SMS24h card, linha 1586)
+    │   ├── div.flex: icon-cube.purple (📱) + "SMS24h.org API" description
+    │   ├── label: "API Key"
+    │   ├── input#cfg_sms_key.input[type=password] (pre-filled if exists)
+    │   ├── div.flex.gap-2
+    │   │   ├── button.btn-3d.success: "💾 Salvar" (salvarConfig)
+    │   │   ├── button.btn-3d.purple: "🧪 Testar (saldo)" (testarSMS)
+    │   │   └── a.btn-3d.ghost: "🌐 Abrir SMS24h" (→ sms24h.org)
+    │   └── details: "Como pegar?" (instructions)
+    │
+    └── div.glass.rounded-3xl.p-6.lg:col-span-2 (Backup card, linha 1602)
+        ├── div.flex: icon-cube.amber (🛟) + "Backup / Restaurar" description
+        ├── div.flex.gap-2
+        │   ├── button.btn-3d.cyan: "📤 Exportar backup" (exportBackup)
+        │   ├── button.btn-3d.ghost: "📥 Importar backup" (triggers file input)
+        │   └── input#imp-file[type=file].hidden (accept="application/json")
+        └── [after import] importBackup restores db + settings, navigates to dashboard
+```
+
+**Multi-account detection (`salvarTokenCF`, linhas 1624-1672):**
+- Single account: auto-selects, displays green confirmation
+- Multiple accounts: renders account picker list with "Usar essa" buttons (`escolherConta(id, nome)`)
+- No list permission: shows orange warning, suggests manual Account ID entry
+
 ### 2.9 Ajuda View
+
+**View Function:** `VIEWS.ajuda` (linhas 1742-1786)
+**Route:** `ajuda`
+**Note:** Static content — no state dependencies, no dynamic rendering
+
+#### Element Hierarchy
+
+```
+VIEWS.ajuda output:
+├── div.grad-card.rounded-3xl (hero, linha 1743)
+│   ├── div.icon-cube.amber.floaty (❓)
+│   └── div.flex-1
+│       ├── h2.font-display: "Como o Laboratório funciona"
+│       └── p.text-slate-300: "Fluxo João Victor — sequencial..."
+│
+└── div.grid.gap-4
+    ├── ajuda() card: 🧬 Etapa 1 — Criar Site
+    │   └── ol (5 steps): CNPJ lookup → domain → meta-tag → HTML gen → publish
+    │
+    ├── ajuda() card: 📱 Etapa 2 — Comprar Número
+    │   └── ol (6 steps): service select → buy → display → polling → code → update site
+    │
+    └── ajuda() card: 📄 Etapa 3 — Editor PDF
+        └── ul (5 steps): drag PDF → click to add text → map fields → copy → download
+```
+
+**ajuda() helper function (linhas 1781-1786):**
+```javascript
+function ajuda(ico, title, body){
+  return `<div class="glass rounded-2xl p-5 flex gap-4">
+    <div class="icon-cube">${ico}</div>
+    <div><div class="font-display font-bold text-lg">${title}</div><div class="text-slate-300 mt-1">${body}</div></div>
+  </div>`;
+}
+```
+- **Wrapper:** `div.glass.rounded-2xl.p-5.flex.gap-4`
+- **Icon:** `div.icon-cube` with emoji
+- **Title:** `div.font-display.font-bold.text-lg`
+- **Body:** `div.text-slate-300.mt-1` (injected HTML — ordered/unordered lists)
+
+**No interactive elements** — Ajuda is purely informational. No event handlers, no form inputs, no state dependencies.
+
+---
+
+### 2.10 Conditional Element Index
+
+| View | Elemento | Condição de Exibição | Estado Controlador | Mecanismo CSS |
+|------|----------|---------------------|-------------------|---------------|
+| Dashboard | API warning card | `!cfOk \|\| !smsOk` (missing config) | getSettings() | Template conditional: `${...? 'html' : ''}` |
+| Etapa 1 | Company display card | `etapa1State.empresa !== null` | etapa1State.empresa | Template conditional in renderStep1CNPJ() |
+| Etapa 1 | CNPJ search form | `etapa1State.empresa === null` | etapa1State.empresa | Template conditional in renderStep1CNPJ() |
+| Etapa 1 | Domain suggestions grid | `etapa1State.dominio === ''` | etapa1State.dominio | Template conditional in renderStep1Dominio() |
+| Etapa 1 | Selected domain display | `etapa1State.dominio !== ''` | etapa1State.dominio | Template conditional in renderStep1Dominio() |
+| Etapa 1 | Meta-tag input form | `etapa1State.metatag === ''` | etapa1State.metatag | Template conditional in renderStep1Meta() |
+| Etapa 1 | Meta-tag display | `etapa1State.metatag !== ''` | etapa1State.metatag | Template conditional in renderStep1Meta() |
+| Etapa 1 | Site generation form | `etapa1State.htmlGerado === ''` | etapa1State.htmlGerado | Template conditional in renderStep1Gerar() |
+| Etapa 1 | Generated site display | `etapa1State.htmlGerado !== ''` | etapa1State.htmlGerado | Template conditional in renderStep1Gerar() |
+| Etapa 1 | Publish form | `etapa1State.publicado === null` | etapa1State.publicado | Template conditional in renderStep1Publicar() |
+| Etapa 1 | Published site display | `etapa1State.publicado !== null` | etapa1State.publicado | Template conditional in renderStep1Publicar() |
+| Etapa 1 | Cloudflare config warning | `!settings.cf_token \|\| !settings.cf_account` | getSettings() | Template conditional |
+| Etapa 1 | Steps 2-5 disabled class | Previous step incomplete | etapa1State fields | `.step-card.disabled { opacity:.45; pointer-events:none }` |
+| Etapa 2 | SMS key warning | `!settings.sms_key` | getSettings().sms_key | Template conditional |
+| Etapa 2 | Phone display copy-rows | `etapa2State.phone !== ''` | etapa2State.phone | Template conditional |
+| Etapa 2 | SMS code display | `etapa2State.code !== ''` | etapa2State.code | Template conditional |
+| Etapa 2 | Polling spinner | `etapa2State.phone && !etapa2State.code` | etapa2State.phone + .code | Template conditional |
+| Etapa 2 | Step cards disabled | `!settings.sms_key` | getSettings().sms_key | `.step-card.disabled` class |
+| Etapa 3 | PDF toolbar | After `carregarPDF()` called | pdfState.fileBytes | `classList.remove('hidden')` via JS |
+| Etapa 3 | Canvas overlays | `pdfState.overlays.length > 0` | pdfState.overlays[] | Dynamically created/removed by `rerenderOverlays()` |
+| Etapa 3 | Mapped fields display | After `mapearCampos()` called | — | innerHTML set by `renderCamposMapeados()` |
+| Banco | Company cards | `db.empresas.length > 0` | getDB().empresas | Template loop; empty state div otherwise |
+| Planilha | Table rows | `db.sites.length > 0` | getDB().sites | Template loop; empty state td otherwise |
+| Config | Account detected display | `settings.cf_account` exists | getSettings().cf_account | Template conditional |
+| Config | Multi-account picker | `contas.length > 1` in API response | salvarTokenCF() result | Dynamically rendered in log div |
+| Toast | Toast visibility | `toast()` called | `window._tt` (timer) | `classList.remove('hidden')` / `.add('hidden')` |
+| Modal | Modal visibility | `openModal()` called | — | `classList.remove('hidden')` / `.add('hidden')` |
+| Sidebar | Mobile open/close | `toggleSidebar(true/false)` | DOM class state | `.sidebar.open`, `.backdrop.open` (CSS classes) |
+| Header | CF status pill state | `settings.cf_token && settings.cf_account` | getSettings() | `.pill.danger` vs `.pill.done` (class swap) |
+| Header | SMS status pill state | `settings.sms_key` | getSettings() | `.pill.danger` vs `.pill.done` (class swap) |
+| All | Hamburger button | Viewport ≤1024px | CSS media query | `.lg:hidden` (Tailwind utility) |
 
 
 ## 3. Rotas & Sistema de Navegação
