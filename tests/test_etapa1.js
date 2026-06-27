@@ -56,16 +56,16 @@ describe('Task 1 — CNPJ Lookup + Wizard State Machine', () => {
   });
 
   describe('resetDownstream(step)', () => {
-    beforeEach(() => {
-      // Set all fields to non-default values
+    function setupState() {
       etapa1State.empresa = { razao_social: 'Test Corp', cnpj: '12345678000199' };
       etapa1State.dominio = 'test-corp';
       etapa1State.metatag = '<meta og:title="Test">';
       etapa1State.htmlGerado = '<html>test</html>';
       etapa1State.publicado = { url: 'https://test.pages.dev', projectName: 'test', deploymentId: 'abc123' };
-    });
+    }
 
     it('clears empresa and all downstream when fromStep is 1', () => {
+      setupState();
       resetDownstream(1);
       assertEquals(etapa1State.empresa, null, 'empresa should be null');
       assertEquals(etapa1State.dominio, '', 'dominio should be empty');
@@ -75,6 +75,7 @@ describe('Task 1 — CNPJ Lookup + Wizard State Machine', () => {
     });
 
     it('clears dominio and downstream but keeps empresa when fromStep is 2', () => {
+      setupState();
       resetDownstream(2);
       assert(etapa1State.empresa !== null, 'empresa should NOT be cleared');
       assertEquals(etapa1State.dominio, '', 'dominio should be empty');
@@ -84,6 +85,7 @@ describe('Task 1 — CNPJ Lookup + Wizard State Machine', () => {
     });
 
     it('clears metatag and downstream but keeps empresa+dominio when fromStep is 3', () => {
+      setupState();
       resetDownstream(3);
       assert(etapa1State.empresa !== null, 'empresa should NOT be cleared');
       assert(etapa1State.dominio !== '', 'dominio should NOT be cleared');
@@ -93,6 +95,7 @@ describe('Task 1 — CNPJ Lookup + Wizard State Machine', () => {
     });
 
     it('clears htmlGerado and publicado but keeps upstream when fromStep is 4', () => {
+      setupState();
       resetDownstream(4);
       assert(etapa1State.empresa !== null, 'empresa should NOT be cleared');
       assert(etapa1State.dominio !== '', 'dominio should NOT be cleared');
@@ -102,6 +105,7 @@ describe('Task 1 — CNPJ Lookup + Wizard State Machine', () => {
     });
 
     it('only clears publicado when fromStep is 5', () => {
+      setupState();
       resetDownstream(5);
       assert(etapa1State.empresa !== null, 'empresa should NOT be cleared');
       assert(etapa1State.dominio !== '', 'dominio should NOT be cleared');
@@ -311,7 +315,8 @@ describe('Task 2 — Meta-tag Generation + Site HTML', () => {
     // Note: Tests set up empresa in etapa1State first
     // This function generates meta-tag HTML string from empresa data
     // Tested via evaluating window.gerarMetatag() behavior
-    it('is exposed on window', () => {
+    it('is exposed on window after initEtapa1()', () => {
+      initEtapa1();
       assert(typeof window.gerarMetatag === 'function', 'gerarMetatag should be on window');
     });
   });
