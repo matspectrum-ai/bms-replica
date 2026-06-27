@@ -10,10 +10,10 @@ Requisitos para clone fiel 100% do original. Sem alterações visuais na v1.
 ### Reconhecimento (RECON)
 
 - [x] **RECON-01**: Extrair árvore DOM completa e confirmar arquitetura vanilla JS
-- [ ] **RECON-02**: Capturar todos os endpoints de API (BrasilAPI, Cloudflare Pages, SMS24h) com esquemas de request/response (sucesso + erro)
+- [x] **RECON-02**: Capturar todos os endpoints de API (BrasilAPI, Cloudflare Pages, SMS24h) com esquemas de request/response (sucesso + erro)
 - [ ] **RECON-03**: Extrair esquema completo do localStorage (`lab_bms_db_v1`, `lab_bms_settings_v1`) com todos os objetos e sub-objetos condicionais
 - [x] **RECON-04**: Mapear todas as 8 rotas e sistema de navegação (VIEWS registry, go() function)
-- [ ] **RECON-05**: Fazer engenharia reversa de todas as funções de negócio (~60 funções, 3 objetos de estado, utilitários)
+- [x] **RECON-05**: Fazer engenharia reversa de todas as funções de negócio (~60 funções, 3 objetos de estado, utilitários)
 
 ### Infraestrutura (CORE)
 
@@ -129,10 +129,10 @@ Requisitos para o rebranding e nova identidade visual.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | RECON-01 | Phase 1 — Reconnaissance & Extraction | Complete |
-| RECON-02 | Phase 1 — Reconnaissance & Extraction | Pending |
+| RECON-02 | Phase 1 — Reconnaissance & Extraction | Complete |
 | RECON-03 | Phase 1 — Reconnaissance & Extraction | Pending |
 | RECON-04 | Phase 1 — Reconnaissance & Extraction | Complete |
-| RECON-05 | Phase 1 — Reconnaissance & Extraction | Pending |
+| RECON-05 | Phase 1 — Reconnaissance & Extraction | Complete |
 | CORE-01 | Phase 2 — Foundation | Pending |
 | CORE-02 | Phase 2 — Foundation | Pending |
 | CORE-03 | Phase 2 — Foundation | Pending |
