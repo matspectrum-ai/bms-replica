@@ -31,7 +31,14 @@ Clone funcional 100% do front-end de gestão empresarial brasileira (https://lab
   4. All 8 routes are mapped with exact VIEWS registry entries, `go()` navigation flow, header title/subtitle updates, and CSS active states
   5. All ~60 business logic functions are documented with signatures, parameters, return values, state mutations, and side effects
 
-**Plans**: TBD
+**Plans**: 5 plans in 5 sequential waves
+
+Plans:
+- [ ] 01-01-PLAN.md — State & Data Extraction: localStorage schemas (lab_bms_db_v1, lab_bms_settings_v1), in-memory state objects, sessionStorage, Lighthouse baseline (RECON-03)
+- [ ] 01-02-PLAN.md — DOM & Route Mapping: static shell DOM, all 8 view DOM trees in all states, route system (ROUTES, VIEWS, go()) (RECON-01, RECON-04)
+- [ ] 01-03-PLAN.md — API & Logic Extraction: all API contracts (success+error), ~60 business logic functions with signatures/call-graphs/side-effects, CORS proxy (RECON-02, RECON-05)
+- [ ] 01-04-PLAN.md — CSS & Theme Documentation: custom properties, component classes (8 btn-3d + 5 icon-cube + 5 pill variants), animations, responsive breakpoints, Tailwind config (RECON-01)
+- [ ] 01-05-PLAN.md — RECON.md Assembly & Validation: compile all sections, reorder per D-01, build cross-reference appendix, completeness audit against all 5 success criteria (RECON-01, RECON-02, RECON-03, RECON-04, RECON-05)
 
 ### Phase 2: Foundation
 **Goal**: Esqueleto completo da aplicação — router SPA, camada de persistência, widgets compartilhados, utilitários de formatação, componentes de layout (sidebar, header), sistema de tema dark, design system CSS (3D buttons, icon cubes, glassmorphism), e camada de proxy CORS — permitindo que qualquer view seja construída sobre uma base sólida e idêntica ao original.
@@ -118,7 +125,7 @@ Clone funcional 100% do front-end de gestão empresarial brasileira (https://lab
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Reconnaissance & Extraction | 0/0 | Not started | - |
+| 1. Reconnaissance & Extraction | 0/5 | Planned | - |
 | 2. Foundation | 0/0 | Not started | - |
 | 3. Views & Integrations | 0/0 | Not started | - |
 | 4. Validation | 0/0 | Not started | - |
