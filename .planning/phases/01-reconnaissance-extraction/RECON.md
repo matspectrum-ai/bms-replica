@@ -452,7 +452,221 @@ The app entry point is the bottom of the inline `<script>` block (lines 2086-213
 
 *(To be filled by Plan 02)*
 
-### 2.1 Shell Estático (sidebar, header, content, modals, toast)
+### 2.1 Static Shell (persiste em todas as rotas)
+
+**Container raiz:** `<body class="min-h-screen">` (linha 136)
+
+The static HTML shell contains 6 persistent elements that exist in the HTML source (not created dynamically by JS). All dynamic view content is injected into `<section id="view">` via `go()` → `VIEWS[route]()` → `innerHTML`.
+
+#### 2.1.1 Backdrop (mobile overlay)
+
+**Element:** `<div id="backdrop" class="backdrop" onclick="toggleSidebar(false)">` (linha 138)
+- **Default state:** `display:none` (CSS `.backdrop` class)
+- **Open state:** `display:block; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:40` (CSS `.backdrop.open`)
+- **Event handler:** `onclick="toggleSidebar(false)"` — clicking backdrop closes sidebar
+- **Toggled by:** `toggleSidebar(open)` (linha 252-255)
+- **Responsive:** Only functional at `≤1024px` (mobile breakpoint)
+
+#### 2.1.2 Sidebar (`<aside id="sidebar">`)
+
+**Element:** `<aside id="sidebar" class="sidebar w-[280px] shrink-0 p-4 border-r border-white/5" style="background:linear-gradient(180deg,#0c1330,#0a0f24);">` (linha 142)
+- **CSS classes:** `sidebar` (transition), `w-[280px]` (fixed width), `shrink-0`, `p-4`, `border-r border-white/5`
+- **Inline style:** `background:linear-gradient(180deg,#0c1330,#0a0f24)`
+- **Responsive behavior (@media max-width:1024px, linhas 106-109):** `position:fixed; inset:0 auto 0 0; z-index:50; transform:translateX(-100%); width:280px` — sidebar slides off-screen. `.sidebar.open { transform:translateX(0); }` brings it back
+- **Transition:** `transition:transform .25s ease` (linha 105)
+
+**Sidebar child hierarchy:**
+```
+<aside id="sidebar">
+  ├── div (logo container, linha 143)
+  │   ├── div.icon-cube.purple (🧪 emoji, 52×52px, linha 144)
+  │   └── div (text container, linha 145)
+  │       ├── div.font-display.text-lg: "LABORATÓRIO<br><span class="grad-text">DE BMS 🎈</span>"
+  │       └── div.text-xs.text-slate-400: "ADM: João Victor"
+  │
+  ├── <nav class="space-y-1.5"> (linha 151)
+  │   ├── div.nav-link.active data-route="dashboard" (linha 152) — 🏠 Início
+  │   │
+  │   ├── div.text-[10px] (category header) — "FLUXO PRINCIPAL" (linha 153)
+  │   ├── div.nav-link data-route="etapa1" (linha 154) — 🧬 Etapa 1 — Criar Site
+  │   ├── div.nav-link data-route="etapa2" (linha 155) — 📱 Etapa 2 — Comprar Número
+  │   ├── div.nav-link data-route="etapa3" (linha 156) — 📄 Etapa 3 — Editor PDF
+  │   │
+  │   ├── div.text-[10px] (category header) — "DADOS" (linha 157)
+  │   ├── div.nav-link data-route="banco" (linha 158) — 💼 Banco de Empresas
+  │   ├── div.nav-link data-route="planilha" (linha 159) — 📊 Planilha
+  │   │
+  │   ├── div.text-[10px] (category header) — "SISTEMA" (linha 160)
+  │   ├── div.nav-link data-route="config" (linha 161) — ⚙️ Configurações
+  │   └── div.nav-link data-route="ajuda" (linha 162) — ❓ Ajuda
+  │
+  └── div.glass (tip card, linha 165)
+      ├── div.icon-cube.cyan (⭐ emoji, 36×36px)
+      ├── div.font-bold: "Dica"
+      └── p.text-sm: "Capital social entre R$ 10k e R$ 50k é a faixa ideal."
+```
+
+**Nav-link element structure (per nav-link):**
+- **Element:** `<div>` (not `<a>` — div with onclick)
+- **CSS classes:** `nav-link active` (dashboard default) or `nav-link`
+- **Attribute:** `data-route="{routeName}"`
+- **CSS (linhas 71-74):**
+  - Base: `display:flex; align-items:center; gap:.8rem; padding:.85rem 1rem; border-radius:14px; color:#cfd5f2; font-weight:600; transition:all .15s ease; cursor:pointer`
+  - Hover: `background:rgba(255,255,255,0.05); color:white; transform:translateX(2px)`
+  - Active: `background:linear-gradient(135deg,rgba(99,102,241,.25),rgba(34,211,238,.1)); color:white; box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)`
+- **Event handler:** `onclick="go('{routeName}')"` (inline onclick attribute, NOT addEventListener)
+- **Child elements:** `<span class="nav-emoji">` (emoji icon, 36×36px, linha 74) + text label (inline text)
+- **Active state mechanism:** `go()` calls `document.querySelectorAll('[data-route]').forEach(el => { el.classList.toggle('active', el.dataset.route === route) })` (linha 288)
+
+**All 8 nav-links detailed:**
+
+| data-route | onclick | Icon | Label | Categoria |
+|------------|---------|------|-------|-----------|
+| dashboard | go('dashboard') | 🏠 | Início | — (topo, sem categoria) |
+| etapa1 | go('etapa1') | 🧬 | Etapa 1 — Criar Site | FLUXO PRINCIPAL |
+| etapa2 | go('etapa2') | 📱 | Etapa 2 — Comprar Número | FLUXO PRINCIPAL |
+| etapa3 | go('etapa3') | 📄 | Etapa 3 — Editor PDF | FLUXO PRINCIPAL |
+| banco | go('banco') | 💼 | Banco de Empresas | DADOS |
+| planilha | go('planilha') | 📊 | Planilha | DADOS |
+| config | go('config') | ⚙️ | Configurações | SISTEMA |
+| ajuda | go('ajuda') | ❓ | Ajuda | SISTEMA |
+
+**Category headers:**
+- **Element:** `<div>` with inline text
+- **CSS classes:** `text-[10px] uppercase tracking-widest text-slate-500 px-3 mt-4 mb-1`
+- **Categories:** FLUXO PRINCIPAL, DADOS, SISTEMA
+- **No interactivity** — purely visual separators
+
+**Tip card (footer of sidebar):**
+- **Wrapper:** `<div class="glass mt-6 p-4 rounded-2xl">`
+- **Icon:** `<div class="icon-cube cyan" style="width:36px;height:36px;font-size:16px;">⭐</div>`
+- **Content:** "Capital social entre `R$ 10k` e `R$ 50k` é a faixa ideal." (with `text-cyan-300` highlights on values)
+- **No event handlers** — informational only
+
+#### 2.1.3 Content Area + Header
+
+**Content wrapper:** `<main class="content-wrap flex-1 min-w-0">` (linha 174)
+- **CSS:** `flex-1 min-w-0` — fills remaining space. At ≤1024px: `.content-wrap { margin-left:0 !important; }` (linha 109)
+
+**Sticky Header (`<header>`):**
+
+**Element:** `<header class="sticky top-0 z-30 px-4 sm:px-8 py-4 flex items-center justify-between border-b border-white/5" style="background:rgba(11,16,32,.85); backdrop-filter:blur(12px);">` (linha 175)
+- **Position:** `sticky top-0 z-30`
+- **Blur effect:** `backdrop-filter:blur(12px)` — confirmed inline style
+- **Layout:** `flex items-center justify-between`
+- **Padding:** `px-4 sm:px-8 py-4`
+- **Border:** `border-b border-white/5`
+
+**Header child hierarchy:**
+```
+<header>
+  ├── div.flex.items-center.gap-3 (left section, linha 176)
+  │   ├── button.lg:hidden.btn-3d.ghost.sm (☰ hamburger, linha 177)
+  │   │   · onclick="toggleSidebar(true)"
+  │   │   · Visible only at <1024px (`.lg:hidden`)
+  │   └── div (title container, linha 178)
+  │       ├── div#page-title.font-display.text-xl: "Início" (linha 179)
+  │       │   · Updated by go() → `document.getElementById('page-title').textContent = titles[route][0]`
+  │       └── div#page-subtitle.text-xs.text-slate-400: "Bem-vindo, João Victor!" (linha 180)
+  │           · CSS: `hidden sm:block` — hidden on mobile
+  │           · Updated by go() → `document.getElementById('page-subtitle').textContent = titles[route][1]`
+  │
+  └── div.flex.items-center.gap-2 (right section, linha 183)
+      ├── div#cf-status.pill.danger (⚡️ Cloudflare, linha 184)
+      │   · CSS: `hidden sm:flex` — hidden on mobile
+      │   · States: `.pill.danger` (⚠️ Cloudflare) vs `.pill.done` (☁️ Cloudflare OK)
+      │   · Updated by refreshHeaderStatus() (linha 223-235)
+      ├── div#sms-status.pill.danger (⚡️ SMS24h, linha 185)
+      │   · CSS: `hidden sm:flex` — hidden on mobile
+      │   · States: `.pill.danger` (⚠️ SMS24h) vs `.pill.done` (📱 SMS24h OK)
+      │   · Updated by refreshHeaderStatus() (linha 223-235)
+      └── div.icon-cube.purple (JV avatar, linha 186)
+          · style="width:42px;height:42px;font-size:18px;"
+          · Static text "JV" (initials)
+```
+
+**Dynamic content:** `#page-title` and `#page-subtitle` are updated by `go()` on every route change (linhas 299-300). The API status pills are updated by `refreshHeaderStatus()` on page load and after `saveSettings()`.
+
+**Hamburger button:**
+- **Element:** `<button class="lg:hidden btn-3d ghost sm" onclick="toggleSidebar(true)">☰</button>`
+- **Visible:** Only at <1024px (`lg:hidden`)
+- **Click handler:** `toggleSidebar(true)` — opens sidebar overlay on mobile
+
+**View container:** `<section id="view" class="p-4 sm:p-8 max-w-7xl mx-auto"></section>` (linha 190)
+- **Initial state:** Empty element
+- **Content injection:** `go()` calls `document.getElementById('view').innerHTML = VIEWS[route]()` (linha 301)
+- **Max width:** `max-w-7xl` — Tailwind utility (1280px)
+- **Padding:** `p-4 sm:p-8` (responsive)
+
+#### 2.1.4 Toast System
+
+**Toast container (static HTML, linha 194):**
+```html
+<div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 hidden z-[60] glass px-5 py-3 rounded-2xl flex items-center gap-3"
+     style="background:rgba(15,23,55,.95);">
+  <span id="toast-icon">✅</span>
+  <span id="toast-msg">Pronto!</span>
+</div>
+```
+
+**Toast element structure:**
+- **Container:** `div#toast`
+- **Position:** `fixed bottom-6 left-1/2 -translate-x-1/2` — centered horizontally, bottom of viewport
+- **Z-index:** `z-[60]` — above sidebar (z-50), below modal (z-70)
+- **CSS classes:** `glass px-5 py-3 rounded-2xl flex items-center gap-3`
+- **Default state:** `hidden` (display:none)
+- **Child elements:**
+  - `span#toast-icon` — emoji icon (default: ✅)
+  - `span#toast-msg` — message text (default: "Pronto!")
+
+**Toast JavaScript (`toast(msg, icon)` function, linhas 237-244):**
+1. Sets `toast-icon.textContent` to `icon` parameter (default: `'✅'`)
+2. Sets `toast-msg.textContent` to `msg` parameter
+3. Removes `.hidden` class (shows toast)
+4. Calls `clearTimeout(window._tt)` — cancels previous auto-dismiss timer
+5. Sets new `window._tt = setTimeout(() => t.classList.add('hidden'), 3000)` — auto-dismiss after 3 seconds
+
+**Toast stacking behavior:** Single toast slot. Calling `toast()` while a toast is visible cancels the previous one (replaces content, resets timer). No toast queue.
+
+#### 2.1.5 Modal System
+
+**Modal container (static HTML, linhas 199-202):**
+```html
+<div id="modal-back" class="fixed inset-0 bg-black/60 hidden z-[70] flex items-center justify-center p-4"
+     onclick="if(event.target===this)closeModal()">
+  <div id="modal-body" class="glass rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-auto scrollbar p-6"
+       style="background:rgba(15,23,55,.95);"></div>
+</div>
+```
+
+**Modal element structure:**
+- **Backdrop:** `div#modal-back`
+  - **Position:** `fixed inset-0` — full viewport overlay
+  - **Background:** `bg-black/60` — 60% opacity black
+  - **Z-index:** `z-[70]` — above sidebar (z-50), toast (z-60), header (z-30)
+  - **Layout:** `flex items-center justify-center p-4` — centers modal body vertically and horizontally
+  - **Default state:** `hidden` (display:none)
+  - **Click handler:** `onclick="if(event.target===this)closeModal()"` — backdrop click closes modal (event target check prevents body clicks from closing)
+- **Body:** `div#modal-body`
+  - **CSS classes:** `glass rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-auto scrollbar p-6`
+  - **Max width:** `max-w-2xl` (672px)
+  - **Max height:** `max-h-[90vh]` — 90% of viewport height with overflow scroll
+  - **Inline style:** `background:rgba(15,23,55,.95)` — dark glass background
+
+**Modal JavaScript:**
+- `openModal(html)` (linha 246-248): Sets `#modal-body.innerHTML` to the HTML string, removes `.hidden` from `#modal-back`
+- `closeModal()` (linha 250): Adds `.hidden` to `#modal-back`
+- **Close triggers documented (from source):**
+  - Backdrop click (`onclick="if(event.target===this)closeModal()"`)
+  - Close buttons in modal content (via inline onclick calling `closeModal()`) — but no global X button or Escape key handler found in source
+
+#### 2.1.6 Other Persistent UI Elements
+
+**No additional persistent UI elements** were found in the static HTML beyond what's documented above. Specifically:
+- **No loading spinner** in the static shell — spinners are created dynamically in view functions (via `class="spinner"`)
+- **No confirmation dialogs** — confirmations use native `confirm()` calls (inline in functions)
+- **No dropdown menus** — all menus are in the sidebar (static) or embedded in view content
+- **No tooltips** — none found in static HTML or CSS
 
 ### 2.2 Dashboard View
 
