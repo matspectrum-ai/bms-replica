@@ -87,7 +87,15 @@ Plans:
   4. User can load a PDF (Etapa 3), render multiple pages via pdf.js, add draggable contentEditable text overlays with per-overlay delete, extract 7 Brazilian address fields via regex, and download the merged PDF via pdf-lib
   5. User can search and filter the company database (Banco de Empresas) with text search and capital social range filter (ideal 10k-50k), use "Usar na Etapa 1" action; manage sites in the 8-column spreadsheet (Planilha) with inline status dropdowns, row deletion, and CSV export (UTF-8 BOM); configure Cloudflare tokens with auto-detection and SMS24h API keys (Configurações) with full JSON backup/restore; and view step-by-step help guides (Ajuda)
 
-**Plans**: TBD
+**Plans**: 5 plans in 1 wave (all parallel)
+
+Plans:
+
+- [ ] 03-01-PLAN.md — Dashboard, Ajuda + Configurações: KPIs computados, quick cards, API warning condicional, 3 guias estáticos, gestão de tokens Cloudflare/SMS24h com backup/restore JSON (DASH-01..03, AJUD-01, CONF-01..03)
+- [ ] 03-02-PLAN.md — Banco de Empresas + Planilha: grid de empresas com busca/filtro e cross-view transfer, tabela de sites 8-colunas com status dropdown inline, delete, e export CSV UTF-8 BOM (BANC-01..03, PLAN-01..04)
+- [ ] 03-03-PLAN.md — Etapa 1 Wizard: CNPJ lookup BrasilAPI → 5-step wizard state machine → 7-algoritmo domain engine → buildSiteHTML template (~285 linhas) → Cloudflare Pages 5-step deploy pipeline (ETP1-01..05)
+- [ ] 03-04-PLAN.md — Etapa 2 SMS: SMS24h API client wrapper → compra de número → auto-polling 5s com timer → display formatado + copy → re-deploy Cloudflare com novo número (ETP2-01..05)
+- [ ] 03-05-PLAN.md — Etapa 3 PDF Editor: CDN scripts pdf.js/pdf-lib → multi-page canvas viewer → overlays arrastáveis contentEditable → pdf-lib merge/download com Y-flip → regex extração 7 campos endereço brasileiro (ETP3-01..04)
 **UI hint**: yes
 
 ### Phase 4: Validation
