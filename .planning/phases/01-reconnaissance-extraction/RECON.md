@@ -3919,6 +3919,309 @@ select.input {
 ```
 - Only defined in `@media (max-width: 1024px)` — removes left margin on mobile when sidebar is hidden.
 
+
+### 6.3 Color Variant Summary (Cross-Reference)
+
+| Component | Base Color | Variant Count | Variants |
+|-----------|-----------|---------------|----------|
+| `.btn-3d` | Indigo (#4f46e5) | 8 | base, .success, .warn, .danger, .cyan, .purple, .ghost, .sm |
+| `.icon-cube` | Indigo (#4f46e5) | 6 | base, .cyan, .green, .purple, .amber, .rose |
+| `.pill` | — (no base) | 5 | .ok, .todo, .doing, .done, .danger |
+| **Total** | | **19** | |
+
+**Design Pattern:** All color variants follow a consistent structure:
+- **.btn-3d:** Overrides `background` (linear-gradient), `box-shadow` (3 layers), and active-state shadows.
+- **.icon-cube:** Overrides `background` (linear-gradient 160deg), `box-shadow` (3 layers with color-matched ambient).
+- **.pill:** Overrides `background` (rgba at ~15-18% opacity), `color`, `border` (rgba at 30% opacity).
+
+**Rebrand note (Phase 5-6):** These 19 color variants are the primary targets for the emerald/orange palette swap (BRAND-01). Each variant must have its gradient colors, shadow colors, and ambient glow colors systematically replaced while preserving the exact structure (gradient angle, shadow layer count, opacity values).
+
+
+### 6.4 Animations & Keyframes
+
+**Source:** lines 98-103 (main app), line 1917 (site generator).
+
+#### 6.4.1 @keyframes float + .floaty
+
+```css
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+.floaty { animation: float 4s ease-in-out infinite; }
+```
+- **Duration:** 4s
+- **Timing:** `ease-in-out`
+- **Iteration:** `infinite`
+- **Effect:** Gentle vertical bobbing — element rises 6px then returns. Creates a floating/hovering illusion.
+- **Applied to:** `.floaty` elements — Dashboard hero icon-cube (🧪), likely other decorative elements.
+
+#### 6.4.2 @keyframes spin + .spinner
+
+```css
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.spinner {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 3px solid rgba(255,255,255,.2);
+  border-top-color: white;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+  vertical-align: middle;
+}
+```
+- **Duration:** 0.8s
+- **Timing:** `linear`
+- **Iteration:** `infinite`
+- **Effect:** Continuous clockwise rotation — CSS border-based spinner (3px ring with white top segment).
+- **Applied to:** Loading indicators during API calls (CNPJ lookup, Cloudflare deploy, SMS polling).
+
+#### 6.4.3 @keyframes pulse-ring + .pulse-ring
+
+```css
+@keyframes pulse-ring {
+  0%   { box-shadow: 0 0 0 0 rgba(34,211,238,.6); }
+  70%  { box-shadow: 0 0 0 14px rgba(34,211,238,0); }
+  100% { box-shadow: 0 0 0 0 rgba(34,211,238,0); }
+}
+.pulse-ring { animation: pulse-ring 2s infinite; }
+```
+- **Duration:** 2s
+- **Timing:** Default (`ease`)
+- **Iteration:** `infinite`
+- **Effect:** Expanding ring pulse — cyan ring grows from 0 to 14px radius, fading to transparent. Creates a sonar/ping effect.
+- **Applied to:** `.pulse-ring` elements — Etapa 1 publish step icon-cube (🌐, line 780) when site is live.
+
+#### 6.4.4 @keyframes pulse (Site Generator)
+
+```css
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.08); }
+}
+```
+- **Duration:** 2.4s (applied via `.float-wpp` animation shorthand)
+- **Effect:** Scale pulse — element grows to 108% then returns. Used for WhatsApp floating button attention-grab.
+- **Applied to:** `.float-wpp` (lines 1916-1917 in site generator CSS).
+
+#### 6.4.5 CSS Transitions (Non-Keyframe Animations)
+
+Documenting `transition` properties on interactive components — these are animation-adjacent but not `@keyframes`:
+
+| Component | Property | Duration | Timing | Effect |
+|-----------|----------|----------|--------|--------|
+| `.btn-3d` | `transform, box-shadow, filter` | `0.12s` | `ease` | Button press depth + ambient shadow collapse |
+| `.nav-link` | `all` | `0.15s` | `ease` | Hover background + color + translateX(2px) |
+| `.step-card` | `opacity` | `0.3s` | *(default)* | Fade when transitioning disabled↔enabled |
+| `.input` | `all` | `0.15s` | *(default)* | Border color + ring glow on focus |
+| `.file-drop` | `all` | `0.15s` | *(default)* | Background + border color on hover/dragover |
+| `.sidebar` | `transform` | `0.25s` | `ease` | Slide in/out on mobile |
+| `.glass` (quickCard) | `transform` (via Tailwind) | — | — | `hover:scale-[1.01]` — subtle scale-up on card hover |
+
+
+### 6.5 Responsive Breakpoints
+
+#### 6.5.1 Breakpoint: 1024px — Mobile Sidebar Collapse (Main App)
+
+**Source:** lines 106-110.
+
+```css
+@media (max-width: 1024px) {
+  .sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 50;
+    transform: translateX(-100%);
+    width: 280px;
+  }
+  .sidebar.open { transform: translateX(0); }
+  .content-wrap { margin-left: 0 !important; }
+}
+```
+
+**Behavioral change detail:**
+| Aspect | Desktop (≥1025px) | Mobile (≤1024px) |
+|--------|-------------------|-------------------|
+| Sidebar position | Static, part of flex layout | Fixed overlay, left edge |
+| Sidebar visibility | Always visible | Hidden off-screen (`translateX(-100%)`) |
+| Sidebar width | 280px (Tailwind `w-[280px]`) | 280px (fixed) |
+| Sidebar toggle | N/A (always visible) | `toggleSidebar()` adds/removes `.open` class |
+| Backdrop | Hidden | `.backdrop.open` — full-screen dark overlay (`rgba(0,0,0,.55)`, z-index:40) |
+| Content margin | Normal flex layout | `margin-left: 0 !important` — content fills full width |
+| Hamburger menu | **Not present in main app** — sidebar toggle mechanism is JS-only (`toggleSidebar()`) triggered programmatically, not by a visible hamburger button in the static shell |
+
+**Toggle mechanism:** `toggleSidebar(open)` function (line 252-255):
+1. `sidebar.classList.toggle('open', open)` — slides sidebar in/out
+2. `backdrop.classList.toggle('open', open)` — shows/hides overlay
+3. No hamburger button exists in the static HTML — toggle is triggered by JS code (e.g., after route change on mobile)
+
+**Transition:** `.sidebar { transition: transform 0.25s ease; }` (line 105) — smooth 250ms slide animation.
+
+#### 6.5.2 Breakpoint: 900px — Mobile Navigation (Site Generator)
+
+**Source:** line 1915.
+
+```css
+@media (max-width: 900px) {
+  .nav-menu { display: none; position: absolute; top: 100%; left: 0; right: 0;
+              flex-direction: column; background: #0c1330; padding: 16px 24px;
+              gap: 14px; border-bottom: 1px solid var(--border); }
+  .nav-menu.open { display: flex; }
+  .menu-toggle { display: block; }
+  .about-grid, .contact-grid, .footer-grid { grid-template-columns: 1fr; }
+  .hero { padding: 48px 0 36px; }
+  section { padding: 48px 0; }
+  .container { padding: 0 18px; }
+}
+```
+
+**Behavioral changes:**
+| Aspect | Desktop (≥901px) | Mobile (≤900px) |
+|--------|-------------------|-----------------|
+| Navigation menu | Horizontal flex | Hidden dropdown (absolute positioned) |
+| Menu toggle button | Hidden (`.menu-toggle { display: none }`) | Visible (☰ hamburger) |
+| Grid layouts | Multi-column (about 2-col, footer 3-col) | Single column (`grid-template-columns: 1fr`) |
+| Hero padding | `80px 0 60px` | `48px 0 36px` |
+| Section padding | `72px 0` | `48px 0` |
+| Container padding | `0 24px` | `0 18px` |
+
+**This breakpoint only applies to generated site templates** (from `buildSiteHTML()`), not the main admin dashboard.
+
+
+### 6.6 Tailwind CDN Version & Configuration
+
+**Source:** `raw-source.html` lines 7, 10-11.
+
+**CDN URL:** `https://cdn.tailwindcss.com` (line 7)
+- **Version:** Unpinned — resolves to latest Tailwind CSS v3 CDN build. No version lock means the site can silently receive Tailwind updates.
+- **Implication for clone:** Pin to a specific version (e.g., `https://cdn.tailwindcss.com/3.4.0`) to prevent breaking changes. Or migrate to Tailwind v4 with the new CSS-first configuration.
+
+**Custom Configuration (lines 10-11):**
+```html
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: {
+        display: ['Sora', 'sans-serif'],
+        sans: ['Inter', 'sans-serif']
+      }
+    }
+  }
+}
+</script>
+```
+
+**What's customized:**
+- `fontFamily.display`: Maps Tailwind `font-display` utility to Sora font stack.
+- `fontFamily.sans`: Overrides default sans-serif to Inter font stack.
+- **No other customizations detected:** No custom colors, spacing scale, breakpoints, border-radius, or shadow extensions. The original relies entirely on Tailwind's default utility values for everything except font families.
+
+**What's NOT customized (uses Tailwind defaults):**
+- Colors: All Tailwind color utilities (`bg-slate-400`, `text-cyan-300`, `border-white/5`, etc.) use the default v3 palette.
+- Spacing: Default 0.25rem scale (p-4 = 1rem, p-5 = 1.25rem, etc.).
+- Breakpoints: Default sm (640px), md (768px), lg (1024px), xl (1280px), 2xl (1536px) — all available but the main app's custom 1024px media query is custom CSS, not Tailwind.
+- No `@tailwind` directives, `@layer` directives, or `@apply` compositions detected in the CSS. All component classes are pure custom CSS.
+
+
+### 6.7 CSS Architecture Summary
+
+| Attribute | Value |
+|-----------|-------|
+| **Approach** | Inline `<style>` block (lines 16-134) + Tailwind CDN v3 for utility classes. No external CSS files. |
+| **Custom properties on :root** | 13 (4 consumed via `var()`, 9 used as hardcoded reference values) |
+| **Component classes** | 23 distinct class families (`.glass`, `.grad-card`, `.btn-3d`, `.icon-cube`, `.pill`, `.nav-link`, `.step-card`, `.input`, `.switch-tab`, `.copy-row`, `.empty`, `.scrollbar`, `.file-drop`, `.pdf-canvas-wrap`, `.pdf-overlay-text`, `.neon`, `.ring-glow`, `.sidebar`, `.backdrop`, `.floaty`, `.spinner`, `.pulse-ring`, `.grad-text`) |
+| **Color variants** | 19 total (8 btn-3d + 6 icon-cube + 5 pill) |
+| **@keyframes animations** | 4 (float, spin, pulse-ring, pulse) |
+| **CSS transitions** | 6 distinct transition rules on interactive components |
+| **@media breakpoints** | 2 (1024px for sidebar collapse, 900px for site generator mobile nav) |
+| **Total CSS size (main app)** | ~118 lines (lines 16-134 of `raw-source.html`) — ~2.5KB |
+| **Total CSS size (site generator)** | ~85 lines (lines 1833-1918) — ~2KB |
+| **Design system** | Dark theme + glassmorphism + 3D depth (buttons/cubes) + gradient accents |
+| **Browser prefixes** | `-webkit-backdrop-filter`, `-webkit-background-clip`, `-webkit-mask`, `-webkit-tap-highlight-color`, `::-webkit-scrollbar` — WebKit-focused, no Firefox/Edge-specific prefixes |
+| **Accessibility gaps** | No `:focus-visible` styles, no `prefers-reduced-motion` queries, no `prefers-contrast` support, nav-links lack focus indicators |
+
+
+### 6.8 Site Generator CSS Template
+
+**Source:** `<style>` block lines 1833-1918 of `raw-source.html`. This CSS is embedded inline within the HTML template generated by `buildSiteHTML()` (see §5.3).
+
+**Purpose:** The generated public-facing SaaS landing page for each company. This is NOT the admin dashboard CSS — it's the customer-facing website template.
+
+#### 6.8.1 :root (Site Generator)
+
+```css
+:root {
+  --bg: #0b1020;
+  --card: #111a36;
+  --border: rgba(255,255,255,.08);
+  --text: #e6e9f5;
+  --muted: #9aa3c7;
+}
+```
+- **Simplified palette:** Only 5 properties (vs 13 in main app). No accent/status colors — those are hardcoded in the template.
+- **Same values:** `--bg`, `--card`, `--border`, `--text`, `--muted` match main app exactly.
+
+#### 6.8.2 Global Resets & Base
+
+```css
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html,body { background: var(--bg); color: var(--text); font-family: Inter, sans-serif; line-height: 1.6; scroll-behavior: smooth; }
+.container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+h1,h2,h3,h4 { font-family: Sora, sans-serif; letter-spacing: -0.02em; line-height: 1.15; }
+a { color: inherit; text-decoration: none; }
+```
+
+#### 6.8.3 Component Classes (Site Generator)
+
+| Class | Purpose | Key Properties |
+|-------|---------|---------------|
+| `.grad-text` | Gradient heading accent | `background: linear-gradient(120deg, #a5b4fc, #22d3ee 50%, #a855f7)` — same as main app |
+| `.pill` | Status badge (single variant) | Green-tinted default: `rgba(34,197,94,.15)` bg, `#86efac` text |
+| `.btn` | Base button | `padding: .95rem 1.5rem; border-radius: 16px; font-weight: 700` |
+| `.btn-primary` | Primary CTA button | Indigo gradient + 3D shadow (same pattern as main app `.btn-3d`) |
+| `.btn-secondary` | Secondary/muted button | Dark gradient `#1f2a52 → #111a36` |
+| `.btn-success` | Success button | Green gradient (single variant — no `.warn`/`.danger`/etc.) |
+| `.icon-cube` | Icon container | `width: 54px; height: 54px` (smaller than main app's 64px) + same 3D shadow pattern |
+| `.icon-cube.cyan/.green/.purple` | 3 color variants | Same gradient pattern as main app but only 3 variants (vs 5) |
+| `.card` | Generic card | Glass-like: `linear-gradient(145deg, rgba(255,255,255,.04), rgba(255,255,255,.01))` + `:hover { transform: translateY(-4px) }` |
+| `.logo` / `.logo-mark` | Site logo | Flex row with gradient icon-cube + company name |
+| `.hero` | Hero section | `padding: 80px 0 60px` + `::before` radial gradient overlay (indigo+purple) |
+| `.stats` | KPI grid | `grid-template-columns: repeat(auto-fit, minmax(180px, 1fr))` |
+| `.stat` | Stat card | Glass border card with `.num` (Sora, 1.7rem) + `.lbl` (muted) |
+| `.about-grid` | About section layout | `grid-template-columns: 1.2fr 1fr` |
+| `.about-meta .kv` | Key-value metadata | Bordered card with uppercase `.k` label + bold `.v` value |
+| `.values-grid` | Values section grid | `repeat(auto-fit, minmax(180px, 1fr))` |
+| `.value-card` | Value card | Centered icon + title, indigo-tinted bg, hover lift effect |
+| `.diff-grid` | Differentiators grid | `repeat(auto-fit, minmax(280px, 1fr))` |
+| `.diff-card` | Differentiator card | Icon + title + description, glass border |
+| `.diff-ico` | Differentiator icon | Small cyan/indigo icon-cube variant (56×56) |
+| `.cnae-grid` | CNAE services grid | `repeat(auto-fit, minmax(260px, 1fr))` |
+| `.cnae-card` | Service card | Positioned badge number + tag + description |
+| `.cnae-num` | Service number badge | Gradient indigo icon-cube (38×38), floating above card |
+| `.data-grid` | Data display grid | `repeat(auto-fit, minmax(260px, 1fr))` |
+| `.data-card` | Data card | Glass border card with `.lbl` + `.val` |
+| `.contact-grid` | Contact section layout | `grid-template-columns: 1fr 1fr` |
+| `.contact-item` | Contact info row | Icon + label + value, glass border |
+| `.contact-form` | Contact form container | Padded card, input/textarea styling matching `.input` pattern |
+| `.footer-grid` | Footer layout | `grid-template-columns: 1.5fr 1fr 1fr` |
+| `.footer-copy` | Copyright bar | Centered muted text with top border |
+| `.float-wpp` | WhatsApp floating button | Fixed position (bottom-right), green gradient icon-cube, `pulse` animation |
+| `header.nav` | Sticky navigation | `backdrop-filter: blur(12px)`, glass header bar |
+| `.nav-menu` | Horizontal nav links | Flex row with 24px gap, items turn white on hover |
+| `.nav-menu a` | Nav link | `color: #cfd5f2; font-weight: 600` |
+| `.menu-toggle` | Mobile hamburger | Hidden on desktop (`display: none`), visible at ≤900px |
+
+**Rebrand note:** The site generator CSS must also receive the Phase 5-6 palette swap (BRAND-01). All indigo/cyan/purple gradients in `.icon-cube`, `.btn-primary`, `.cnae-num`, `.hero::before`, `.grad-text` must be replaced with emerald/orange equivalents.
+
+
+## 7. Apêndice: Referências Cruzadas por View
+
+*(To be filled progressively as each plan completes)*
+
 ### 7.1 Dashboard → {DOM:§2.2, APIs:—, State:§1.1, Routes:§3, CSS:§6.2}
 
 ### 7.2 Etapa 1 → {DOM:§2.3, APIs:§4.1-4.2, State:§1.1-1.3, CSS:§6}
