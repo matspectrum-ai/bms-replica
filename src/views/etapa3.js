@@ -351,18 +351,224 @@ function limparTudo() {
 }
 
 // =============================================================================
-// STUBS for Task 3 features (implemented in next task)
+// TASK 3: PDF MERGE/DOWNLOAD + ADDRESS EXTRACTION
 // =============================================================================
-function baixarPDF() {
-  toast('⚠️ Funcionalidade em desenvolvimento — Task 3');
+
+// =============================================================================
+// baixarPDF() — Merge overlays into PDF via pdf-lib 1.17.1 and trigger download
+// Pitfall 3 compliance: Y-coordinate flipped for pdf-lib coordinate system
+// pdf.js: Y=0 at top, Y increases downward | pdf-lib: Y=0 at bottom, Y increases upward
+// =============================================================================
+async function baixarPDF() {
+  if (typeof PDFLib === 'undefined') {
+    toast('❌ pdf-lib não foi carregado. Recarregue a página.', '⚠️');
+    return;
+  }
+  if (!pdfState.fileBytes) {
+    toast('⚠️ Carregue um PDF primeiro');
+    return;
+  }
+
+  try {
+    toast('⏳ Gerando PDF...', '⏳');
+
+    // Load PDF from stored file bytes
+    const pdfDoc = await PDFLib.PDFDocument.load(pdfState.fileBytes);
+    const pages = pdfDoc.getPages();
+
+    // Embed standard font once for all overlays (efficiency)
+    const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
+
+    // Draw each overlay on the corresponding page
+    for (const ol of pdfState.overlays) {
+      if (ol.page < 1 || ol.page > pages.length) continue;
+
+      const page = pages[ol.page - 1];
+      const { width, height } = page.getSize();
+
+      // Scale from viewport coordinates to actual PDF page dimensions
+      const scaleX = width / ol.pageWidth;
+      const scaleY = height / ol.pageHeight;
+
+      // Pitfall 3: Y-coordinate flip
+      // pdf.js canvas: Y=0 at top, Y increases downward
+      // pdf-lib: Y=0 at bottom, Y increases upward
+      // Formula: yPdf = height - (y_viewport * scaleY) - (size * scaleY * 0.8)
+      const xPdf = ol.x * scaleX;
+      const textHeight = ol.size * scaleY * 0.8;
+      const yPdf = height - (ol.y * scaleY) - textHeight;
+
+      page.drawText(ol.text || 'Texto', {
+        x: xPdf,
+        y: yPdf,
+        size: ol.size * scaleY,
+        font: font,
+        color: PDFLib.rgb(0, 0, 0)
+      });
+    }
+
+    // Save merged PDF and trigger browser download
+    const pdfBytes = await pdfDoc.save();
+    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'documento-editado.pdf';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    toast('✅ PDF baixado!');
+  } catch (err) {
+    console.error('Erro ao gerar PDF:', err);
+    toast('❌ Erro ao gerar o PDF. Tente novamente.', '⚠️');
+  }
 }
 
-function extrairEndereco() {
-  toast('⚠️ Funcionalidade em desenvolvimento — Task 3');
+// =============================================================================
+// extrairEndereco() — Extract 7 Brazilian address fields from PDF text content
+// Uses pdf.js getTextContent() across all pages, then applies regex patterns
+// for CEP, logradouro, numero, complemento, bairro, municipio, UF
+// =============================================================================
+async function extrairEndereco() {
+  if (!pdfState.pdfDoc) {
+    toast('⚠️ Carregue um PDF primeiro');
+    return;
+  }
+
+  try {
+    toast('🔍 Extraindo endereço...', '🔍');
+
+    // Collect text from all PDF pages
+    const textParts = [];
+    for (let i = 1; i <= pdfState.pdfDoc.numPages; i++) {
+      const page = await pdfState.pdfDoc.getPage(i);
+      const textContent = await page.getTextContent();
+      const pageText = textContent.items.map(item => item.str).join(' ');
+      textParts.push(pageText);
+    }
+    const fullText = textParts.join('\n');
+
+    // 7 Brazilian address regex patterns (matches PLAN.md action block)
+    const patterns = {
+      cep:           /\b(\d{5}-?\d{3})\b/,
+      logradouro:    /(?:Rua|Avenida|Av\.?|Travessa|Praça|Alameda|Rodovia|Estrada)\s+([^,;\n]{3,60}?)(?:\s*,?\s*(?:,|\d|nº|n\.?|Bairro|CEP|$))/i,
+      numero:        /(?:nº?|n\.?|número)\s*(\d+[A-Za-z]?)/i,
+      complemento:   /(?:complemento|comp\.?|apto|apartamento|sala|andar)\s*:?\s*([^,;\n]{2,40})/i,
+      bairro:        /(?:Bairro|Bairro:)\s*([^,;\n\-]{3,40}?)(?:\s*[,\-]|\s*(?:CEP|Município|Cidade|$))/i,
+      municipio:     /(?:Município|Cidade|município|cidade)(?:\s*:\s*|\s+)([^,;\n\-\/]{3,50}?)(?:\s*[,\-\/]|\s*(?:Estado|UF|CEP|$))/i,
+      uf:            /\b([A-Z]{2})\b(?=\s*(?:,|$|\d{5}|CEP|\n))/
+    };
+
+    // Extract each field from full text
+    const extracted = {};
+    for (const [field, regex] of Object.entries(patterns)) {
+      const match = fullText.match(regex);
+      extracted[field] = match ? match[1].trim() : '—';
+    }
+
+    // Format CEP with dash: XXXXX-XXX
+    if (extracted.cep !== '—' && extracted.cep.length === 8) {
+      extracted.cep = extracted.cep.slice(0, 5) + '-' + extracted.cep.slice(5);
+    }
+
+    // Display results in address card
+    const resultsDiv = document.getElementById('pdf-address-results');
+    const fieldsDiv = document.getElementById('pdf-address-fields');
+    if (!resultsDiv || !fieldsDiv) return;
+
+    const fieldLabels = {
+      cep: 'CEP',
+      logradouro: 'Logradouro',
+      numero: 'Número',
+      complemento: 'Complemento',
+      bairro: 'Bairro',
+      municipio: 'Município',
+      uf: 'UF'
+    };
+
+    fieldsDiv.innerHTML = Object.entries(fieldLabels).map(([key, label]) => {
+      const val = extracted[key] || '—';
+      const escapedVal = escapeHTML(val);
+      // Pattern 4: Copy-to-Clipboard — each field has a copy button
+      return `<div class="copy-row">
+        <span class="key">${label}</span>
+        <span class="val">${escapedVal}</span>
+        <button class="btn-3d ghost sm" onclick="window.copyText('${escapedVal.replace(/'/g, "\\'")}', '${label} copiado!')" style="padding:4px 8px;font-size:12px">📋</button>
+      </div>`;
+    }).join('');
+
+    resultsDiv.classList.remove('hidden');
+
+    const foundCount = Object.values(extracted).filter(v => v !== '—').length;
+    if (foundCount > 0) {
+      toast(`✅ Endereço extraído! ${foundCount} campos encontrados`);
+    } else {
+      toast('⚠️ Nenhum endereço encontrado no PDF');
+    }
+
+  } catch (err) {
+    console.error('Erro ao extrair endereço:', err);
+    toast('❌ Erro ao extrair endereço do PDF', '⚠️');
+  }
 }
 
+// =============================================================================
+// aplicarEndereco() — Create text overlays from extracted address fields
+// Reads values from the #pdf-address-fields DOM (populated by extrairEndereco)
+// Overlays stacked vertically starting at y=100 with 30px spacing
+// =============================================================================
 function aplicarEndereco() {
-  toast('⚠️ Funcionalidade em desenvolvimento — Task 3');
+  if (!pdfState.pages.length) {
+    toast('⚠️ Carregue um PDF primeiro');
+    return;
+  }
+
+  // Read extracted values from the address results DOM
+  const rows = document.querySelectorAll('#pdf-address-fields .copy-row');
+  if (!rows.length) {
+    toast('⚠️ Extraia o endereço primeiro');
+    return;
+  }
+
+  const fields = {};
+  rows.forEach(row => {
+    const keyEl = row.querySelector('.key');
+    const valEl = row.querySelector('.val');
+    if (keyEl && valEl) {
+      const key = keyEl.textContent.trim();
+      const val = valEl.textContent.trim();
+      if (val !== '—' && val) {
+        fields[key] = val;
+      }
+    }
+  });
+
+  if (Object.keys(fields).length === 0) {
+    toast('⚠️ Nenhum campo para preencher');
+    return;
+  }
+
+  // Use last page (typically where address appears)
+  const page = pdfState.pages[pdfState.pages.length - 1];
+  const startY = 100;
+  const spacing = 30;
+
+  Object.entries(fields).forEach(([label, value], i) => {
+    pdfState.overlays.push({
+      page: page.pageNum,
+      x: 50,
+      y: startY + (i * spacing),
+      text: `${label}: ${value}`,
+      size: 12,
+      pageWidth: page.viewport.width,
+      pageHeight: page.viewport.height
+    });
+  });
+
+  rerenderOverlays();
+  toast(`✅ ${Object.keys(fields).length} campos adicionados ao PDF`);
 }
 
 // =============================================================================
