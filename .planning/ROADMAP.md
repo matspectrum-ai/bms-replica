@@ -9,7 +9,7 @@ Clone funcional 100% do front-end de gestão empresarial brasileira (https://lab
 ## Phases
 
 - [x] **Phase 1: Reconnaissance & Extraction** — Extrair e documentar sistematicamente DOM, APIs, estado, rotas e lógica de negócio do sistema original (completed 2026-06-27)
-- [ ] **Phase 2: Foundation** — Infraestrutura completa: router SPA, persistência localStorage, widgets reutilizáveis, utilitários, layout, tema e proxy CORS
+- [x] **Phase 2: Foundation** — Infraestrutura completa: router SPA, persistência localStorage, widgets reutilizáveis, utilitários, layout, tema e proxy CORS (completed 2026-06-27)
 - [ ] **Phase 3: Views & Integrations** — Todas as 8 rotas com integrações de API: Dashboard, Etapa 1-3, Banco, Planilha, Configurações, Ajuda
 - [ ] **Phase 4: Validation** — Validação de paridade: A/B testing, compatibilidade de storage, responsividade, bundle size
 - [ ] **Phase 5: Rebrand Foundation** — Nova identidade visual estrutural: paleta, tipografia, layout Header+Mega Menu, ícones, nome/logotipo
@@ -62,11 +62,12 @@ Plans:
 **Plans**: 5 plans in 2 waves
 
 Plans:
-- [ ] 02-01-PLAN.md — Project Scaffold & Entry Point: directory structure, index.html static shell, main.js entry with all imports + window exposure, Tailwind CDN config, _redirects, .gitignore
-- [ ] 02-02-PLAN.md — Stores & Persistence: localStorage DataStore (getDB/saveDB/getSettings/saveSettings), formatting utilities (fmtCNPJ/fmtMoney/fmtDate/formatBRPhone/calcAnos), string utils (onlyDigits/slugify/escapeHTML), header status + clipboard
-- [ ] 02-03-PLAN.md — Router & Layout: SPA router (go/ROUTES/VIEWS/toggleSidebar), 8 view stubs (placeholder HTML for all routes), complete navigation system
-- [ ] 02-04-PLAN.md — Widgets & UI Components: toast/modal/statCard/quickCard/stepBox/pill factory functions, clipboard copy with toast feedback
-- [ ] 02-05-PLAN.md — CSS Design System & CORS Proxy: 12 CSS files (theme/components/buttons/icon-cube/navigation/pills/inputs/steps/layout/misc/animations/responsive), instalarProxy() fetch monkey-patch
+
+- [x] 02-01-PLAN.md — Project Scaffold & Entry Point: directory structure, index.html static shell, main.js entry with all imports + window exposure, Tailwind CDN config, _redirects, .gitignore
+- [x] 02-02-PLAN.md — Stores & Persistence: localStorage DataStore (getDB/saveDB/getSettings/saveSettings), formatting utilities (fmtCNPJ/fmtMoney/fmtDate/formatBRPhone/calcAnos), string utils (onlyDigits/slugify/escapeHTML), header status + clipboard
+- [x] 02-03-PLAN.md — Router & Layout: SPA router (go/ROUTES/VIEWS/toggleSidebar), 8 view stubs (placeholder HTML for all routes), complete navigation system
+- [x] 02-04-PLAN.md — Widgets & UI Components: toast/modal/statCard/quickCard/stepBox/pill factory functions, clipboard copy with toast feedback
+- [x] 02-05-PLAN.md — CSS Design System & CORS Proxy: 12 CSS files (theme/components/buttons/icon-cube/navigation/pills/inputs/steps/layout/misc/animations/responsive), instalarProxy() fetch monkey-patch
 
 **UI hint**: yes
 
@@ -147,7 +148,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Reconnaissance & Extraction | 5/5 | Complete   | 2026-06-27 |
-| 2. Foundation | 0/5 | Planned | - |
+| 2. Foundation | 5/5 | Complete   | 2026-06-27 |
 | 3. Views & Integrations | 0/0 | Not started | - |
 | 4. Validation | 0/0 | Not started | - |
 | 5. Rebrand Foundation | 0/0 | Not started | - |

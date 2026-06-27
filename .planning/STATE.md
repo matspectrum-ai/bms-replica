@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 01-reconnaissance-extraction-04-PLAN.md
-last_updated: "2026-06-27T06:24:46.873Z"
-last_activity: 2026-06-27 -- Phase 01 execution started
+status: verifying
+stopped_at: Completed 02-foundation-05-PLAN.md
+last_updated: "2026-06-27T07:13:45.653Z"
+last_activity: 2026-06-27 -- Phase 02 execution started
 progress:
   total_phases: 6
-  completed_phases: 1
-  total_plans: 5
-  completed_plans: 5
-  percent: 17
+  completed_phases: 2
+  total_plans: 10
+  completed_plans: 10
+  percent: 33
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-27)
 
 **Core value:** Réplica funcional exata da plataforma de gestão empresarial, com comportamento idêntico ao original, mas com identidade visual totalmente renovada.
-**Current focus:** Phase 01 — Reconnaissance & Extraction
+**Current focus:** Phase 02 — Foundation
 
 ## Current Position
 
-Phase: 01 (Reconnaissance & Extraction) — EXECUTING
+Phase: 02 (Foundation) — EXECUTING
 Plan: 5 of 5
-Status: Ready to execute
-Last activity: 2026-06-27 -- Phase 01 execution started
+Status: Phase complete — ready for verification
+Last activity: 2026-06-27 -- Phase 02 execution started
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -50,6 +50,10 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01-reconnaissance-extraction P02 | 4 min | 3 tasks | 941 files |
 | Phase 01-reconnaissance-extraction P04 | 5 min | 3 tasks | 1 files |
 | Phase 01-reconnaissance-extraction P05 | 15 min | 2 tasks | 1 files |
+| Phase 02-foundation P01 | 4 min | 3 tasks | 4 files |
+| Phase 02-foundation P05 | 3 min | 3 tasks | 13 files |
+| Phase 02 P04 | 3 min | 2 tasks | 6 files |
+| Phase 02-foundation P02 | 6min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -71,6 +75,15 @@ Key decisions logged in PROJECT.md Key Decisions table. Summary of decisions aff
 - [Phase 01-reconnaissance-extraction]: No standalone .stat-card or .quick-card CSS classes — composed from .glass + Tailwind utilities + inline styles
 - [Phase ?]: D-01 layer order enforced: RECON.md organized as DOM→APIs→State→Routes→Logic→CSS per locked decision
 - [Phase ?]: Cross-reference appendix uses detailed per-view tables with 6 columns for developer usability
+- [Phase ?]: Tailwind CDN pinned to 3.4.0 — Prevents silent version drift
+- [Phase ?]: autoConectarTokens() intentionally omitted — original hardcodes credentials; clone uses empty settings defaults — Security improvement — the original hardcodes API credentials belonging to the original author
+- [Phase ?]: initDashboard (not initDasboard) — corrected RESEARCH.md typo in view init function names — Plan specification uses correct spelling; RESEARCH.md example had typo
+- [Phase 02-foundation]: Preserved hardcoded hex values in component CSS — did NOT convert to var() references (RECON.md Pitfall 5)
+- [Phase 02-foundation]: Split single inline <style> block into 12 separate CSS files organized by component family
+- [Phase 02-foundation]: instalarProxy() rewrites 3 URL prefixes using string-prefix matching per original RECON.md pattern
+- [Phase ?]: Toast uses module-level _tt for timer management — Cleaner ES module scoping while preserving original single-slot behavior. Module-private variable not exported.
+- [Phase ?]: Pill widget extracted as standalone factory — Not a discrete function in original but .pill pattern used extensively across all views — reusable widget avoids Phase 03 duplication.
+- [Phase ?]: Backdrop-click handled by index.html inline onclick — Matches original architecture — event.target===this check prevents modal body clicks from closing.
 
 ### Pending Todos
 
@@ -85,6 +98,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-27T06:24:38.461Z
-Stopped at: Completed 01-reconnaissance-extraction-04-PLAN.md
+Last session: 2026-06-27T07:13:45.628Z
+Stopped at: Completed 02-foundation-05-PLAN.md
 Resume file: None

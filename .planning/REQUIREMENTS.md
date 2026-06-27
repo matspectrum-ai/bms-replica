@@ -17,15 +17,15 @@ Requisitos para clone fiel 100% do original. Sem alterações visuais na v1.
 
 ### Infraestrutura (CORE)
 
-- [ ] **CORE-01**: SPA Router vanilla JS com 8 rotas, hash-free, title dinâmico e active nav-link
-- [ ] **CORE-02**: Sidebar Navigation com 3 categorias, data-route, colapso mobile em 1024px
-- [ ] **CORE-03**: localStorage Persistence com chaves `lab_bms_db_v1` e `lab_bms_settings_v1`, JSON com fallback defaults
-- [ ] **CORE-04**: Sticky Header com blur, título dinâmico, pills de status API (Cloudflare/SMS24h OK/Danger)
-- [ ] **CORE-05**: Toast Notification System — bottom-center, emoji icon, auto-dismiss 3s
-- [ ] **CORE-06**: Generic Modal System — overlay, HTML content, background click close
-- [ ] **CORE-07**: Clipboard Copy Utility com feedback toast
-- [ ] **CORE-08**: Data Formatting Utilities (fmtCNPJ, fmtMoney, fmtDate, formatBRPhone, slugify, escapeHTML)
-- [ ] **CORE-09**: CORS Proxy / API Mock Layer para desenvolvimento offline
+- [x] **CORE-01**: SPA Router vanilla JS com 8 rotas, hash-free, title dinâmico e active nav-link
+- [x] **CORE-02**: Sidebar Navigation com 3 categorias, data-route, colapso mobile em 1024px
+- [x] **CORE-03**: localStorage Persistence com chaves `lab_bms_db_v1` e `lab_bms_settings_v1`, JSON com fallback defaults
+- [x] **CORE-04**: Sticky Header com blur, título dinâmico, pills de status API (Cloudflare/SMS24h OK/Danger)
+- [x] **CORE-05**: Toast Notification System — bottom-center, emoji icon, auto-dismiss 3s
+- [x] **CORE-06**: Generic Modal System — overlay, HTML content, background click close
+- [x] **CORE-07**: Clipboard Copy Utility com feedback toast
+- [x] **CORE-08**: Data Formatting Utilities (fmtCNPJ, fmtMoney, fmtDate, formatBRPhone, slugify, escapeHTML)
+- [x] **CORE-09**: CORS Proxy / API Mock Layer para desenvolvimento offline
 
 ### Dashboard (DASH)
 
@@ -81,11 +81,11 @@ Requisitos para clone fiel 100% do original. Sem alterações visuais na v1.
 
 ### Responsividade e Tema (UI)
 
-- [ ] **UI-01**: Responsive Design com breakpoint 1024px (sidebar collapse, overlay backdrop)
-- [ ] **UI-02**: Dark Theme + Glassmorphism via CSS custom properties
-- [ ] **UI-03**: 3D Button System com 8 variantes de cor
-- [ ] **UI-04**: Icon Cube Design System com 5 variantes de cor
-- [ ] **UI-05**: Componentes reutilizáveis (statCard, quickCard, stepBox)
+- [x] **UI-01**: Responsive Design com breakpoint 1024px (sidebar collapse, overlay backdrop)
+- [x] **UI-02**: Dark Theme + Glassmorphism via CSS custom properties
+- [x] **UI-03**: 3D Button System com 8 variantes de cor
+- [x] **UI-04**: Icon Cube Design System com 5 variantes de cor
+- [x] **UI-05**: Componentes reutilizáveis (statCard, quickCard, stepBox)
 
 ### Validação (VAL)
 
@@ -133,15 +133,15 @@ Requisitos para o rebranding e nova identidade visual.
 | RECON-03 | Phase 1 — Reconnaissance & Extraction | Complete |
 | RECON-04 | Phase 1 — Reconnaissance & Extraction | Complete |
 | RECON-05 | Phase 1 — Reconnaissance & Extraction | Complete |
-| CORE-01 | Phase 2 — Foundation | Pending |
-| CORE-02 | Phase 2 — Foundation | Pending |
-| CORE-03 | Phase 2 — Foundation | Pending |
-| CORE-04 | Phase 2 — Foundation | Pending |
-| CORE-05 | Phase 2 — Foundation | Pending |
-| CORE-06 | Phase 2 — Foundation | Pending |
-| CORE-07 | Phase 2 — Foundation | Pending |
-| CORE-08 | Phase 2 — Foundation | Pending |
-| CORE-09 | Phase 2 — Foundation | Pending |
+| CORE-01 | Phase 2 — Foundation | Complete |
+| CORE-02 | Phase 2 — Foundation | Complete |
+| CORE-03 | Phase 2 — Foundation | Complete |
+| CORE-04 | Phase 2 — Foundation | Complete |
+| CORE-05 | Phase 2 — Foundation | Complete |
+| CORE-06 | Phase 2 — Foundation | Complete |
+| CORE-07 | Phase 2 — Foundation | Complete |
+| CORE-08 | Phase 2 — Foundation | Complete |
+| CORE-09 | Phase 2 — Foundation | Complete |
 | DASH-01 | Phase 3 — Views & Integrations | Pending |
 | DASH-02 | Phase 3 — Views & Integrations | Pending |
 | DASH-03 | Phase 3 — Views & Integrations | Pending |
@@ -170,11 +170,11 @@ Requisitos para o rebranding e nova identidade visual.
 | CONF-02 | Phase 3 — Views & Integrations | Pending |
 | CONF-03 | Phase 3 — Views & Integrations | Pending |
 | AJUD-01 | Phase 3 — Views & Integrations | Pending |
-| UI-01 | Phase 2 — Foundation | Pending |
-| UI-02 | Phase 2 — Foundation | Pending |
-| UI-03 | Phase 2 — Foundation | Pending |
-| UI-04 | Phase 2 — Foundation | Pending |
-| UI-05 | Phase 2 — Foundation | Pending |
+| UI-01 | Phase 2 — Foundation | Complete |
+| UI-02 | Phase 2 — Foundation | Complete |
+| UI-03 | Phase 2 — Foundation | Complete |
+| UI-04 | Phase 2 — Foundation | Complete |
+| UI-05 | Phase 2 — Foundation | Complete |
 | VAL-01 | Phase 4 — Validation | Pending |
 | VAL-02 | Phase 4 — Validation | Pending |
 | VAL-03 | Phase 4 — Validation | Pending |
