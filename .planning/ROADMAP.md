@@ -114,7 +114,11 @@ Plans:
   3. Responsive behavior matches original at all breakpoints: sidebar collapses at 1024px with overlay backdrop, touch targets remain usable on mobile viewports
   4. Production bundle size is ≤180 kB gzipped (≤20% larger than original ~150 kB gzipped baseline)
 
-**Plans**: TBD
+**Plans**: 2 plans in 2 waves
+
+Plans:
+- [ ] 04-01-PLAN.md — Storage & Bundle Size: automated localStorage bidirectional compatibility test suite + gzipped bundle size measurement + validation hub dashboard (VAL-02, VAL-04)
+- [ ] 04-02-PLAN.md — Visual & Responsive: automated view structure comparison for all 8 views + responsive breakpoint tests + structured A/B manual verification checklist (VAL-01, VAL-03)
 
 ### Phase 5: Rebrand Foundation
 
@@ -159,6 +163,6 @@ Plans:
 | 1. Reconnaissance & Extraction | 5/5 | Complete   | 2026-06-27 |
 | 2. Foundation | 5/5 | Complete   | 2026-06-27 |
 | 3. Views & Integrations | 5/5 | Complete   | 2026-06-27 |
-| 4. Validation | 0/0 | Not started | - |
+| 4. Validation | 0/2 | Not started | - |
 | 5. Rebrand Foundation | 0/0 | Not started | - |
 | 6. Rebrand Polish | 0/0 | Not started | - |
