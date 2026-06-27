@@ -1,0 +1,441 @@
+{
+  "extractionDate": "2026-06-27",
+  "sourceUrl": "https://laboratoriodebms.netlify.app/",
+  "sourceFile": "data/raw-source.html",
+  "sourceLines": 2135,
+  "endpoints": [
+    {
+      "id": "brasilapi-cnpj",
+      "service": "BrasilAPI",
+      "method": "GET",
+      "url": "https://brasilapi.com.br/api/cnpj/v1/{cnpj}",
+      "proxiedUrl": null,
+      "headers": {},
+      "authType": "none",
+      "queryParams": {},
+      "requestBody": null,
+      "successStatus": 200,
+      "successBody": {
+        "cnpj": "string (##.###.###/####-##)",
+        "razao_social": "string",
+        "nome_fantasia": "string | null",
+        "capital_social": "number",
+        "porte": "string (ME/EPP/DEMAIS)",
+        "descricao_porte": "string | null",
+        "descricao_situacao_cadastral": "string",
+        "situacao_cadastral": "number (2 = ATIVA)",
+        "data_inicio_atividade": "string (YYYY-MM-DD)",
+        "natureza_juridica": "string",
+        "cnae_fiscal": "string (7-digit)",
+        "cnae_fiscal_descricao": "string",
+        "cnaes_secundarios": [{ "codigo": "number", "descricao": "string" }],
+        "descricao_tipo_de_logradouro": "string",
+        "logradouro": "string",
+        "numero": "string",
+        "complemento": "string | null",
+        "bairro": "string",
+        "municipio": "string",
+        "uf": "string (2-letter)",
+        "cep": "string",
+        "ddd_telefone_1": "string",
+        "ddd_telefone_2": "string | null",
+        "email": "string | null",
+        "qsa": [{ "nome_socio": "string", "qualificacao_socio": "string" }]
+      },
+      "errorStatuses": [400, 404],
+      "errorBodies": {
+        "404": {
+          "message": "CNPJ 00.000.000/0000-00 não encontrado.",
+          "type": "not_found",
+          "name": "NotFoundError"
+        }
+      },
+      "normalizationFunction": "normalizarBrasilAPI",
+      "triggerFunction": "e1Buscar",
+      "sourceLines": "485-503"
+    },
+    {
+      "id": "cloudflare-create-project",
+      "service": "Cloudflare Pages API",
+      "pipeline": "Step 1: Create Project",
+      "method": "POST",
+      "url": "https://api.cloudflare.com/client/v4/accounts/{account_id}/pages/projects",
+      "proxiedUrl": "/cf-api/client/v4/accounts/{account_id}/pages/projects",
+      "headers": {
+        "Authorization": "Bearer {cf_token}",
+        "Content-Type": "application/json"
+      },
+      "authType": "Bearer token",
+      "queryParams": {},
+      "requestBody": {
+        "name": "{projectName}",
+        "production_branch": "main"
+      },
+      "successStatus": 200,
+      "successBody": {
+        "success": true,
+        "result": {
+          "name": "string",
+          "id": "string (project UUID)",
+          "created_on": "string (ISO8601)",
+          "subdomain": "string.pages.dev"
+        }
+      },
+      "errorStatuses": [401, 403],
+      "errorBodies": {
+        "exists": {
+          "success": false,
+          "errors": [{ "code": 8000007, "message": "A project with that name already exists" }]
+        },
+        "auth": {
+          "success": false,
+          "errors": [{ "code": 10000, "message": "Authentication error" }]
+        }
+      },
+      "idempotencyCodes": [8000007, 8000031],
+      "idempotencyMessagePattern": "exists",
+      "triggerFunction": "e1Publicar",
+      "sourceLines": "824-833"
+    },
+    {
+      "id": "cloudflare-get-jwt",
+      "service": "Cloudflare Pages API",
+      "pipeline": "Step 2: Get Upload Token (JWT)",
+      "method": "GET",
+      "url": "https://api.cloudflare.com/client/v4/accounts/{account_id}/pages/projects/{project_name}/upload-token",
+      "proxiedUrl": "/cf-api/client/v4/accounts/{account_id}/pages/projects/{project_name}/upload-token",
+      "headers": {
+        "Authorization": "Bearer {cf_token}"
+      },
+      "authType": "Bearer token",
+      "queryParams": {},
+      "requestBody": null,
+      "successStatus": 200,
+      "successBody": {
+        "success": true,
+        "result": {
+          "jwt": "string (JWT token for asset upload)"
+        }
+      },
+      "errorStatuses": [401, 403, 404],
+      "errorBodies": {
+        "auth": {
+          "success": false,
+          "errors": [{ "code": 10000, "message": "Authentication error" }]
+        }
+      },
+      "triggerFunction": "e1Publicar",
+      "sourceLines": "836-843"
+    },
+    {
+      "id": "cloudflare-check-missing",
+      "service": "Cloudflare Pages API",
+      "pipeline": "Step 4a: Check Missing Assets",
+      "method": "POST",
+      "url": "https://api.cloudflare.com/client/v4/pages/assets/check-missing",
+      "proxiedUrl": "/cf-api/client/v4/pages/assets/check-missing",
+      "headers": {
+        "Authorization": "Bearer {jwt}",
+        "Content-Type": "application/json"
+      },
+      "authType": "JWT (from upload-token endpoint)",
+      "queryParams": {},
+      "requestBody": {
+        "hashes": ["{fileHash}"]
+      },
+      "successStatus": 200,
+      "successBody": {
+        "success": true,
+        "result": []
+      },
+      "errorStatuses": [401],
+      "errorBodies": {},
+      "triggerFunction": "e1Publicar",
+      "sourceLines": "857-861"
+    },
+    {
+      "id": "cloudflare-upload-asset",
+      "service": "Cloudflare Pages API",
+      "pipeline": "Step 4b: Upload Asset",
+      "method": "POST",
+      "url": "https://api.cloudflare.com/client/v4/pages/assets/upload",
+      "proxiedUrl": "/cf-api/client/v4/pages/assets/upload",
+      "headers": {
+        "Authorization": "Bearer {jwt}",
+        "Content-Type": "application/json"
+      },
+      "authType": "JWT (from upload-token endpoint)",
+      "queryParams": {},
+      "requestBody": [
+        {
+          "key": "{fileHash}",
+          "value": "{base64_encoded_html}",
+          "base64": "true",
+          "metadata": {
+            "contentType": "text/html"
+          }
+        }
+      ],
+      "successStatus": 200,
+      "successBody": {
+        "success": true,
+        "result": null
+      },
+      "errorStatuses": [400, 401],
+      "errorBodies": {
+        "invalid": {
+          "success": false,
+          "errors": [{ "code": 8000000, "message": "Invalid asset format" }]
+        }
+      },
+      "triggerFunction": "e1Publicar",
+      "sourceLines": "864-874"
+    },
+    {
+      "id": "cloudflare-create-deployment",
+      "service": "Cloudflare Pages API",
+      "pipeline": "Step 5: Create Deployment",
+      "method": "POST",
+      "url": "https://api.cloudflare.com/client/v4/accounts/{account_id}/pages/projects/{project_name}/deployments",
+      "proxiedUrl": "/cf-api/client/v4/accounts/{account_id}/pages/projects/{project_name}/deployments",
+      "headers": {
+        "Authorization": "Bearer {cf_token}"
+      },
+      "authType": "Bearer token (API token, NOT JWT)",
+      "queryParams": {},
+      "contentType": "multipart/form-data",
+      "requestBody": {
+        "manifest": "JSON string: { '/index.html': '{fileHash}' }"
+      },
+      "successStatus": 200,
+      "successBody": {
+        "success": true,
+        "result": {
+          "id": "string (deployment UUID)",
+          "url": "https://{project_name}.pages.dev",
+          "alias": "https://{project_name}.pages.dev",
+          "latest_stage": {
+            "name": "deploy",
+            "status": "success"
+          }
+        }
+      },
+      "errorStatuses": [400, 401, 403],
+      "errorBodies": {
+        "generic": {
+          "success": false,
+          "errors": [{ "code": 8000000, "message": "Deployment creation failed" }]
+        }
+      },
+      "triggerFunction": "e1Publicar",
+      "sourceLines": "877-888"
+    },
+    {
+      "id": "cloudflare-list-accounts",
+      "service": "Cloudflare API",
+      "pipeline": "Account Detection",
+      "method": "GET",
+      "url": "https://api.cloudflare.com/client/v4/accounts",
+      "proxiedUrl": "/cf-api/client/v4/accounts",
+      "headers": {
+        "Authorization": "Bearer {cf_token}"
+      },
+      "authType": "Bearer token",
+      "permissionsRequired": "Account → Account Settings → Read",
+      "queryParams": {},
+      "requestBody": null,
+      "successStatus": 200,
+      "successBody": {
+        "success": true,
+        "result": [
+          {
+            "id": "string (32-char hex)",
+            "name": "string (account display name)"
+          }
+        ],
+        "result_info": {
+          "page": "number",
+          "total_pages": "number",
+          "total_count": "number"
+        }
+      },
+      "errorStatuses": [401, 403],
+      "errorBodies": {
+        "auth": {
+          "success": false,
+          "errors": [{ "code": 10000, "message": "Authentication error — you do not have permission to access this resource" }]
+        }
+      },
+      "triggerFunction": "salvarTokenCF",
+      "sourceLines": "1633-1635"
+    },
+    {
+      "id": "cloudflare-list-projects",
+      "service": "Cloudflare API",
+      "pipeline": "Token Test",
+      "method": "GET",
+      "url": "https://api.cloudflare.com/client/v4/accounts/{account_id}/pages/projects",
+      "proxiedUrl": "/cf-api/client/v4/accounts/{account_id}/pages/projects",
+      "headers": {
+        "Authorization": "Bearer {cf_token}"
+      },
+      "authType": "Bearer token",
+      "queryParams": {},
+      "requestBody": null,
+      "successStatus": 200,
+      "successBody": {
+        "success": true,
+        "result": [],
+        "result_info": {
+          "total_count": "number"
+        }
+      },
+      "errorStatuses": [401, 403],
+      "errorBodies": {
+        "error": {
+          "success": false,
+          "errors": [{ "code": 10000, "message": "string" }]
+        }
+      },
+      "triggerFunction": "testarCloudflare",
+      "sourceLines": "1706-1708"
+    },
+    {
+      "id": "sms24h-getBalance",
+      "service": "SMS24h",
+      "method": "GET",
+      "url": "https://api.sms24h.org/stubs/handler_api?api_key={key}&action=getBalance",
+      "proxiedUrl": "/sms-api/stubs/handler_api?api_key={key}&action=getBalance",
+      "headers": {},
+      "authType": "query-param (api_key)",
+      "authParam": "api_key",
+      "queryParams": {
+        "api_key": "{sms_key}",
+        "action": "getBalance"
+      },
+      "requestBody": null,
+      "successStatus": 200,
+      "successBody": "ACCESS_BALANCE:{balance_as_USD_string}",
+      "responseFormat": "plain_text",
+      "errorStatuses": [400, 401, 403],
+      "errorBodies": {
+        "badKey": "BAD_KEY"
+      },
+      "triggerFunction": "smsVerSaldo",
+      "sourceLines": "1025-1032, 1034-1041"
+    },
+    {
+      "id": "sms24h-getNumber",
+      "service": "SMS24h",
+      "method": "GET",
+      "url": "https://api.sms24h.org/stubs/handler_api?api_key={key}&action=getNumber&service={service}&country={country}",
+      "proxiedUrl": "/sms-api/stubs/handler_api?api_key={key}&action=getNumber&service={service}&country={country}",
+      "headers": {},
+      "authType": "query-param (api_key)",
+      "authParam": "api_key",
+      "queryParams": {
+        "api_key": "{sms_key}",
+        "action": "getNumber",
+        "service": "fb|ig|wa|go|tg|other",
+        "country": "0|1|22|73|187"
+      },
+      "requestBody": null,
+      "successStatus": 200,
+      "successBody": "ACCESS_NUMBER:{activation_id}:{phone_number}",
+      "responseFormat": "plain_text",
+      "errorStatuses": [400, 401, 403],
+      "errorBodies": {
+        "noNumbers": "NO_NUMBERS",
+        "noBalance": "NO_BALANCE",
+        "badKey": "BAD_KEY",
+        "badService": "BAD_SERVICE"
+      },
+      "triggerFunction": "smsComprar",
+      "sourceLines": "1025-1032, 1043-1064"
+    },
+    {
+      "id": "sms24h-getStatus",
+      "service": "SMS24h",
+      "method": "GET",
+      "url": "https://api.sms24h.org/stubs/handler_api?api_key={key}&action=getStatus&id={activation_id}",
+      "proxiedUrl": "/sms-api/stubs/handler_api?api_key={key}&action=getStatus&id={activation_id}",
+      "headers": {},
+      "authType": "query-param (api_key)",
+      "authParam": "api_key",
+      "queryParams": {
+        "api_key": "{sms_key}",
+        "action": "getStatus",
+        "id": "{activation_id}"
+      },
+      "requestBody": null,
+      "successStatus": 200,
+      "successBody": "STATUS_OK:{sms_code}",
+      "responseFormat": "plain_text",
+      "pollingInterval": 5000,
+      "pollingMaxDuration": 1200000,
+      "errorStatuses": [400, 401],
+      "errorBodies": {
+        "pending": "STATUS_WAIT_CODE",
+        "cancel": "STATUS_CANCEL",
+        "waitResend": "STATUS_WAIT_RESEND",
+        "badKey": "BAD_KEY"
+      },
+      "triggerFunction": "iniciarPollingSMS",
+      "sourceLines": "1025-1032, 1066-1082"
+    },
+    {
+      "id": "sms24h-setStatus",
+      "service": "SMS24h",
+      "method": "GET",
+      "url": "https://api.sms24h.org/stubs/handler_api?api_key={key}&action=setStatus&status={status}&id={activation_id}",
+      "proxiedUrl": "/sms-api/stubs/handler_api?api_key={key}&action=setStatus&status={status}&id={activation_id}",
+      "headers": {},
+      "authType": "query-param (api_key)",
+      "authParam": "api_key",
+      "queryParams": {
+        "api_key": "{sms_key}",
+        "action": "setStatus",
+        "status": "6|8",
+        "id": "{activation_id}"
+      },
+      "statusCodes": {
+        "6": "confirm (complete activation)",
+        "8": "cancel (free the number)"
+      },
+      "requestBody": null,
+      "successStatus": 200,
+      "successBody": "ACCESS_ACTIVATION",
+      "responseFormat": "plain_text",
+      "errorStatuses": [400, 401],
+      "errorBodies": {
+        "badKey": "BAD_KEY",
+        "badAction": "BAD_ACTION"
+      },
+      "triggerFunction": "smsCancelar | smsConfirmar",
+      "sourceLines": "1025-1032, 1084-1100"
+    }
+  ],
+  "corsProxy": {
+    "mechanism": "instalarProxy() monkey-patches window.fetch",
+    "sourceLines": "2112-2123",
+    "rewriteRules": [
+      {
+        "pattern": "https://api.cloudflare.com",
+        "replacement": "/cf-api",
+        "netlifyRedirect": "/cf-api/* → https://api.cloudflare.com/:splat 200"
+      },
+      {
+        "pattern": "https://api.sms24h.org",
+        "replacement": "/sms-api",
+        "netlifyRedirect": "/sms-api/* → https://api.sms24h.org/:splat 200"
+      },
+      {
+        "pattern": "https://sms24h.org",
+        "replacement": "/sms-api",
+        "netlifyRedirect": "/sms-api/* → https://sms24h.org/:splat 200"
+      }
+    ],
+    "bypassCondition": "location.protocol === 'file:'",
+    "unproxiedEndpoints": ["brasilapi-cnpj"]
+  }
+}

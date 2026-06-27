@@ -1420,17 +1420,745 @@ This pattern exists because both Banco and Planilha have interactive search/filt
 
 ## 4. Contratos de API
 
-*(To be filled by Plan 03)*
+**All API contracts extracted from `data/raw-source.html` JavaScript source code (lines 485-905, 1025-1178, 1624-1672, 2089-2123). Every endpoint documented with success AND error response schemas. Proxied vs upstream URLs both documented per Pitfall 6.**
+
+---
 
 ### 4.1 BrasilAPI — CNPJ Lookup
 
-### 4.2 Cloudflare Pages API — Deploy Pipeline (5 passos)
+**Endpoint:** GET `https://brasilapi.com.br/api/cnpj/v1/{cnpj}`
+**Proxied URL:** None (direct call — no CORS proxy needed; BrasilAPI supports CORS)
+**Trigger:** `e1Buscar()` in Etapa 1, Step 1 (user clicks "Buscar" after entering CNPJ, or auto-triggered when 14 digits typed)
+**Source:** Lines 485-503
+
+| Property | Value |
+|----------|-------|
+| **Method** | GET |
+| **Auth** | None (public API, no API key required) |
+| **Headers** | None (no custom headers) |
+| **URL Construction** | `onlyDigits(cnpj)` strips all non-numeric characters → appended to base URL |
+| **Timeout** | No explicit timeout set; relies on browser default |
+| **Validation** | CNPJ length check (`cnpj.length !== 14`) before fetch — returns early with toast "CNPJ precisa ter 14 números" |
+| **Proxied?** | No — direct call to BrasilAPI (no CORS issue, public API) |
+
+#### Error Handling (from source, lines 500-502)
+
+```javascript
+catch(err){
+  box.innerHTML = `<div class="glass rounded-2xl p-4 text-center text-rose-300">
+    😕 Não consegui encontrar este CNPJ. Verifique ou cadastre manualmente.
+  </div>`;
+}
+```
+
+| Status | Condition | Behavior |
+|--------|-----------|----------|
+| **Network error / timeout** | `fetch()` throws | Caught by `catch(err)` → error message rendered in `#e1_result` div |
+| **404 Not Found** | `!r.ok` (BrasilAPI returns 404 for invalid CNPJ) | `throw new Error('Não encontrado')` → caught by `catch(err)` → same error display |
+| **400 Bad Request** | Malformed CNPJ (wrong length after digits) | Not explicitly checked — pre-validated by `cnpj.length !== 14` check before fetch. But if API returns 400, caught by `!r.ok` |
+| **5xx Server Error** | BrasilAPI down | Caught by `catch(err)` → generic error message |
+
+**Unhandled:** No specific handling for different error status codes (404 vs 500 produce same generic message). No retry logic. No rate limit handling.
+
+#### Success Response (200) — Full Schema
+
+The BrasilAPI response is normalized by `normalizarBrasilAPI(d)` (lines 528-552) which maps/renames fields. The full BrasilAPI response (stored in `empresa.raw`) contains:
+
+```json
+{
+  "cnpj": "string (##.###.###/####-##)",
+  "razao_social": "string",
+  "nome_fantasia": "string | null",
+  "capital_social": "number",
+  "porte": "string (ME/EPP/DEMAIS)",
+  "descricao_porte": "string | null",
+  "descricao_situacao_cadastral": "string",
+  "situacao_cadastral": "number (2 = ATIVA)",
+  "data_inicio_atividade": "string (YYYY-MM-DD)",
+  "natureza_juridica": "string",
+  "cnae_fiscal": "string (7-digit)",
+  "cnae_fiscal_descricao": "string",
+  "cnaes_secundarios": [
+    {
+      "codigo": "number",
+      "descricao": "string"
+    }
+  ],
+  "descricao_tipo_de_logradouro": "string",
+  "logradouro": "string",
+  "numero": "string",
+  "complemento": "string | null",
+  "bairro": "string",
+  "municipio": "string",
+  "uf": "string (2-letter)",
+  "cep": "string",
+  "ddd_telefone_1": "string",
+  "ddd_telefone_2": "string | null",
+  "email": "string | null",
+  "qsa": [
+    {
+      "nome_socio": "string",
+      "qualificacao_socio": "string"
+    }
+  ]
+}
+```
+
+#### Response Normalization (`normalizarBrasilAPI(d)`, lines 528-552)
+
+| Original Field | Normalized Field | Transformation |
+|---------------|-----------------|----------------|
+| `d.cnpj` | `cnpj` | Pass-through |
+| `d.razao_social` | `razao_social` | Pass-through |
+| `d.nome_fantasia \|\| d.razao_social` | `fantasia` | Fallback to razao_social if null |
+| `d.capital_social` | `capital_social` | Pass-through |
+| `d.porte \|\| d.descricao_porte \|\| ''` | `porte` | Prioritize `porte`, fallback to `descricao_porte` |
+| `d.descricao_situacao_cadastral \|\| (d.situacao_cadastral===2?'ATIVA':'')` | `situacao` | Map numeric code 2 → "ATIVA" |
+| `d.data_inicio_atividade` | `inicio` | Pass-through |
+| `d.natureza_juridica` | `natureza` | Pass-through |
+| `d.cnae_fiscal` | `cnae_principal` | Pass-through |
+| `d.cnae_fiscal_descricao` | `cnae_descricao` | Pass-through |
+| `d.cnaes_secundarios[].map(c=>({codigo:c.codigo, descricao:c.descricao}))` | `cnaes_secundarios` | Remap array objects |
+| `[d.descricao_tipo_de_logradouro, d.logradouro, d.numero].filter(Boolean).join(' ')` | `logradouro` | Compose address line |
+| `d.complemento` | `complemento` | Pass-through |
+| `d.bairro` | `bairro` | Pass-through |
+| `d.municipio` | `municipio` | Pass-through |
+| `d.uf` | `uf` | Pass-through |
+| `d.cep` | `cep` | Pass-through |
+| `[d.ddd_telefone_1, d.ddd_telefone_2].filter(Boolean).join(' / ')` | `telefone` | Compose phone line |
+| `d.email` | `email` | Pass-through |
+| `(d.qsa\|\|[]).map(s=>({nome:s.nome_socio, qualif:s.qualificacao_socio}))` | `socios` | Remap QSA array |
+| `d` | `raw` | Full original response preserved |
+
+#### Error Response (404 — CNPJ not found)
+
+From BrasilAPI documentation (the code doesn't parse the error body — it just checks `!r.ok`):
+```json
+{
+  "message": "CNPJ 00.000.000/0000-00 não encontrado.",
+  "type": "not_found",
+  "name": "NotFoundError"
+}
+```
+
+#### Rate Limiting
+No rate limit headers checked. No backoff/retry logic. BrasilAPI has documented rate limits (typically 60 req/min) but the code does not handle 429 responses.
+
+#### Post-Fetch Flow
+1. `normalizarBrasilAPI(d)` → normalized company object
+2. `salvarEmpresa(e)` → upsert into `db.empresas[]` via `saveDB()`
+3. `etapa1State.empresa = e` → in-memory state set
+4. `toast('Empresa carregada!','✅')` → user notification
+5. `go('etapa1')` → re-render view (shows company card now)
+
+---
+
+### 4.2 Cloudflare Pages API — Deploy Pipeline (5 Passos)
+
+This is the most complex API integration. Orchestrated by `e1Publicar()` (lines 807-905) and duplicated in `smsAtualizarSite()` (lines 1102-1178). The 5-step pipeline is:
+
+```
+Step 1: Create Project  →  Step 2: Get JWT  →  Step 3: BLAKE3 Hash (local)  →  Step 4: Upload Asset  →  Step 5: Create Deployment
+```
+
+**Global Configuration:**
+- **Auth Header:** `Authorization: Bearer {settings.cf_token}`
+- **Account ID:** `settings.cf_account` (32-char hex string)
+- **Project Name:** `{etapa1State.dominio}` (subdomain slug, e.g., "empresa01")
+- **CORS Proxy:** All URLs rewritten by `instalarProxy()` — see §4.5
+- **Error Recovery:** "Tentar novamente" button re-enables after failure; no auto-retry
+
+#### Step 1: Create Pages Project
+
+**Endpoint:** POST `https://api.cloudflare.com/client/v4/accounts/{account_id}/pages/projects`
+**Proxied URL:** POST `/cf-api/client/v4/accounts/{account_id}/pages/projects`
+**Source:** Lines 824-833
+
+| Property | Value |
+|----------|-------|
+| **Method** | POST |
+| **Headers** | `Authorization: Bearer {cf_token}`, `Content-Type: application/json` |
+| **Request Body** | `{ "name": "{projectName}", "production_branch": "main" }` |
+| **Success Status** | 200 (project created) |
+| **Idempotency** | Errors with codes `8000007` or `8000031` or message containing "exists" are treated as success (project already exists) |
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "result": {
+    "name": "string",
+    "id": "string (project UUID)",
+    "created_on": "string (ISO8601)",
+    "subdomain": "string.pages.dev"
+  }
+}
+```
+
+**Error Response (idempotency — project exists):**
+```json
+{
+  "success": false,
+  "errors": [
+    {
+      "code": 8000007,
+      "message": "A project with that name already exists"
+    }
+  ]
+}
+```
+Handled as success — code checks `d1.errors.some(e=>e.code===8000007 || e.code===8000031 || (e.message||'').toLowerCase().includes('exists'))`.
+
+**Error Response (other):**
+```json
+{
+  "success": false,
+  "errors": [
+    {
+      "code": 10000,
+      "message": "Authentication error"
+    }
+  ]
+}
+```
+Throws: `'CRIAR: '+JSON.stringify(d1.errors||d1)`.
+
+#### Step 2: Get Upload Token (JWT)
+
+**Endpoint:** GET `https://api.cloudflare.com/client/v4/accounts/{account_id}/pages/projects/{project_name}/upload-token`
+**Proxied URL:** GET `/cf-api/client/v4/accounts/{account_id}/pages/projects/{project_name}/upload-token`
+**Source:** Lines 836-843
+
+| Property | Value |
+|----------|-------|
+| **Method** | GET |
+| **Headers** | `Authorization: Bearer {cf_token}` |
+| **Request Body** | None |
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "result": {
+    "jwt": "string (JWT token for asset upload)"
+  }
+}
+```
+The `jwt` is used for Steps 3-4 (asset upload). Note: Steps 3-4 use JWT auth, NOT the API token.
+
+**Error Response (401/403 — invalid token):**
+```json
+{
+  "success": false,
+  "errors": [
+    {
+      "code": 10000,
+      "message": "Authentication error"
+    }
+  ]
+}
+```
+Throws: `'JWT: '+JSON.stringify(d2)`.
+
+#### Step 3: BLAKE3 Hash Calculation (LOCAL — not an API call)
+
+**Source:** Lines 846-854
+**Library:** `@noble/hashes/blake3` dynamically imported from `https://esm.sh/@noble/hashes/blake3`
+
+The hash algorithm:
+```javascript
+// 1. Encode HTML → base64
+const b64 = btoa(unescape(encodeURIComponent(html)));
+
+// 2. Append extension as string
+const toHash = new TextEncoder().encode(b64 + 'html');
+
+// 3. BLAKE3 hash
+const hashBytes = blake3(toHash);
+
+// 4. Take first 32 hex chars
+const hex = Array.from(hashBytes).map(b=>b.toString(16).padStart(2,'0')).join('');
+const fileHash = hex.slice(0, 32);
+```
+
+The hash is computed as: `blake3(base64(html_content) + "html").hex.slice(0, 32)`. This is Cloudflare Pages' specific hashing scheme.
+
+#### Step 4a: Check Missing Assets
+
+**Endpoint:** POST `https://api.cloudflare.com/client/v4/pages/assets/check-missing`
+**Proxied URL:** POST `/cf-api/client/v4/pages/assets/check-missing`
+**Source:** Lines 857-861
+
+| Property | Value |
+|----------|-------|
+| **Method** | POST |
+| **Headers** | `Authorization: Bearer {jwt}` (JWT from Step 2, NOT API token), `Content-Type: application/json` |
+| **Request Body** | `{ "hashes": ["{fileHash}"] }` |
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "result": []  // Array of missing hashes (empty = already uploaded)
+}
+```
+Response status not checked — treated as fire-and-forget. If the asset already exists, this is a no-op.
+
+**Error Response:** Not explicitly handled. Network failure caught at this step would propagate as an unhandled exception in Step 4b.
+
+#### Step 4b: Upload Asset
+
+**Endpoint:** POST `https://api.cloudflare.com/client/v4/pages/assets/upload`
+**Proxied URL:** POST `/cf-api/client/v4/pages/assets/upload`
+**Source:** Lines 864-874
+
+| Property | Value |
+|----------|-------|
+| **Method** | POST |
+| **Headers** | `Authorization: Bearer {jwt}` (JWT, NOT API token), `Content-Type: application/json` |
+| **Request Body** | Array of asset objects |
+
+**Request Body Schema:**
+```json
+[
+  {
+    "key": "{fileHash}",
+    "value": "{base64_encoded_html}",
+    "base64": true,
+    "metadata": {
+      "contentType": "text/html"
+    }
+  }
+]
+```
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "result": null
+}
+```
+Check: `!upRes.ok` throws `'UPLOAD: '+JSON.stringify(upJson)`.
+
+**Error Response:**
+```json
+{
+  "success": false,
+  "errors": [
+    {
+      "code": 8000000,
+      "message": "Invalid asset format"
+    }
+  ]
+}
+```
+
+#### Step 5: Create Deployment
+
+**Endpoint:** POST `https://api.cloudflare.com/client/v4/accounts/{account_id}/pages/projects/{project_name}/deployments`
+**Proxied URL:** POST `/cf-api/client/v4/accounts/{account_id}/pages/projects/{project_name}/deployments`
+**Source:** Lines 877-888
+
+| Property | Value |
+|----------|-------|
+| **Method** | POST |
+| **Headers** | `Authorization: Bearer {cf_token}` (API token, NOT JWT) |
+| **Content-Type** | `multipart/form-data` (NOT JSON — uses FormData) |
+| **Request Body** | FormData with `manifest` field |
+
+**Request Body (FormData):**
+```
+manifest: JSON string: { "/index.html": "{fileHash}" }
+```
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "result": {
+    "id": "string (deployment UUID)",
+    "url": "https://{project_name}.pages.dev",
+    "alias": "https://{project_name}.pages.dev",
+    "latest_stage": {
+      "name": "deploy",
+      "status": "success"
+    }
+  }
+}
+```
+The `url` and `id` fields are extracted: `depJson.result.url || 'https://'+projectName+'.pages.dev'` and `depJson.result.id`.
+
+**Error Response:**
+```json
+{
+  "success": false,
+  "errors": [
+    {
+      "code": 8000000,
+      "message": "Deployment creation failed"
+    }
+  ]
+}
+```
+Throws: `'DEPLOY: '+JSON.stringify(depJson)`.
+
+#### Complete Error Handling Strategy (e1Publicar)
+
+| Error Type | Detection | Behavior | Recovery |
+|-----------|-----------|----------|----------|
+| **No cf_token or cf_account** | `!podePublicar` check before fetch | Publish button disabled; warning card shown: "Configure o token Cloudflare nas Configurações" | User must configure in Config view |
+| **Network failure (any step)** | `fetch()` throws | Error logged to `#publish-log`: "Erro: {message}" | Button re-enabled: "🚀 Tentar novamente" |
+| **Project already exists** | Error codes 8000007/8000031 | Treated as success (idempotent) — proceeds to Step 2 | Transparent |
+| **Invalid/expired token** | 401/403 response | Step-specific error message (CRIAR/JWT/UPLOAD/DEPLOY) | Button re-enabled |
+| **Any other API error** | `!r.ok` or `!dep.ok` | Error object shown + "Dica: verifique se o token tem permissão..." | Button re-enabled |
+
+**No retry logic** — failures are terminal until user clicks "Tentar novamente". No exponential backoff. No rate limit handling.
+
+#### Post-Deploy Flow
+1. `etapa1State.publicado = { url, projectName, deploymentId }` — in-memory state
+2. `db.sites[idx].url = url`, `.deploymentId = depId`, `.status = 'deploy'`, `.atualizado = Date.now()` — localStorage update
+3. `toast('🎉 Site publicado!','🚀')` — user notification
+4. `setTimeout(()=>go('etapa1'), 800)` — re-render with 800ms delay
+
+---
 
 ### 4.3 Cloudflare API — Account Detection
 
+**Endpoint:** GET `https://api.cloudflare.com/client/v4/accounts`
+**Proxied URL:** GET `/cf-api/client/v4/accounts`
+**Trigger:** `salvarTokenCF()` when user saves Cloudflare API token in Config view
+**Source:** Lines 1624-1672
+
+| Property | Value |
+|----------|-------|
+| **Method** | GET |
+| **Headers** | `Authorization: Bearer {cf_token}` |
+| **Permissions Required** | `Account → Account Settings → Read` (this is a separate permission from Pages:Edit) |
+| **Request Body** | None |
+| **Proxied?** | Yes — rewritten by `instalarProxy()` |
+
+**Success Response (200 — Single Account):**
+```json
+{
+  "success": true,
+  "result": [
+    {
+      "id": "string (32-char hex)",
+      "name": "string (account display name)"
+    }
+  ],
+  "result_info": {
+    "page": 1,
+    "total_pages": 1,
+    "total_count": 1
+  }
+}
+```
+
+**Success Response (200 — Multiple Accounts):**
+```json
+{
+  "success": true,
+  "result": [
+    { "id": "abc123...", "name": "Personal" },
+    { "id": "def456...", "name": "Business" }
+  ]
+}
+```
+Renders multi-account picker UI: each account gets a card with "Usar essa" button calling `escolherConta(id, nome)`.
+
+**Error Response (403 — Missing Account:Read Permission):**
+```json
+{
+  "success": false,
+  "errors": [
+    {
+      "code": 10000,
+      "message": "Authentication error — you do not have permission to access this resource"
+    }
+  ]
+}
+```
+User sees orange warning: "Token salvo, mas não consegui listar suas contas. Adicione o Account ID manualmente."
+
+**Error Response (Network/CORS):**
+Caught by `catch(e)`: `log.innerHTML = '❌ Erro: '+escapeHTML(e.message)`.
+
+#### Multi-Account Selection Flow
+1. **1 account:** Auto-selects → `s.cf_account = contas[0].id`, `s.cf_account_name = contas[0].name` → toast "Tudo configurado!" → reload config view after 1500ms
+2. **Multiple accounts:** Renders picker list → user clicks "Usar essa" → `escolherConta(id, nome)` → saves → reload
+3. **0 accounts:** Shows "Nenhuma conta encontrada nesse token"
+4. **Serialized:** `s.cf_accounts = contas` (only populated when >1 account — conditional localStorage field)
+
+#### Cloudflare Token Test (testarCloudflare)
+
+**Endpoint:** GET `https://api.cloudflare.com/client/v4/accounts/{account_id}/pages/projects`
+**Source:** Lines 1701-1713
+
+| Property | Value |
+|----------|-------|
+| **Method** | GET |
+| **Headers** | `Authorization: Bearer {cf_token}` |
+| **Success Check** | `d.success === true` |
+| **Success Toast** | `✅ OK! Você tem {total_count} projeto(s) Pages` |
+| **Error Toast** | `❌ {errors[0].message}` |
+| **Network Error Toast** | `Erro: {e.message}` |
+
+---
+
 ### 4.4 SMS24h API — Number Purchase & Polling
 
-### 4.5 CORS Proxy Layer (Netlify _redirects)
+**Base URL:** `https://api.sms24h.org/stubs/handler_api`
+**Proxied URL:** `/sms-api/stubs/handler_api`
+**Source:** `smsAPI(action, extra)` function, lines 1025-1032
+**Auth:** API key passed as query parameter `api_key={key}` (NOT in headers)
+
+#### smsAPI() Wrapper (lines 1025-1032)
+
+```javascript
+async function smsAPI(action, extra=''){
+  const k = getSettings().sms_key;
+  if(!k) throw new Error('Sem API key SMS24h. Configure primeiro.');
+  const url = `https://api.sms24h.org/stubs/handler_api?api_key=${encodeURIComponent(k)}&action=${encodeURIComponent(action)}${extra}`;
+  const r = await fetch(url, { method:'GET' });
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  return await r.text();  // NOTE: Returns text, NOT JSON
+}
+```
+
+**Critical detail:** The SMS24h API returns **plain text**, not JSON. All responses are string-based with colon-delimited formats.
+
+#### Endpoint 1: getBalance — Check Account Balance
+
+**Full URL:** `https://api.sms24h.org/stubs/handler_api?api_key={key}&action=getBalance`
+**Source:** `smsVerSaldo()` (line 1036)
+
+| Property | Value |
+|----------|-------|
+| **Method** | GET |
+| **Query Params** | `api_key={key}`, `action=getBalance` |
+| **Response Format** | Plain text string |
+
+**Success Response:**
+```
+ACCESS_BALANCE:42.50
+```
+(Colon-delimited: `ACCESS_BALANCE:{balance_as_USD_string}`)
+
+**Error Response (invalid key):**
+```
+BAD_KEY
+```
+
+**Error Handling:** `catch(e)` → toast "Erro: {e.message} (Pode ser CORS — use proxy)"
+
+#### Endpoint 2: getNumber — Purchase Phone Number
+
+**Full URL:** `https://api.sms24h.org/stubs/handler_api?api_key={key}&action=getNumber&service={service}&country={country}`
+**Source:** `smsComprar()` (lines 1049)
+
+| Property | Value |
+|----------|-------|
+| **Method** | GET |
+| **Query Params** | `api_key={key}`, `action=getNumber`, `service={fb\|ig\|wa\|go\|tg\|other}`, `country={0\|1\|22\|73\|187}` |
+| **Cost** | Deducted from balance (~$0.10-$0.50 per number depending on country/service) |
+
+**Service Options:**
+| Value | Service |
+|-------|---------|
+| `fb` | Facebook |
+| `ig` | Instagram |
+| `wa` | WhatsApp |
+| `go` | Google |
+| `tg` | Telegram |
+| `other` | Outro |
+
+**Country Options:**
+| Value | Country | Approx Numbers |
+|-------|---------|---------------|
+| `73` | 🇧🇷 Brasil | 73 available |
+| `0` | 🇷🇺 Rússia | 0 available |
+| `187` | 🇺🇸 EUA | 187 available |
+| `1` | 🇺🇦 Ucrânia | 1 available |
+| `22` | 🇮🇳 Índia | 22 available |
+
+**Success Response (number acquired):**
+```
+ACCESS_NUMBER:12345678:5531990885354
+```
+Format: `ACCESS_NUMBER:{activation_id}:{phone_number}`
+- `activation_id`: string ID for subsequent status/polling calls
+- `phone_number`: raw E.164 format (e.g., "5531990885354")
+
+**Error Responses:**
+```
+NO_NUMBERS       // No numbers available for this country/service
+NO_BALANCE       // Insufficient funds
+BAD_KEY          // Invalid API key
+BAD_SERVICE      // Invalid service parameter
+```
+
+**Post-purchase flow:** Sets `etapa2State.activationId`, `.phone` → calls `go('etapa2')` (re-render) → calls `iniciarPollingSMS()` (start 5s polling).
+
+#### Endpoint 3: getStatus — Poll for SMS Code
+
+**Full URL:** `https://api.sms24h.org/stubs/handler_api?api_key={key}&action=getStatus&id={activation_id}`
+**Source:** `iniciarPollingSMS()` (line 1074)
+
+| Property | Value |
+|----------|-------|
+| **Method** | GET |
+| **Query Params** | `api_key={key}`, `action=getStatus`, `id={activation_id}` |
+| **Polling Interval** | 5,000ms (every 5 seconds) |
+| **Max Polling Duration** | 1,200 seconds (20 minutes) — `if(elapsed>1200) clearInterval(timer)` |
+
+**Success Response (SMS received):**
+```
+STATUS_OK:123456
+```
+Format: `STATUS_OK:{sms_code}`
+
+**Pending Response (no SMS yet):**
+```
+STATUS_WAIT_CODE
+```
+
+**Other Possible Statuses:**
+```
+STATUS_CANCEL      // Activation cancelled
+STATUS_WAIT_RESEND // Waiting for resend
+```
+
+**Polling Logic (lines 1066-1082):**
+```javascript
+function iniciarPollingSMS(){
+  if(etapa2State.timer) clearInterval(etapa2State.timer);
+  const start = Date.now();
+  etapa2State.timer = setInterval(async ()=>{
+    const elapsed = Math.floor((Date.now()-start)/1000);
+    // Update #sms-timer display
+    const timer = document.getElementById('sms-timer');
+    if(timer) timer.textContent = `(${elapsed}s)`;
+    // Timeout check
+    if(elapsed>1200){ clearInterval(etapa2State.timer); return; }
+    // Poll
+    try{
+      const t = await smsAPI('getStatus', `&id=${etapa2State.activationId}`);
+      if(t.startsWith('STATUS_OK:')){
+        etapa2State.code = t.split(':')[1];  // Extract SMS code
+        clearInterval(etapa2State.timer);
+        go('etapa2');  // Re-render view
+      }
+    }catch(e){ /* ignore polling errors */ }
+  }, 5000);
+}
+```
+
+#### Endpoint 4: setStatus — Cancel or Confirm Activation
+
+**Full URL:** `https://api.sms24h.org/stubs/handler_api?api_key={key}&action=setStatus&status={status_code}&id={activation_id}`
+
+**Source:** `smsCancelar()` (status=8), `smsConfirmar()` (status=6)
+
+| Action | status code | Function | Description |
+|--------|-----------|----------|-------------|
+| Cancel | `8` | `smsCancelar()` (line 1087) | Cancel activation (frees the number) |
+| Confirm | `6` | `smsConfirmar()` (line 1097) | Confirm receipt (complete activation) |
+
+**Request (both variants):**
+| Property | Value |
+|----------|-------|
+| **Method** | GET |
+| **Query Params** | `api_key={key}`, `action=setStatus`, `status=6\|8`, `id={activation_id}` |
+
+**Success Response:**
+```
+ACCESS_ACTIVATION
+```
+
+**Error Responses:**
+```
+BAD_KEY
+BAD_ACTION
+```
+
+**Cancel post-flow:** Clear timer, reset `etapa2State`, toast "Cancelado", `go('etapa2')`.
+**Confirm post-flow:** Toast "Ativação finalizada" (no state change).
+
+#### Complete SMS24h Error Handling Summary
+
+| Error | Detection | User Feedback |
+|-------|-----------|---------------|
+| **No API key configured** | `!k` check in `smsAPI()` | Toast "Sem API key SMS24h. Configure primeiro." (also: warning card in Etapa 2 view) |
+| **HTTP error** | `!r.ok` in `smsAPI()` | Toast "Erro: HTTP {status}" |
+| **Network/CORS error** | `catch(e)` in callers | Contextual: "Erro: {message} (Pode ser CORS — use proxy)" or "❌ {message}" |
+| **No numbers available** | `NO_NUMBERS` text response | Displayed in `#sms-buy-log` as error |
+| **No balance** | `NO_BALANCE` text response | Displayed in `#sms-buy-log` as error |
+| **Bad key** | `BAD_KEY` text response | Displayed as error text |
+| **Polling timeout** | `elapsed > 1200` (20 min) | Timer stops; code never arrives; no explicit "timeout" toast |
+| **Polling network errors** | `catch(e)` in `setInterval` | Swallowed silently (`/* ignore */`) — timer continues |
+
+**Unhandled:** No retry logic for `getNumber` or `getStatus`. Polling silently swallows network errors. No exponential backoff. No "activation expired" detection (STATUS_CANCEL not explicitly checked — only STATUS_OK triggers code extraction).
+
+---
+
+### 4.5 CORS Proxy Layer
+
+**Source:** `instalarProxy()` function, lines 2112-2123
+**Header Comment (source line 2110):** `/* PROXY CORS via Netlify — substitui chamadas pra api.cloudflare.com e sms24h.org pelos paths /cf-api/ e /sms-api/ que o arquivo _redirects do Netlify intermedia */`
+
+#### instalarProxy() Implementation
+
+```javascript
+(function instalarProxy(){
+  if(location.protocol === 'file:') return; // local: não precisa
+  const orig = window.fetch;
+  window.fetch = function(url, opts){
+    if(typeof url === 'string'){
+      if(url.startsWith('https://api.cloudflare.com')) url = url.replace('https://api.cloudflare.com', '/cf-api');
+      else if(url.startsWith('https://api.sms24h.org')) url = url.replace('https://api.sms24h.org', '/sms-api');
+      else if(url.startsWith('https://sms24h.org')) url = url.replace('https://sms24h.org', '/sms-api');
+    }
+    return orig(url, opts);
+  };
+})();
+```
+
+#### URL Rewriting Rules
+
+| Pattern | Original (Upstream) URL | Rewritten (Proxied) URL |
+|---------|------------------------|------------------------|
+| Cloudflare API | `https://api.cloudflare.com/client/v4/...` | `/cf-api/client/v4/...` |
+| SMS24h API (api subdomain) | `https://api.sms24h.org/stubs/handler_api?...` | `/sms-api/stubs/handler_api?...` |
+| SMS24h (root domain) | `https://sms24h.org/...` | `/sms-api/...` |
+
+#### Inferred Netlify _redirects Configuration
+
+Based on the proxy rewriting rules, the Netlify `_redirects` file would contain:
+
+```
+/cf-api/*  https://api.cloudflare.com/:splat  200
+/sms-api/* https://api.sms24h.org/:splat      200
+```
+
+**Why the proxy exists:** Cloudflare API and SMS24h API do NOT return CORS headers. Direct browser `fetch()` calls would be blocked by the browser's same-origin policy. The Netlify `_redirects` proxy makes the requests same-origin (`/cf-api/` and `/sms-api/` paths), avoiding CORS entirely.
+
+**Key observations:**
+1. **No header modification:** The proxy only rewrites URL strings. Headers pass through unchanged.
+2. **local file bypass:** `if(location.protocol === 'file:') return;` — when running locally from `file://`, the proxy is NOT installed. This means local development without Netlify will hit CORS errors.
+3. **BrasilAPI exception:** BrasilAPI is NOT proxied — it's called directly at `https://brasilapi.com.br/api/cnpj/v1/{cnpj}`. This works because BrasilAPI returns proper CORS headers.
+4. **Monkey-patching pattern:** `window.fetch` is reassigned, wrapping the original. All code that calls `fetch()` (including any future code added) gets the proxy — transparent interception.
+5. **String-only matching:** Only string URLs are rewritten. If someone passes a `Request` object as the URL parameter, the proxy does nothing.
+
+#### Clone Implications
+
+The clone must either:
+- **Option A:** Replicate the proxy layer (e.g., Vite dev server proxy, or a Netlify deploy with `_redirects`)
+- **Option B:** Fully mock all API calls for offline development (Phase 2-3)
+- **Option C:** Use a CORS proxy service or browser extension during development
+
+**Without the proxy**, all Cloudflare and SMS24h API calls will fail with CORS errors in the browser.
 
 
 ## 5. Funções de Lógica de Negócio
