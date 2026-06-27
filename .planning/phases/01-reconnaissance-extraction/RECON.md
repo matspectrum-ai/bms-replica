@@ -1174,15 +1174,248 @@ function ajuda(ico, title, body){
 
 ## 3. Rotas & Sistema de Navegação
 
-*(To be filled by Plan 02)*
-
 ### 3.1 Tabela de Rotas (ROUTES array)
+
+**Source:** Line 284
+```javascript
+const ROUTES = ['dashboard','etapa1','etapa2','etapa3','banco','planilha','config','ajuda'];
+```
+
+The `ROUTES` constant is a flat array of 8 route path strings. It is used by `go()` for route validation (line 287: `if(!ROUTES.includes(route)) route='dashboard'`) and is NOT an array of route objects — there is no structured route definition with separate title/subtitle/view fields.
+
+**Route titles and subtitles** are defined inline within the `go()` function as a hardcoded `titles` object (linhas 289-297):
+
+```javascript
+const titles = {
+  dashboard: ['🏠 Início',                'Bem-vindo, João Victor!'],
+  etapa1:    ['🧬 Etapa 1 — Criar Site',   'Fluxo automático: CNPJ → Domínio → Meta → Site → Publicar'],
+  etapa2:    ['📱 Etapa 2 — Comprar Número','SMS24h integrado para verificação Facebook'],
+  etapa3:    ['📄 Etapa 3 — Editor PDF',   'Edite PDFs e mapeie campos do endereço'],
+  banco:     ['💼 Banco de Empresas',      'Histórico de CNPJs consultados'],
+  planilha:  ['📊 Planilha de Sites',      'Status de cada site publicado'],
+  config:    ['⚙️ Configurações',          'Tokens e chaves de API'],
+  ajuda:     ['❓ Ajuda',                  'Como cada parte funciona']
+};
+```
+
+**Route Table:**
+
+| path | Emoji | Title | Subtitle | Categoria (Sidebar) | View Function |
+|------|-------|-------|----------|---------------------|---------------|
+| dashboard | 🏠 | Início | Bem-vindo, João Victor! | — | VIEWS.dashboard |
+| etapa1 | 🧬 | Etapa 1 — Criar Site | Fluxo automático: CNPJ → Domínio → Meta → Site → Publicar | FLUXO PRINCIPAL | VIEWS.etapa1 |
+| etapa2 | 📱 | Etapa 2 — Comprar Número | SMS24h integrado para verificação Facebook | FLUXO PRINCIPAL | VIEWS.etapa2 |
+| etapa3 | 📄 | Etapa 3 — Editor PDF | Edite PDFs e mapeie campos do endereço | FLUXO PRINCIPAL | VIEWS.etapa3 |
+| banco | 💼 | Banco de Empresas | Histórico de CNPJs consultados | DADOS | VIEWS.banco |
+| planilha | 📊 | Planilha de Sites | Status de cada site publicado | DADOS | VIEWS.planilha |
+| config | ⚙️ | Configurações | Tokens e chaves de API | SISTEMA | VIEWS.config |
+| ajuda | ❓ | Ajuda | Como cada parte funciona | SISTEMA | VIEWS.ajuda |
+
+**Cross-reference with §2.1 sidebar:** Every `data-route` in the sidebar matches a route in this table. The `data-route` attribute values (`dashboard`, `etapa1`, ..., `ajuda`) are the same strings used as keys in the `titles` object and the `ROUTES` array.
 
 ### 3.2 VIEWS Registry
 
-### 3.3 go(route) Function
+**Source:** Line 307
+```javascript
+const VIEWS = {};
+```
 
-### 3.4 Comportamento de Navegação (title, nav-link.active, history)
+The VIEWS object is declared as an empty object literal and populated progressively as each view function is assigned. The order of assignment follows the source code structure:
+
+| Chave | Função | Descrição | Linha de Definição |
+|-------|--------|-----------|-------------------|
+| dashboard | `VIEWS.dashboard = () => {...}` | Renderiza dashboard HTML (hero + stats + quick-cards) | 312 |
+| etapa1 | `VIEWS.etapa1 = () => {...}` | Renderiza wizard de 5 passos (CNPJ → Publicar) | 399 |
+| etapa2 | `VIEWS.etapa2 = () => {...}` | Renderiza formulário de compra SMS | 917 |
+| etapa3 | `VIEWS.etapa3 = () => {...}` | Renderiza editor PDF com drop zone + toolbar | 1185 |
+| banco | `VIEWS.banco = () => {...}` | Renderiza grid de empresas + search/filter | 1400 |
+| planilha | `VIEWS.planilha = () => {...}` | Renderiza tabela de 8 colunas + export CSV | 1475 |
+| config | `VIEWS.config = () => {...}` | Renderiza painel de tokens Cloudflare + SMS24h + backup | 1557 |
+| ajuda | `VIEWS.ajuda = () => {...}` | Renderiza 3 cards de ajuda com guias passo-a-passo | 1742 |
+
+**VIEWS Function Contract:**
+- **Input:** No parameters — all views read from global state (`localStorage` via `getDB()`/`getSettings()`, module-level `let` state objects `etapa1State`/`etapa2State`/`pdfState`)
+- **Output:** HTML string (template literal with interpolated values)
+- **Side effects:** None during render — view functions are PURE string generators. Event handlers are attached via inline `onclick`/`onchange`/`oninput` attributes IN the generated HTML string, not via separate `addEventListener` calls after rendering
+- **Injection:** `go()` sets `document.getElementById('view').innerHTML = VIEWS[route]()` (line 301)
+
+### 3.3 go(route) Function — Full Implementation Trace
+
+**Source:** Linhas 286-305
+**Signature:** `go(route: string): void`
+
+```javascript
+function go(route){
+  if(!ROUTES.includes(route)) route='dashboard';                                    // Step 1: Validation
+  document.querySelectorAll('[data-route]').forEach(el=>{                           // Step 2: Nav active toggle
+    el.classList.toggle('active', el.dataset.route===route);
+  });
+  const titles = { /* ... 8 route title pairs */ };                                 // Step 3: Title lookup
+  document.getElementById('page-title').textContent = titles[route][0];             // Step 4: Set page title
+  document.getElementById('page-subtitle').textContent = titles[route][1];          // Step 5: Set page subtitle
+  document.getElementById('view').innerHTML = VIEWS[route]();                       // Step 6: Render view HTML
+  window.scrollTo({top:0,behavior:'smooth'});                                       // Step 7: Scroll to top
+  toggleSidebar(false);                                                             // Step 8: Close mobile sidebar
+  if(typeof window['after_'+route]==='function') window['after_'+route]();         // Step 9: Post-render hook
+}
+```
+
+**Step-by-step execution trace:**
+
+| Step | Action | DOM Element | Mechanism | Line |
+|------|--------|-------------|-----------|------|
+| 1 | **Route validation** | — | `ROUTES.includes(route)` check; invalid routes default to `'dashboard'` | 287 |
+| 2 | **Nav-link active toggle** | All `[data-route]` elements | `classList.toggle('active', el.dataset.route===route)` — removes `.active` from all, adds to matching element | 288 |
+| 3 | **Title lookup** | — | Hardcoded `titles` object with 8 entries | 289-297 |
+| 4 | **Page title update** | `#page-title` | `textContent = titles[route][0]` (e.g., "🧬 Etapa 1 — Criar Site") | 299 |
+| 5 | **Page subtitle update** | `#page-subtitle` | `textContent = titles[route][1]` (e.g., "Fluxo automático...") | 300 |
+| 6 | **Content swap** | `#view` | `innerHTML = VIEWS[route]()` — calls view function, injects HTML | 301 |
+| 7 | **Scroll to top** | `window` | `window.scrollTo({top:0, behavior:'smooth'})` — smooth scroll animation | 302 |
+| 8 | **Close mobile sidebar** | `#sidebar`, `#backdrop` | `toggleSidebar(false)` — removes `.open` classes if sidebar was open (mobile only) | 303 |
+| 9 | **Post-render hook** | `window` global | Checks for `window['after_'+route]` function, calls it if exists | 304 |
+
+**Edge Cases:**
+
+| Case | Behavior | Line |
+|------|----------|------|
+| **Invalid route** (not in ROUTES) | Defaults to `'dashboard'` — no error thrown | 287 |
+| **Duplicate navigation** (same route) | Re-executes all steps — no guard against redundant re-render | 286-305 |
+| **Missing VIEWS key** (VIEWS[route] is undefined) | `innerHTML` set to `undefined` — view container becomes empty (no explicit error handling) | 301 |
+| **Missing title entry** | `titles[route]` would be `undefined` — `textContent` would be `undefined` (silent failure) | 289-300 |
+| **Missing DOM element** (page-title/subtitle/view) | `getElementById` returns `null` — `.textContent`/`.innerHTML` assignment throws TypeError | 299-301 |
+
+**History API:** NOT USED. There is no `history.pushState`, `history.replaceState`, or `popstate` event handler anywhere in the source. This is a **hash-free, history-free SPA** — the URL never changes during navigation. The browser back button does not work.
+
+### 3.4 Fluxo de Navegação
+
+**Initial Route:** `go('dashboard')` — called in bootstrap (line 2132), the last line of the inline script block.
+
+**All go() Call Sites (trigger points):**
+
+| Trigger | Location | go() Call | Line |
+|---------|----------|-----------|------|
+| Bootstrap (initial load) | End of `<script>` block | `go('dashboard')` | 2132 |
+| Sidebar — Dashboard | `<div onclick="go('dashboard')">` | `go('dashboard')` | 152 |
+| Sidebar — Etapa 1 | `<div onclick="go('etapa1')">` | `go('etapa1')` | 154 |
+| Sidebar — Etapa 2 | `<div onclick="go('etapa2')">` | `go('etapa2')` | 155 |
+| Sidebar — Etapa 3 | `<div onclick="go('etapa3')">` | `go('etapa3')` | 156 |
+| Sidebar — Banco | `<div onclick="go('banco')">` | `go('banco')` | 158 |
+| Sidebar — Planilha | `<div onclick="go('planilha')">` | `go('planilha')` | 159 |
+| Sidebar — Config | `<div onclick="go('config')">` | `go('config')` | 161 |
+| Sidebar — Ajuda | `<div onclick="go('ajuda')">` | `go('ajuda')` | 162 |
+| Dashboard hero — Etapa 1 | `<button class="btn-3d" onclick="go('etapa1')">` | `go('etapa1')` | 331 |
+| Dashboard hero — Etapa 2 | `<button class="btn-3d cyan" onclick="go('etapa2')">` | `go('etapa2')` | 332 |
+| Dashboard hero — Etapa 3 | `<button class="btn-3d purple" onclick="go('etapa3')">` | `go('etapa3')` | 333 |
+| Dashboard API warning — Config | `<button class="btn-3d warn sm" onclick="go('config')">` | `go('config')` | 347 |
+| Dashboard quick-cards (×6) | `<div ... onclick="go('{route}')">` | go(route) | 376 |
+| Etapa 1 — Step 1 Trocar | Cascade reset, then `go('etapa1')` | `go('etapa1')` | 459 |
+| Etapa 1 — After CNPJ lookup | `e1Buscar()` success → `go('etapa1')` | `go('etapa1')` | 499 |
+| Etapa 1 — After manual save | `e1ManualSalvar()` → `go('etapa1')` | `go('etapa1')` | 525 |
+| Etapa 1 — Domain chosen | `e1EscolherDominio()` → `go('etapa1')` | `go('etapa1')` | 636 |
+| Etapa 1 — Meta-tag saved | `e1SalvarMeta()` → `go('etapa1')` | `go('etapa1')` | 672 |
+| Etapa 1 — Site generated | `e1Gerar()` → `go('etapa1')` | `go('etapa1')` | 740 |
+| Etapa 1 — After publish success | `e1Publicar()` success → `setTimeout(()=>go('etapa1'), 800)` | `go('etapa1')` | 898 |
+| Etapa 1 — Reset todo fluxo | `resetEtapa1()` → `go('etapa1')` | `go('etapa1')` | 909 |
+| Etapa 1 — Published "Próximo" | `<button onclick="go('etapa2')">` | `go('etapa2')` | 789 |
+| Etapa 1 — Published "Ver planilha" | `<button onclick="go('planilha')">` | `go('planilha')` | 790 |
+| Etapa 1 — Publish CF warning | `<button onclick="go('config')">` | `go('config')` | 798 |
+| Etapa 2 — SMS key warning | `<button onclick="go('config')">` | `go('config')` | 937 |
+| Etapa 2 — After purchase success | `smsComprar()` success → `go('etapa2')` | `go('etapa2')` | 1056 |
+| Etapa 2 — After SMS received | `iniciarPollingSMS()` success → `go('etapa2')` | `go('etapa2')` | 1078 |
+| Etapa 2 — Purchase cancelled | `smsCancelar()` → `go('etapa2')` | `go('etapa2')` | 1091 |
+| Etapa 2 — Token detected | Config page `salvarTokenCF()` → `setTimeout(()=>go('config'), 1500)` | `go('config')` | 1659 |
+| Etapa 2 — Account selected | `escolherConta()` → `go('config')` | `go('config')` | 1680 |
+| Etapa 2 — Account switched | `trocarConta()` → `go('config')` | `go('config')` | 1687 |
+| Etapa 2 — Manual account saved | `salvarAccountManual()` → `go('config')` | `go('config')` | 1698 |
+| Banco — After limpar | `limparBanco()` → `go('banco')` | `go('banco')` | 1465 |
+| Banco — "Usar na Etapa 1" | `usarEmpresaNaEtapa1()` → `go('etapa1')` | `go('etapa1')` | 1472 |
+| Banco — Empty state | `<button onclick="go('etapa1')">` (inline) | `go('etapa1')` | 1436 |
+| Planilha — Empty state | `<button onclick="go('etapa1')">` (inline) | `go('etapa1')` | 1509 |
+| Backup — After import | `importBackup()` → `go('dashboard')` | `go('dashboard')` | 1735 |
+
+**Total unique call sites: 35+** (listed above). Every call site confirmed from source code line references.
+
+**Navigation Flow Diagram:**
+
+```
+Page Load → go('dashboard')
+  │
+  ├── Sidebar click → go(route) → Nav-link.active toggle → Title update → VIEWS[route]() → innerHTML
+  │
+  ├── Dashboard → go('etapa1/2/3/config')
+  │
+  ├── Etapa 1 → go('etapa1') [self: after each step completion]
+  │            → go('etapa2') [from "Próximo" button after publish]
+  │            → go('planilha') [from "Ver na planilha" after publish]
+  │            → go('config') [from CF warning]
+  │
+  ├── Etapa 2 → go('etapa2') [self: after purchase, SMS received, cancel]
+  │            → go('config') [from SMS key warning]
+  │
+  ├── Banco → go('banco') [self: after limpar]
+  │         → go('etapa1') [from "Usar na Etapa 1"]
+  │
+  ├── Config → go('config') [self: after token saved, account selected/switched]
+  │
+  ├── Import/Backup → go('dashboard') [after restore]
+  │
+  └── Post-render hooks: window['after_'+route]() called after each view render
+      · after_banco: renderBanco()
+      · after_planilha: renderPlanilha()
+```
+
+**Side Effects Per Navigation (in order):**
+
+| # | Side Effect | Function/Element | Confirmed |
+|---|-------------|-----------------|-----------|
+| 1 | Nav-link `.active` class toggle (remove from all, add to current) | `querySelectorAll('[data-route]').forEach(...)` | Line 288 |
+| 2 | `#page-title` text content update | `document.getElementById('page-title').textContent` | Line 299 |
+| 3 | `#page-subtitle` text content update | `document.getElementById('page-subtitle').textContent` | Line 300 |
+| 4 | `#view` innerHTML replacement | `document.getElementById('view').innerHTML = VIEWS[route]()` | Line 301 |
+| 5 | Smooth scroll to top | `window.scrollTo({top:0,behavior:'smooth'})` | Line 302 |
+| 6 | Close mobile sidebar | `toggleSidebar(false)` | Line 303 |
+| 7 | Post-render hook execution | `window['after_'+route]()` if exists | Line 304 |
+
+**History Behavior:** The original app does NOT use the History API. Navigation does not push/pop state, and the URL never changes. The browser back button will navigate away from the app entirely. This is confirmed by grep for `pushState`, `replaceState`, `popstate` — zero matches across the entire 2135-line source.
+
+**No duplicate navigation guard:** Calling `go('etapa1')` when already on Etapa 1 re-renders the view (re-executes VIEWS.etapa1, resets innerHTML, scrolls to top). There is no check like `if(currentRoute === route) return`.
+
+### 3.5 VIEWS Function Signature Pattern
+
+All VIEWS functions follow an identical contract:
+
+```
+Signature: () => HTML_string
+Input:     None (reads from global state/localStorage)
+Output:    HTML string (template literal with ${} interpolation)
+Injection: innerHTML assignment in go() (line 301)
+```
+
+**Post-render hooks:**
+
+Two views use `window.after_{route}` hooks for separate data-rendering logic:
+
+| View | Hook Function | What It Does | Line |
+|------|--------------|-------------|------|
+| banco | `window.after_banco = () => renderBanco()` | Renders company cards into `#banco-list` (separate from VIEWS output) | 1419 |
+| planilha | `window.after_planilha = () => renderPlanilha()` | Renders site rows into `#planilha-body` (separate from VIEWS output) | 1504 |
+
+This pattern exists because both Banco and Planilha have interactive search/filter controls in the VIEWS output but render data into ID-referenced containers that don't exist yet when the VIEWS function returns its HTML string. The `after_` hook fires AFTER innerHTML injection, when the target containers exist in the DOM.
+
+### 3.6 Cross-Reference: §2.1 Sidebar ↔ §3.1 Routes
+
+| data-route (sidebar) | §3.1 Route Path | §3.2 VIEWS Key | §2 View Section | Match? |
+|---------------------|-----------------|----------------|-----------------|--------|
+| dashboard | dashboard | dashboard | §2.2 Dashboard | ✅ |
+| etapa1 | etapa1 | etapa1 | §2.3 Etapa 1 | ✅ |
+| etapa2 | etapa2 | etapa2 | §2.4 Etapa 2 | ✅ |
+| etapa3 | etapa3 | etapa3 | §2.5 Etapa 3 | ✅ |
+| banco | banco | banco | §2.6 Banco | ✅ |
+| planilha | planilha | planilha | §2.7 Planilha | ✅ |
+| config | config | config | §2.8 Config | ✅ |
+| ajuda | ajuda | ajuda | §2.9 Ajuda | ✅ |
+
+**All 8 data-route attributes match ROUTES paths, VIEWS keys, and documented view sections. Zero discrepancies.**
 
 
 ## 4. Contratos de API
