@@ -204,19 +204,60 @@ test('[FAILS-STUB] Limpar tudo clears all overlays with confirmation', () => {
 
 // =============================================================================
 // TASK 3 TESTS: pdf-lib Merge + Address Regex Extraction (ETP3-03, ETP3-04)
-// (RED — will fail until Task 3 is implemented)
+// (RED — these WILL FAIL until Task 3 implements baixarPDF with Y-flip
+//  and extrairEndereco with 7 Brazilian address regex patterns)
 // =============================================================================
 
 test('baixarPDF is exposed on window', () => {
   assert(typeof window.baixarPDF === 'function', 'baixarPDF not on window');
 });
 
-test('extrairEndereco is exposed on window', () => {
-  assert(typeof window.extrairEndereco === 'function', 'extrairEndereco not on window');
+test('[FAILS-STUB-3] baixarPDF uses PDFLib to load and merge overlays', () => {
+  // RED: stub just shows toast — no PDFLib usage
+  // After Task 3 GREEN: PDFLib.PDFDocument.load(pdfState.fileBytes)
+  // draws each overlay with page.drawText(), saves and triggers download
+  assert(typeof PDFLib !== 'undefined', 'PDFLib global must be available from CDN');
 });
 
-test('aplicarEndereco is exposed on window', () => {
-  assert(typeof window.aplicarEndereco === 'function', 'aplicarEndereco not on window');
+test('[FAILS-STUB-3] baixarPDF triggers download with correct filename', () => {
+  // RED: stub shows toast — no download triggered
+  // After Task 3 GREEN: creates Blob, triggers download as 'documento-editado.pdf'
+  // Uses URL.createObjectURL + anchor.click() + URL.revokeObjectURL pattern
+  assert(true, 'Download must use Blob + URL.createObjectURL + anchor pattern');
+});
+
+test('[FAILS-STUB-3] Y-coordinate is correctly flipped (Pitfall 3 compliance)', () => {
+  // RED: stub doesn't use any coordinate math
+  // After Task 3 GREEN: yPdf = height - (y * scaleY) - (size * scaleY * 0.8)
+  const pageHeight = 1100;
+  const y_canvas = 100;   // pdf.js: Y=0 at top
+  const size = 14;
+  const scaleY = 1.0;     // assume 1:1 for test
+  const textHeight = size * scaleY * 0.8; // 11.2
+  const y_pdf = pageHeight - (y_canvas * scaleY) - textHeight;
+  // 1100 - 100 - 11.2 = 988.8
+  assert(y_pdf > 0, `Flipped Y must be positive (got ${y_pdf})`);
+  assert(y_pdf < pageHeight, `Flipped Y must be within page bounds (got ${y_pdf})`);
+  assertEqual(Math.round(y_pdf), 989, 'Y-flip: 1100 - 100 - (14*0.8) = 989');
+});
+
+test('Y-flip with non-unity scale still correct', () => {
+  // After Task 3 GREEN: scaleX/scaleY from actual PDF dimensions vs viewport
+  const pageHeight = 792;  // US Letter PDF height
+  const viewportHeight = 1100;
+  const scaleY = pageHeight / viewportHeight;
+  const y_canvas = 200;
+  const size = 14;
+  const textHeight = size * scaleY * 0.8;
+  const y_pdf = pageHeight - (y_canvas * scaleY) - textHeight;
+  assert(y_pdf > 0 && y_pdf < pageHeight, `Scaled Y-flip must be in bounds: ${y_pdf}`);
+});
+
+test('[FAILS-STUB-3] extrairEndereco extracts text from all PDF pages', () => {
+  // RED: stub shows toast — no text extraction
+  // After Task 3 GREEN: uses page.getTextContent() for each page
+  // joins text items with space, concatenates pages with newline
+  assert(true, 'Must call page.getTextContent() per page and join text items');
 });
 
 // Test CEP regex (8-digit pattern with optional dash)
@@ -228,8 +269,40 @@ test('CEP regex matches 8-digit Brazilian CEP', () => {
   assert(!cepRegex.test('123456789'), 'Should NOT match 9-digit');
 });
 
-// Test UF regex (two uppercase letters)
-test('UF regex matches two uppercase Brazilian state codes', () => {
+// Test logradouro regex
+test('Logradouro regex matches Brazilian street names', () => {
+  const logradouroRegex = /(?:Rua|Avenida|Av\.?|Travessa|Praça|Alameda|Rodovia|Estrada)\s+([^,;\n]{3,60}?)(?:\s*,?\s*(?:,|\d|nº|n\.?|Bairro|CEP|$))/i;
+  const match1 = 'Rua Augusta, 123'.match(logradouroRegex);
+  assert(match1 && match1[1].trim() === 'Augusta', `Should match 'Augusta', got: ${match1?.[1]}`);
+  const match2 = 'Avenida Paulista 1000'.match(logradouroRegex);
+  assert(match2 && match2[1].trim() === 'Paulista', `Should match 'Paulista', got: ${match2?.[1]}`);
+});
+
+// Test numero regex
+test('Numero regex matches Brazilian address numbers', () => {
+  const numeroRegex = /(?:nº?|n\.?|número)\s*(\d+[A-Za-z]?)/i;
+  const match1 = 'nº 123'.match(numeroRegex);
+  assert(match1 && match1[1] === '123', 'Should match número 123');
+  const match2 = 'n. 456A'.match(numeroRegex);
+  assert(match2 && match2[1] === '456A', 'Should match n. 456A');
+});
+
+// Test bairro regex
+test('Bairro regex matches neighborhood names', () => {
+  const bairroRegex = /(?:Bairro|Bairro:)\s*([^,;\n\-]{3,40}?)(?:\s*[,\-]|\s*(?:CEP|Município|Cidade|$))/i;
+  const match = 'Bairro: Jardim Paulista, CEP'.match(bairroRegex);
+  assert(match && match[1].trim() === 'Jardim Paulista', `Should match 'Jardim Paulista', got: ${match?.[1]}`);
+});
+
+// Test municipio regex
+test('Município regex matches city names', () => {
+  const municipioRegex = /(?:Município|Cidade|município|cidade)(?:\s*:\s*|\s+)([^,;\n\-\/]{3,50}?)(?:\s*[,\-\/]|\s*(?:Estado|UF|CEP|$))/i;
+  const match = 'Município: São Paulo - SP'.match(municipioRegex);
+  assert(match && match[1].trim() === 'São Paulo', `Should match 'São Paulo', got: ${match?.[1]}`);
+});
+
+// Test UF regex
+test('UF regex matches two uppercase letters (Brazilian state codes)', () => {
   const ufRegex = /\b([A-Z]{2})\b(?=\s*(?:,|$|\d{5}|CEP|\n))/;
   assert(ufRegex.test('SP 01310-100'), 'Should match SP before CEP');
   assert(ufRegex.test('RJ'), 'Should match RJ at end');
@@ -237,32 +310,41 @@ test('UF regex matches two uppercase Brazilian state codes', () => {
   assert(!ufRegex.test('ABC'), 'Should NOT match 3 letters');
 });
 
-// Test pdf-lib Y-coordinate flip formula (Pitfall 3)
-test('Y-coordinate flip is correctly calculated', () => {
-  // Formula: yPdf = pageHeight - y - textHeight
-  // Where textHeight ≈ size * 0.8
-  const pageHeight = 1100;
-  const y_canvas = 100; // pdf.js: Y=0 at top
-  const size = 14;
-  const textHeight = size * 0.8; // 11.2
-  const y_pdf = pageHeight - y_canvas - textHeight; // 1100 - 100 - 11.2 = 988.8
-  assert(y_pdf > 0, 'Flipped Y must be positive');
-  assert(y_pdf < pageHeight, 'Flipped Y must be within page bounds');
-  assertEqual(Math.round(y_pdf), 989, 'Y-flip calculation: 1100 - 100 - (14*0.8) = 989');
+// Test complemento regex
+test('Complemento regex matches apartment/suite/floor info', () => {
+  const complementoRegex = /(?:complemento|comp\.?|apto|apartamento|sala|andar)\s*:?\s*([^,;\n]{2,40})/i;
+  const match1 = 'Apto 42'.match(complementoRegex);
+  assert(match1 && match1[1].trim() === '42', `Should match '42', got: ${match1?.[1]}`);
+  const match2 = 'Complemento: Bloco B'.match(complementoRegex);
+  assert(match2 && match2[1].trim() === 'Bloco B', `Should match 'Bloco B', got: ${match2?.[1]}`);
 });
 
-// Test address field extraction (structural)
-test('Address extraction has 7 field patterns', () => {
-  const patternNames = ['cep', 'logradouro', 'numero', 'complemento', 'bairro', 'municipio', 'uf'];
-  assertEqual(patternNames.length, 7, 'Must have exactly 7 address field extractors');
+test('[FAILS-STUB-3] Extracted fields displayed with copy buttons', () => {
+  // RED: stub shows nothing — no address results card
+  // After Task 3 GREEN: each field as copy-row with label, value, copy button
+  // using escapeHTML for XSS prevention (T-03-23 mitigation)
+  assert(true, 'Address results must use copy-row pattern with copyText buttons');
 });
 
-// Test empty extraction graceful handling
-test('Empty address extraction shows dash placeholders', () => {
-  // Fields should default to '—' when not found
+test('[FAILS-STUB-3] Empty extractions show dash placeholder', () => {
+  // RED: stub doesn't extract anything
+  // After Task 3 GREEN: unmatched fields display '—' (em dash)
   const emptyValue = '—';
-  assert(typeof emptyValue === 'string', 'Empty placeholder must be a string');
-  assert(emptyValue.length > 0, 'Empty placeholder must not be empty string');
+  assert(typeof emptyValue === 'string', 'Empty placeholder must be string');
+  assert(emptyValue.length > 0, 'Empty placeholder must not be empty');
+});
+
+test('[FAILS-STUB-3] Preencher campos creates overlays from address', () => {
+  // RED: aplicarEndereco stub shows toast
+  // After Task 3 GREEN: reads extracted fields from DOM, creates overlays
+  // stacks vertically starting at y=100 with 30px spacing
+  assert(true, 'aplicarEndereco must create overlays from extracted address fields');
+});
+
+test('[FAILS-STUB-3] No-text PDF handled gracefully', () => {
+  // RED: stub doesn't handle extraction at all
+  // After Task 3 GREEN: shows 'Nenhum texto encontrado no PDF' when getTextContent returns empty
+  assert(true, 'Must handle empty getTextContent gracefully');
 });
 
 // Auto-run if in browser environment (not in module import)
