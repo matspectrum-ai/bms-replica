@@ -1,0 +1,105 @@
+/* 3D Button System — matches RECON.md §6.2.2 */
+
+/* === BASE === */
+.btn-3d {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.95rem 1.4rem;
+  border-radius: 16px;
+  font-weight: 700;
+  font-size: 0.98rem;
+  letter-spacing: 0.2px;
+  color: white;
+  background: linear-gradient(180deg, #6d72ff, #4f46e5);
+  box-shadow: 0 6px 0 #312e81, 0 12px 24px rgba(79,70,229,.45), inset 0 1px 0 rgba(255,255,255,.25);
+  transform: translateY(0);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+  user-select: none;
+  cursor: pointer;
+  border: none;
+}
+
+/* === STATES === */
+.btn-3d:hover { filter: brightness(1.08); }
+.btn-3d:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 #312e81, 0 6px 14px rgba(79,70,229,.4), inset 0 1px 0 rgba(255,255,255,.2);
+}
+.btn-3d:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  filter: grayscale(0.3);
+}
+
+/* === COLOR VARIANTS === */
+
+/* .success — green */
+.btn-3d.success {
+  background: linear-gradient(180deg, #34d399, #10b981);
+  box-shadow: 0 6px 0 #065f46, 0 12px 24px rgba(16,185,129,.4), inset 0 1px 0 rgba(255,255,255,.25);
+}
+.btn-3d.success:active {
+  box-shadow: 0 2px 0 #065f46, 0 6px 14px rgba(16,185,129,.4), inset 0 1px 0 rgba(255,255,255,.2);
+}
+
+/* .warn — amber */
+.btn-3d.warn {
+  background: linear-gradient(180deg, #fbbf24, #f59e0b);
+  box-shadow: 0 6px 0 #92400e, 0 12px 24px rgba(245,158,11,.4), inset 0 1px 0 rgba(255,255,255,.3);
+  color: #1f1300;
+}
+.btn-3d.warn:active {
+  box-shadow: 0 2px 0 #92400e, 0 6px 14px rgba(245,158,11,.4), inset 0 1px 0 rgba(255,255,255,.25);
+}
+
+/* .danger — red */
+.btn-3d.danger {
+  background: linear-gradient(180deg, #fb7185, #ef4444);
+  box-shadow: 0 6px 0 #7f1d1d, 0 12px 24px rgba(239,68,68,.4), inset 0 1px 0 rgba(255,255,255,.25);
+}
+.btn-3d.danger:active {
+  box-shadow: 0 2px 0 #7f1d1d, 0 6px 14px rgba(239,68,68,.4), inset 0 1px 0 rgba(255,255,255,.2);
+}
+
+/* .cyan */
+.btn-3d.cyan {
+  background: linear-gradient(180deg, #67e8f9, #06b6d4);
+  box-shadow: 0 6px 0 #155e75, 0 12px 24px rgba(6,182,212,.4), inset 0 1px 0 rgba(255,255,255,.3);
+  color: #001017;
+}
+.btn-3d.cyan:active {
+  box-shadow: 0 2px 0 #155e75, 0 6px 14px rgba(6,182,212,.4), inset 0 1px 0 rgba(255,255,255,.25);
+}
+
+/* .purple */
+.btn-3d.purple {
+  background: linear-gradient(180deg, #c084fc, #a855f7);
+  box-shadow: 0 6px 0 #581c87, 0 12px 24px rgba(168,85,247,.4), inset 0 1px 0 rgba(255,255,255,.25);
+}
+.btn-3d.purple:active {
+  box-shadow: 0 2px 0 #581c87, 0 6px 14px rgba(168,85,247,.4), inset 0 1px 0 rgba(255,255,255,.2);
+}
+
+/* .ghost — dark/muted */
+.btn-3d.ghost {
+  background: linear-gradient(180deg, #1f2a52, #111a36);
+  box-shadow: 0 6px 0 #0a0f23, 0 12px 24px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.08);
+}
+.btn-3d.ghost:active {
+  box-shadow: 0 2px 0 #0a0f23, 0 6px 14px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.06);
+}
+
+/* === SIZE MODIFIER === */
+.btn-3d.sm {
+  padding: 0.55rem 0.85rem;
+  font-size: 0.82rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 0 #312e81, inset 0 1px 0 rgba(255,255,255,.25);
+}
+.btn-3d.sm:active {
+  box-shadow: 0 1px 0 #312e81, inset 0 1px 0 rgba(255,255,255,.2);
+  transform: translateY(3px);
+}

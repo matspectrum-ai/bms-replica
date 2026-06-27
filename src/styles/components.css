@@ -1,0 +1,41 @@
+/* Glassmorphism base — matches RECON.md §6.2.1 */
+.glass {
+  background: linear-gradient(145deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+  border: 1px solid var(--border);
+  backdrop-filter: blur(10px);
+}
+
+/* Radial gradient card — deep navy fade from top-left */
+.grad-card {
+  background: radial-gradient(120% 120% at 0% 0%, #1d275a 0%, #0e1430 60%, #0b1020 100%);
+}
+
+/* Neon glow ring — two-layer indigo box-shadow */
+.neon {
+  box-shadow: 0 0 0 1px rgba(99,102,241,.3), 0 0 40px -10px rgba(99,102,241,.5);
+}
+
+/* Animated gradient ring border using mask technique */
+.ring-glow {
+  position: relative;
+}
+.ring-glow::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(120deg, #22d3ee, #a855f7, #22d3ee);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0.55;
+}
+
+/* Gradient text — indigo → cyan → purple */
+.grad-text {
+  background: linear-gradient(120deg, #a5b4fc, #22d3ee 50%, #a855f7);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}

@@ -1,0 +1,26 @@
+/* :root custom properties — matches RECON.md §6.1 exactly */
+:root {
+  --bg: #0b1020;
+  --bg2: #0f172a;
+  --card: #111a36;
+  --soft: #1a2348;
+  --border: rgba(255,255,255,0.08);
+  --text: #e6e9f5;
+  --muted: #9aa3c7;
+  --accent: #6366f1;
+  --accent2: #22d3ee;
+  --accent3: #a855f7;
+  --ok: #22c55e;
+  --warn: #f59e0b;
+  --bad: #ef4444;
+}
+
+/* Base — only --bg, --text consumed via var() */
+html, body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: Inter, sans-serif;
+}
+
+/* Display font — Sora for headings */
+.font-display { font-family: Sora, sans-serif; }
