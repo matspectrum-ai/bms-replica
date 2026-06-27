@@ -132,15 +132,24 @@
     </div>
   </div>
 
+  <!-- Embedded bundle measurement (static — from measure-bundle.sh) -->
+  <script id="bundle-data" type="application/json">
+{
+  "total_raw_bytes": 159324,
+  "total_gzip_bytes": 42138,
+  "css_raw_bytes": 13587,
+  "css_gzip_bytes": 3706,
+  "js_raw_bytes": 145737,
+  "js_gzip_bytes": 38432,
+  "pass": true
+}
+  </script>
+
   <!-- Bundle results section -->
   <div class="results-section" id="bundle-section">
     <h2>&#128230; Bundle Size (VAL-04)</h2>
     <div id="bundle-results">
-      <p class="placeholder-text">Execute <code>bash tests/measure-bundle.sh</code> no terminal para popular os resultados.</p>
-      <div class="stats-row" style="margin-top:1rem;">
-        <div class="stat-item">Threshold: <strong>180 kB</strong> gzipped</div>
-        <div class="stat-item">Baseline original: <strong>~150 kB</strong></div>
-      </div>
+      <p class="placeholder-text">Carregando dados do bundle...</p>
     </div>
   </div>
 
@@ -154,6 +163,120 @@
 
   <script type="module">
     import { runStorageTests } from './test_storage.js';
+
+    // ================================================================
+    // Bundle rendering (executa no carregamento da página)
+    // ================================================================
+    function renderBundleResults() {
+      const container = document.getElementById('bundle-results');
+      const dataScript = document.getElementById('bundle-data');
+
+      if (!dataScript) {
+        container.innerHTML = '<p class="error-text">Bloco de dados do bundle não encontrado.</p>';
+        return;
+      }
+
+      let bundle;
+      try {
+        bundle = JSON.parse(dataScript.textContent.trim());
+      } catch (e) {
+        container.innerHTML = `<p class="error-text">Erro ao parsear dados do bundle: ${e.message}</p>`;
+        return;
+      }
+
+      const threshold = 180000;
+      const pct = Math.min(100, Math.round((bundle.total_gzip_bytes / threshold) * 100));
+      const gaugeClass = bundle.pass ? 'pass' : (pct > 90 ? 'warn' : 'fail');
+      const verdict = bundle.pass ? 'PASS' : 'FAIL';
+      const verdictClass = bundle.pass ? 'status-pass' : 'status-fail';
+
+      let html = '';
+
+      // Verdict banner
+      html += `<div style="margin-bottom:1.5rem;">
+        <span class="status ${verdictClass}" style="font-size:1.4rem;">&#9679; ${verdict}</span>
+        <span style="color:#888; margin-left:0.5rem;">contra threshold de ${(threshold/1024).toFixed(0)} kB gzipped</span>
+      </div>`;
+
+      // Main gauge
+      html += `<div class="gauge-container">
+        <div class="gauge-label">
+          <span>Total gzip: <strong>${(bundle.total_gzip_bytes/1024).toFixed(1)} kB</strong> / ${(threshold/1024).toFixed(0)} kB</span>
+          <span>${pct}%</span>
+        </div>
+        <div class="gauge-bar"><div class="gauge-fill ${gaugeClass}" style="width:${pct}%"></div></div>
+      </div>`;
+
+      // Breakdown stats
+      html += '<div class="stats-row">';
+      html += `<div class="stat-item">JS gzip: <strong>${(bundle.js_gzip_bytes/1024).toFixed(1)} kB</strong></div>`;
+      html += `<div class="stat-item">JS raw: <strong>${(bundle.js_raw_bytes/1024).toFixed(1)} kB</strong></div>`;
+      html += `<div class="stat-item">CSS gzip: <strong>${(bundle.css_gzip_bytes/1024).toFixed(1)} kB</strong></div>`;
+      html += `<div class="stat-item">CSS raw: <strong>${(bundle.css_raw_bytes/1024).toFixed(1)} kB</strong></div>`;
+      html += `<div class="stat-item">Total raw: <strong>${(bundle.total_raw_bytes/1024).toFixed(1)} kB</strong></div>`;
+      html += '</div>';
+
+      // Gauge per category
+      html += '<div style="margin-top:1.5rem;">';
+      html += '<h3 style="font-size:0.9rem; color:#aaa; margin-bottom:0.5rem;">Por categoria</h3>';
+
+      // JS gauge
+      const jsPct = Math.min(100, Math.round((bundle.js_gzip_bytes / threshold) * 100));
+      html += `<div class="gauge-container">
+        <div class="gauge-label"><span>JavaScript (22 arquivos)</span><span>${(bundle.js_gzip_bytes/1024).toFixed(1)} kB (${jsPct}%)</span></div>
+        <div class="gauge-bar"><div class="gauge-fill pass" style="width:${Math.min(100, jsPct)}%; opacity:0.5;"></div></div>
+      </div>`;
+
+      // CSS gauge
+      const cssPct = Math.min(100, Math.round((bundle.css_gzip_bytes / threshold) * 100));
+      html += `<div class="gauge-container">
+        <div class="gauge-label"><span>CSS (12 arquivos)</span><span>${(bundle.css_gzip_bytes/1024).toFixed(1)} kB (${cssPct}%)</span></div>
+        <div class="gauge-bar"><div class="gauge-fill pass" style="width:${Math.min(100, cssPct)}%; opacity:0.5;"></div></div>
+      </div>`;
+      html += '</div>';
+
+      // Warnings section (if needed)
+      if (!bundle.pass) {
+        html += '<div id="bundle-warnings" style="margin-top:1rem; padding:1rem; background:#2a1a1a; border:1px solid #f87171; border-radius:8px;">';
+        html += '<h3 style="color:#f87171; margin-bottom:0.5rem;">&#9888; Avisos de Tamanho</h3>';
+        html += '<p style="color:#fca5a5; font-size:0.9rem;">Bundle excede o threshold de 180 kB. Para otimizar:</p>';
+        html += '<ul style="color:#fca5a5; font-size:0.85rem; margin:0.5rem 0 0 1.5rem;">';
+        html += '<li>Verifique os maiores arquivos em src/views/ (views tendem a ser os maiores)</li>';
+        html += '<li>Considere extrair padrões CSS duplicados para classes reutilizáveis</li>';
+        html += '<li>Minifique HTML inline em geradores de template</li>';
+        html += '</ul>';
+        html += '</div>';
+      } else {
+        html += '<div style="margin-top:1rem; padding:0.75rem 1rem; background:#1a2a1a; border:1px solid #4ade80; border-radius:8px; color:#4ade80; font-size:0.9rem;">';
+        html += `&#10003; Bundle dentro do orçamento — ${(bundle.total_gzip_bytes/1024).toFixed(1)} kB de ${(threshold/1024).toFixed(0)} kB (${pct}% utilizado)`;
+        html += '</div>';
+      }
+
+      html += '<div class="stats-row" style="margin-top:1rem;">';
+      html += '<div class="stat-item">Fonte dos dados: <strong>measure-bundle.sh</strong></div>';
+      html += '<div class="stat-item">Mede apenas <strong>src/*.js</strong> + <strong>src/styles/*.css</strong></div>';
+      html += '<div class="stat-item">NÃO inclui CDN (Tailwind, pdf.js, etc.)</div>';
+      html += '</div>';
+
+      container.innerHTML = html;
+
+      // Update summary card
+      const el = document.getElementById('val04-status');
+      if (bundle.pass) {
+        el.className = 'status status-pass';
+        el.textContent = `PASS (${(bundle.total_gzip_bytes/1024).toFixed(0)} kB)`;
+      } else {
+        el.className = 'status status-fail';
+        el.textContent = `FAIL (${(bundle.total_gzip_bytes/1024).toFixed(0)} kB)`;
+      }
+    }
+
+    // Render bundle on page load
+    renderBundleResults();
+
+    // ================================================================
+    // Storage test runner
+    // ================================================================
 
     // Expor para o onclick inline (módulos ES têm escopo próprio)
     window.runStorageTestsHandler = async function() {
