@@ -3194,9 +3194,730 @@ O `.icon-cube` base tem `width:64px; height:64px` mas é frequentemente sobrescr
 | 180×180 | `width:180px; height:180px; font-size:90px; border-radius:40px` | Logo grande (dashboard hero)
 
 
-## 7. Apêndice: Referências Cruzadas por View
+---
 
-*(To be filled progressively as each plan completes)*
+### 6.2 Component Classes
+
+All CSS extracted from `<style>` block lines 16-134 of `raw-source.html`. Source line references provided for every rule. Component classes use custom CSS (not Tailwind `@apply` compositions) — Tailwind utility classes are applied separately via HTML `class=""` attributes.
+
+#### 6.2.1 Glassmorphism Cards & Glow Effects
+
+##### .glass
+**Source:** line 27.
+```css
+.glass {
+  background: linear-gradient(145deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+  border: 1px solid var(--border);
+  backdrop-filter: blur(10px);
+}
+```
+- **States:** Default only — no `:hover`, `:active`, or `:disabled` pseudo-classes in CSS. Hover effects (e.g., `hover:scale-[1.01]` on quickCard) applied via Tailwind utilities.
+- **Border-radius:** Applied via Tailwind utility (e.g., `rounded-2xl`, `rounded-3xl`) — not in .glass itself.
+- **Padding:** Applied via Tailwind utility (e.g., `p-4`, `p-5`, `p-6`) — not in .glass itself.
+- **Usage in DOM (§2 references):**
+  - Sidebar tip card: `<div class="glass mt-6 p-4 rounded-2xl">` (line 165)
+  - Toast container: `<div id="toast" class="... glass px-5 py-3 rounded-2xl ...">` (line 194)
+  - Modal body: `<div id="modal-body" class="glass rounded-3xl ... p-6">` (line 201)
+  - statCard wrapper: `<div class="glass rounded-2xl p-4 sm:p-5 ...">` (via statCard(), line 369)
+  - quickCard wrapper: `<div class="glass rounded-2xl p-5 ...">` (via quickCard(), line 376)
+  - stepCard wrapper: `<div class="glass step-card">` (via stepBox(), line 434)
+  - Warning/status cards: `<div class="glass rounded-2xl p-5 mb-6 ..." style="border-color:rgba(245,158,11,.4)">` (lines 338, 798, 936)
+  - Log/code outputs: `<div class="glass rounded-xl p-3 ...">` (lines 1171, 1639, 1654)
+
+##### .grad-card
+**Source:** line 29.
+```css
+.grad-card {
+  background: radial-gradient(120% 120% at 0% 0%, #1d275a 0%, #0e1430 60%, #0b1020 100%);
+}
+```
+- **Effect:** Deep radial gradient from top-left corner — lighter blue center (`#1d275a`) darkening to deep navy at edges (`#0b1020`).
+- **States:** Default only — no pseudo-classes.
+- **Usage in DOM:** Etapa 1 hero section: `<div class="grad-card ...">` wrapping the icon-cube + title + reset button (line 408).
+
+##### .neon
+**Source:** line 30.
+```css
+.neon {
+  box-shadow: 0 0 0 1px rgba(99,102,241,.3), 0 0 40px -10px rgba(99,102,241,.5);
+}
+```
+- **Effect:** Two-layer glow: 1px indigo border ring + 40px indigo ambient glow (offset -10px to pull center inward).
+- **States:** Default only.
+- **Usage in DOM:** SMS code display: `<div class="copy-row neon" style="border-color:rgba(16,185,129,.4)">` (line 996); deploy log cards: `<div class="glass rounded-xl p-3 neon" style="border-color:rgba(16,185,129,.4)">` (lines 1171, 1654).
+
+##### .ring-glow
+**Source:** lines 132-133.
+```css
+.ring-glow {
+  position: relative;
+}
+.ring-glow::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(120deg, #22d3ee, #a855f7, #22d3ee);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0.55;
+}
+```
+- **Effect:** Animated gradient border ring (cyan→purple→cyan) using CSS mask technique. The `::before` pseudo-element creates a 2px gradient border 4px outside the element, then the mask composite excludes the inner area, leaving only the border ring visible.
+- **States:** Default only. Opacity 0.55 makes it subtle.
+- **Usage:** Applied via JS when element needs a glowing border (identified in §5 function specs).
+
+
+#### 6.2.2 3D Button System (.btn-3d)
+
+**Source:** lines 33-57. The most distinctive visual element: buttons with depth illusion via multi-layer box-shadow.
+
+##### Base Class (.btn-3d — Default/Primary Variant)
+```css
+.btn-3d {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.95rem 1.4rem;
+  border-radius: 16px;
+  font-weight: 700;
+  font-size: 0.98rem;
+  letter-spacing: 0.2px;
+  color: white;
+  background: linear-gradient(180deg, #6d72ff, #4f46e5);
+  box-shadow: 0 6px 0 #312e81, 0 12px 24px rgba(79,70,229,.45), inset 0 1px 0 rgba(255,255,255,.25);
+  transform: translateY(0);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+  user-select: none;
+  cursor: pointer;
+  border: none;
+}
+```
+- **Gradient:** `linear-gradient(180deg, #6d72ff, #4f46e5)` — lighter indigo at top fading to darker at bottom.
+- **Shadow layers (3 total):**
+  1. `0 6px 0 #312e81` — **Bottom shadow:** 6px of solid deep indigo creating 3D depth illusion.
+  2. `0 12px 24px rgba(79,70,229,.45)` — **Ambient glow:** spread-out indigo tint.
+  3. `inset 0 1px 0 rgba(255,255,255,.25)` — **Inner highlight:** thin white line at top for glossy/raised effect.
+
+##### States
+
+**Hover (line 41):**
+```css
+.btn-3d:hover { filter: brightness(1.08); }
+```
+- Slight brightness boost (8%) on hover — no transform change.
+
+**Active/Pressed (line 42):**
+```css
+.btn-3d:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 #312e81, 0 6px 14px rgba(79,70,229,.4), inset 0 1px 0 rgba(255,255,255,.2);
+}
+```
+- **Transform:** Button moves DOWN 4px (simulates being pressed).
+- **Bottom shadow:** Shrinks from `6px` to `2px` — depth illusion collapses.
+- **Ambient shadow:** Shrinks from `12px 24px` to `6px 14px`.
+- **Inner highlight:** Slightly dims from `.25` to `.2` opacity.
+- **Effect:** Realistic button press with 3D depth reduction.
+
+**Disabled (line 43):**
+```css
+.btn-3d:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  filter: grayscale(0.3);
+}
+```
+- No focus style defined — inherits browser default focus ring.
+
+##### Color Variants (7 total)
+
+Each variant overrides `background` and `box-shadow` (base + active). Hover is inherited from base `.btn-3d:hover`.
+
+**Variant 2: .success (Green, lines 44-45)**
+- **Background:** `linear-gradient(180deg, #34d399, #10b981)`
+- **Bottom shadow:** `0 6px 0 #065f46`
+- **Ambient:** `0 12px 24px rgba(16,185,129,.4)`
+- **Inner highlight:** `inset 0 1px 0 rgba(255,255,255,.25)`
+- **Active bottom:** `0 2px 0 #065f46`, ambient `0 6px 14px rgba(16,185,129,.4)`, inner `rgba(255,255,255,.2)`
+
+**Variant 3: .warn (Amber/Yellow, lines 46-47)**
+- **Background:** `linear-gradient(180deg, #fbbf24, #f59e0b)`
+- **Bottom shadow:** `0 6px 0 #92400e`
+- **Ambient:** `0 12px 24px rgba(245,158,11,.4)`
+- **Inner highlight:** `inset 0 1px 0 rgba(255,255,255,.3)` (brighter — compensates for yellow text)
+- **Text color:** `#1f1300` (dark brown — for contrast on yellow)
+- **Active bottom:** `0 2px 0 #92400e`, ambient `0 6px 14px rgba(245,158,11,.4)`, inner `rgba(255,255,255,.25)`
+
+**Variant 4: .danger (Red, lines 48-49)**
+- **Background:** `linear-gradient(180deg, #fb7185, #ef4444)`
+- **Bottom shadow:** `0 6px 0 #7f1d1d`
+- **Ambient:** `0 12px 24px rgba(239,68,68,.4)`
+- **Inner highlight:** `inset 0 1px 0 rgba(255,255,255,.25)`
+- **Active bottom:** `0 2px 0 #7f1d1d`, ambient `0 6px 14px rgba(239,68,68,.4)`, inner `rgba(255,255,255,.2)`
+
+**Variant 5: .cyan (Cyan, lines 50-51)**
+- **Background:** `linear-gradient(180deg, #67e8f9, #06b6d4)`
+- **Bottom shadow:** `0 6px 0 #155e75`
+- **Ambient:** `0 12px 24px rgba(6,182,212,.4)`
+- **Inner highlight:** `inset 0 1px 0 rgba(255,255,255,.3)`
+- **Text color:** `#001017` (near-black — for contrast on cyan)
+- **Active bottom:** `0 2px 0 #155e75`, ambient `0 6px 14px rgba(6,182,212,.4)`, inner `rgba(255,255,255,.25)`
+
+**Variant 6: .purple (Purple, lines 52-53)**
+- **Background:** `linear-gradient(180deg, #c084fc, #a855f7)`
+- **Bottom shadow:** `0 6px 0 #581c87`
+- **Ambient:** `0 12px 24px rgba(168,85,247,.4)`
+- **Inner highlight:** `inset 0 1px 0 rgba(255,255,255,.25)`
+- **Active bottom:** `0 2px 0 #581c87`, ambient `0 6px 14px rgba(168,85,247,.4)`, inner `rgba(255,255,255,.2)`
+
+**Variant 7: .ghost (Dark/Muted, lines 54-55)**
+- **Background:** `linear-gradient(180deg, #1f2a52, #111a36)`
+- **Bottom shadow:** `0 6px 0 #0a0f23`
+- **Ambient:** `0 12px 24px rgba(0,0,0,.4)`
+- **Inner highlight:** `inset 0 1px 0 rgba(255,255,255,.08)` (very subtle)
+- **Active bottom:** `0 2px 0 #0a0f23`, ambient `0 6px 14px rgba(0,0,0,.4)`, inner `rgba(255,255,255,.06)`
+
+**Variant 8: .sm (Small Size Modifier, lines 56-57)**
+```css
+.btn-3d.sm {
+  padding: 0.55rem 0.85rem;
+  font-size: 0.82rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 0 #312e81, inset 0 1px 0 rgba(255,255,255,.25);
+}
+.btn-3d.sm:active {
+  box-shadow: 0 1px 0 #312e81, inset 0 1px 0 rgba(255,255,255,.2);
+  transform: translateY(3px);
+}
+```
+- Reduces padding, font-size, border-radius, and shadow depth.
+- Combinable with any color variant (e.g., `.btn-3d.ghost.sm` on Etapa 1 reset button).
+
+##### Variant Summary Table
+
+| # | Modifier | Gradient (top→bottom) | Bottom Shadow | Ambient Glow Color | Text Color |
+|---|----------|----------------------|---------------|-------------------|------------|
+| 1 | *(base)* | `#6d72ff → #4f46e5` | `#312e81` | `rgba(79,70,229,.45)` | `white` |
+| 2 | `.success` | `#34d399 → #10b981` | `#065f46` | `rgba(16,185,129,.4)` | `white` |
+| 3 | `.warn` | `#fbbf24 → #f59e0b` | `#92400e` | `rgba(245,158,11,.4)` | `#1f1300` |
+| 4 | `.danger` | `#fb7185 → #ef4444` | `#7f1d1d` | `rgba(239,68,68,.4)` | `white` |
+| 5 | `.cyan` | `#67e8f9 → #06b6d4` | `#155e75` | `rgba(6,182,212,.4)` | `#001017` |
+| 6 | `.purple` | `#c084fc → #a855f7` | `#581c87` | `rgba(168,85,247,.4)` | `white` |
+| 7 | `.ghost` | `#1f2a52 → #111a36` | `#0a0f23` | `rgba(0,0,0,.4)` | `white` |
+| 8 | `.sm` | *(inherits color)* | Reduced to `4px` | *(inherits color)* | *(inherits)* |
+
+**Usage in DOM:** Common across all views — `.btn-3d` with various modifiers used for publish buttons, reset buttons, modal actions, deploy triggers, etc. Refer to §2 per-view DOM trees for specific instances.
+
+**Internal note — hardcoded credential button:**
+In the autoConectarTokens() boot function, a `.btn-3d.cyan.sm` button onClick submits an HTML form containing hardcoded API credentials. This button is rendered during the "CONFIGURAR TOKENS" step in Config view. **REDACT — DO NOT SHIP CREDENTIALS IN CLONE.**
+
+
+#### 6.2.3 Icon Cube Design System (.icon-cube)
+
+**Source:** lines 59-69. Second most distinctive visual element: gradient squares with inner highlight + bottom shadow creating a raised 3D cube illusion.
+
+##### Base Class (.icon-cube — Default/Primary)
+```css
+.icon-cube {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  background: linear-gradient(160deg, #7c83ff, #4f46e5 60%, #312e81);
+  box-shadow: 0 10px 24px rgba(79,70,229,.45), inset 0 2px 0 rgba(255,255,255,.25), inset 0 -6px 0 rgba(0,0,0,.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  color: white;
+}
+```
+- **Gradient:** `linear-gradient(160deg, light, mid 60%, dark)` — diagonal light source from top-left creates 3D cube face illusion.
+- **Shadow layers (3 total):**
+  1. `0 10px 24px rgba(79,70,229,.45)` — **Drop shadow:** spreads outward for floating effect.
+  2. `inset 0 2px 0 rgba(255,255,255,.25)` — **Top inner highlight:** simulates light hitting the top edge.
+  3. `inset 0 -6px 0 rgba(0,0,0,.25)` — **Bottom inner shadow:** simulates dark underside of the cube.
+- **States:** Default only — no `:hover`, `:active`, or `:disabled` pseudo-classes.
+
+##### Color Variants (5 total)
+
+Each variant overrides `background` and `box-shadow` only. Font size, dimensions, border-radius, and display properties are inherited from base.
+
+| # | Modifier | Gradient (160deg) | Drop Shadow Color | Inner Top | Inner Bottom |
+|---|----------|-------------------|-------------------|-----------|-------------|
+| 1 | *(base/default)* | `#7c83ff → #4f46e5 60% → #312e81` | `rgba(79,70,229,.45)` | `rgba(255,255,255,.25)` | `rgba(0,0,0,.25)` |
+| 2 | `.cyan` | `#67e8f9 → #06b6d4 60% → #155e75` | `rgba(6,182,212,.45)` | `rgba(255,255,255,.25)` | `rgba(0,0,0,.25)` |
+| 3 | `.green` | `#34d399 → #10b981 60% → #065f46` | `rgba(16,185,129,.45)` | `rgba(255,255,255,.25)` | `rgba(0,0,0,.25)` |
+| 4 | `.purple` | `#c084fc → #a855f7 60% → #581c87` | `rgba(168,85,247,.45)` | `rgba(255,255,255,.25)` | `rgba(0,0,0,.25)` |
+| 5 | `.amber` | `#fbbf24 → #f59e0b 60% → #92400e` | `rgba(245,158,11,.45)` | `rgba(255,255,255,.25)` | `rgba(0,0,0,.25)` |
+| 6 | `.rose` | `#fb7185 → #ef4444 60% → #7f1d1d` | `rgba(239,68,68,.45)` | `rgba(255,255,255,.25)` | `rgba(0,0,0,.25)` |
+
+**Usage in DOM (§2 references):**
+| Variant | Locations |
+|---------|-----------|
+| base (indigo) | banco company icon (line 1442) |
+| `.cyan` | Sidebar tip card ⭐ (line 167), Etapa 1 domain step 🌐 (line 604) |
+| `.green` | Etapa 1 success step 🏢 (line 447), Etapa 1 meta step 🎨 (line 681), Etapa 1 publish step 🌐 (line 780), Banco detail 🗺️ (line 1373) |
+| `.purple` | Sidebar logo 🧪 (line 144), Header admin avatar JV (line 186), Dashboard hero 🧪 (line 325), Etapa 1 security step 🛡️ (line 645) |
+| `.amber` | Warning icons ⚠️ (line 339) |
+| `.rose` | (not found in static HTML; used dynamically via JS) |
+
+**Size overrides (via inline `style=""`):** See §6.1.10 for the 6 size variants used throughout the app. The CSS base size (64×64) is rarely used directly — most instances have inline width/height/font-size overrides.
+
+
+#### 6.2.4 Pill / Badge System (.pill)
+
+**Source:** lines 76-81. Inline status badges with colored backgrounds and borders.
+
+##### Base Class
+```css
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+```
+- **Shape:** Fully rounded (pill shape) via `border-radius: 999px`.
+- **States:** Default only — no pseudo-classes. Pills are non-interactive display elements.
+
+##### Color Variants (5 total)
+
+| # | Modifier | Background | Text Color | Border | Semantics | Usage |
+|---|----------|-----------|------------|--------|-----------|-------|
+| 1 | `.ok` | `rgba(34,197,94,.15)` | `#86efac` | `1px solid rgba(34,197,94,.3)` | Success/active/approved | Empresa ATIVA status, API status pill (ok) |
+| 2 | `.todo` | `rgba(245,158,11,.15)` | `#fcd34d` | `1px solid rgba(245,158,11,.3)` | Pending/to-do | Capital social pending, status todo |
+| 3 | `.doing` | `rgba(99,102,241,.15)` | `#a5b4fc` | `1px solid rgba(99,102,241,.3)` | In progress | "FLUXO LINEAR" label, status doing |
+| 4 | `.done` | `rgba(16,185,129,.18)` | `#6ee7b7` | `1px solid rgba(16,185,129,.3)` | Completed | Capital social completed, status done |
+| 5 | `.danger` | `rgba(239,68,68,.18)` | `#fda4af` | `1px solid rgba(239,68,68,.3)` | Error/danger | API error status, failed deploys |
+
+**Key pattern:** All background colors use `rgba()` with 15-18% opacity over the dark theme background — this creates a tinted transparent effect consistent with glassmorphism. Border uses 30% opacity of the same color for subtle definition.
+
+**Usage in DOM:** Used extensively as inline status indicators in Etapa 1 (empresa situacao, porte, capital status), API status pills in header, and Planilha status column.
+
+
+#### 6.2.5 Navigation Links (.nav-link)
+
+**Source:** lines 71-74.
+
+```css
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.85rem 1rem;
+  border-radius: 14px;
+  color: #cfd5f2;
+  font-weight: 600;
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+```
+
+##### States
+
+**Hover (line 72):**
+```css
+.nav-link:hover {
+  background: rgba(255,255,255,0.05);
+  color: white;
+  transform: translateX(2px);
+}
+```
+- Subtle rightward slide (2px) on hover + slight background highlight.
+
+**Active (line 73):**
+```css
+.nav-link.active {
+  background: linear-gradient(135deg, rgba(99,102,241,.25), rgba(34,211,238,.1));
+  color: white;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.08);
+}
+```
+- Diagonal gradient (indigo→cyan) at 135deg for active state.
+- Inset border via box-shadow (1px white at 8% opacity).
+- **Toggle mechanism:** `go()` function calls `document.querySelectorAll('[data-route]').forEach(el => el.classList.toggle('active', el.dataset.route === route))`.
+
+**Focus:** No focus style defined — inherits browser default. This is an accessibility gap.
+
+##### Child: .nav-emoji
+```css
+.nav-link .nav-emoji {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: linear-gradient(160deg, rgba(255,255,255,.12), rgba(255,255,255,.04));
+  font-size: 18px;
+}
+```
+- Small icon-cube-like container for emoji icons in nav links.
+- Subtle white gradient background.
+
+**Usage in DOM:** 8 nav-links in `<aside id="sidebar">` → `<nav class="space-y-1.5">`. Each is a `<div>` (not `<a>`) with `data-route` attribute, inline `onclick="go('route')"`, and `.nav-emoji` + text label. Detailed mapping at §2.1.2.
+
+**Disabled state:** No disabled nav-link style defined in CSS.
+
+
+#### 6.2.6 Step Cards (.step-card)
+
+**Source:** lines 89-92. Wizard step containers used in Etapa 1's 5-step flow.
+
+```css
+.step-card {
+  position: relative;
+  padding: 1.5rem 1.5rem 1.5rem 5rem;
+  border-radius: 20px;
+  transition: opacity 0.3s;
+}
+```
+- **Left padding (5rem):** Creates space for the absolutely-positioned `.step-num` badge.
+
+##### States
+
+**Disabled (line 90):**
+```css
+.step-card.disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+```
+- Dimmed + non-interactive when step is not yet unlocked.
+- **Toggle mechanism:** `stepBox()` function adds/removes `.disabled` class based on wizard progression.
+
+**Done (line 92):**
+```css
+.step-card.done .step-num {
+  background: linear-gradient(160deg, #34d399, #10b981);
+  box-shadow: 0 6px 0 #065f46, inset 0 1px 0 rgba(255,255,255,.25);
+}
+```
+- Green variant of the step number badge — indicates completed step.
+- Note: `.done` modifies the child `.step-num`, not the card itself.
+
+**Hover/Active:** No hover or active styles defined for `.step-card`.
+
+##### Child: .step-num
+```css
+.step-num {
+  position: absolute;
+  left: 1.2rem;
+  top: 1.2rem;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1.25rem;
+  color: white;
+  background: linear-gradient(160deg, #7c83ff, #4f46e5);
+  box-shadow: 0 6px 0 #312e81, inset 0 1px 0 rgba(255,255,255,.25);
+}
+```
+- Mini 3D badge with number — uses same visual language as `.btn-3d` and `.icon-cube`.
+- Default state: indigo gradient (matches base `.icon-cube`).
+- Done state: green gradient (see above).
+
+**Usage in DOM:** `stepBox()` generates 5 step cards for Etapa 1 wizard: Buscar CNPJ, Escolher Domínio, Meta Tag, Gerar HTML, Publicar. Each has conditional `.disabled` based on prior step completion. See §5.1 `stepBox()` for full generation logic.
+
+
+#### 6.2.7 Input Elements (.input)
+
+**Source:** lines 83-87.
+
+```css
+.input {
+  width: 100%;
+  padding: 0.95rem 1.1rem;
+  border-radius: 14px;
+  background: #0b1330;
+  border: 1px solid var(--border);
+  color: white;
+  font-size: 1rem;
+  outline: none;
+  transition: all 0.15s;
+  font-family: Inter, sans-serif;
+}
+```
+
+##### States
+
+**Focus (line 84):**
+```css
+.input:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 4px rgba(99,102,241,.18);
+}
+```
+- Indigo border + 4px indigo ring on focus.
+
+**Placeholder (line 85):**
+```css
+.input::placeholder {
+  color: #6b7299;
+}
+```
+- Muted blue-gray placeholder text.
+
+##### Variants
+
+**textarea.input (line 86):**
+```css
+textarea.input {
+  min-height: 90px;
+  resize: vertical;
+}
+```
+
+**select.input (line 87):**
+```css
+select.input {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%239aa3c7' viewBox='0 0 16 16'%3E%3Cpath d='M3 5l5 6 5-6z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+```
+- Custom dropdown arrow via inline SVG (muted color `#9aa3c7` to match `--muted`).
+- Removes browser-native select appearance.
+
+**Disabled:** No disabled style defined in CSS.
+
+**Usage in DOM:** All form inputs across views (CNPJ input, domain input, meta tag textarea, config token inputs, Planilha status select, filter inputs, PDF text size input).
+
+
+#### 6.2.8 Additional Component Classes
+
+##### .switch-tab (lines 116-117)
+```css
+.switch-tab {
+  padding: 0.55rem 1rem;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  color: #9aa3c7;
+}
+.switch-tab.active {
+  background: rgba(99,102,241,.2);
+  color: white;
+  box-shadow: inset 0 0 0 1px rgba(99,102,241,.4);
+}
+```
+- **States:** Default + `.active` (indigo highlight).
+- **Usage:** Config view account switcher tabs (Cloudflare/SMS).
+- No hover or disabled styles.
+
+##### .copy-row (lines 119-121)
+```css
+.copy-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1rem;
+  border-radius: 14px;
+  background: #0b1330;
+  border: 1px solid var(--border);
+}
+.copy-row .key {
+  font-size: 0.7rem;
+  color: #9aa3c7;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  min-width: 120px;
+}
+.copy-row .val {
+  flex: 1;
+  font-weight: 700;
+  word-break: break-word;
+}
+```
+- **Usage:** Display-only rows showing key-value pairs (domain, deployment ID, SMS code). Has `.neon` modifier for highlighted rows (see §6.2.1).
+
+##### .empty (line 114)
+```css
+.empty {
+  border: 2px dashed rgba(255,255,255,.1);
+  border-radius: 18px;
+  padding: 2rem;
+  text-align: center;
+  color: var(--muted);
+}
+```
+- **Usage:** Empty state placeholder in Banco (no companies), Planilha (no sites).
+
+##### .scrollbar (lines 94-96)
+```css
+.scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
+.scrollbar::-webkit-scrollbar-thumb { background: #2a3460; border-radius: 6px; }
+.scrollbar::-webkit-scrollbar-track { background: transparent; }
+```
+- Custom WebKit scrollbar styling: 8px width, dark blue thumb (`#2a3460`), transparent track.
+- **Usage:** Modal body (`#modal-body`), PDF viewer (`#pdf-viewer`).
+
+##### .file-drop (lines 129-130)
+```css
+.file-drop {
+  border: 2px dashed rgba(99,102,241,.4);
+  border-radius: 20px;
+  padding: 2.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: rgba(99,102,241,.04);
+}
+.file-drop:hover, .file-drop.dragover {
+  background: rgba(99,102,241,.1);
+  border-color: rgba(99,102,241,.7);
+}
+```
+- **States:** Default → `:hover` / `.dragover` (highlighted indigo).
+- **Usage:** Etapa 3 PDF upload area.
+
+##### .pdf-canvas-wrap + .pdf-overlay-text (lines 123-127)
+```css
+.pdf-canvas-wrap {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+}
+.pdf-canvas-wrap canvas {
+  display: block;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.4);
+}
+```
+```css
+.pdf-overlay-text {
+  position: absolute;
+  min-width: 60px;
+  padding: 2px 6px;
+  font-size: 14px;
+  color: #000;
+  background: rgba(255,235,59,.25);
+  border: 1px dashed #f59e0b;
+  border-radius: 4px;
+  cursor: move;
+  outline: none;
+}
+.pdf-overlay-text:focus {
+  background: rgba(255,235,59,.45);
+  border-style: solid;
+}
+.pdf-overlay-text .del {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ef4444;
+  color: white;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: 1px solid white;
+}
+```
+- **States:** `.pdf-overlay-text`: default (dashed amber border) → `:focus` (solid amber border, brighter background). `.del`: delete button (red circle).
+- **Usage:** Etapa 3 PDF editor — draggable text overlays with delete buttons.
+
+##### .sidebar (lines 105-110)
+```css
+.sidebar { transition: transform 0.25s ease; }
+@media (max-width: 1024px) {
+  .sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 50;
+    transform: translateX(-100%);
+    width: 280px;
+  }
+  .sidebar.open { transform: translateX(0); }
+  .content-wrap { margin-left: 0 !important; }
+}
+```
+- **States:** Default (visible, static) → `.open` (visible on mobile, slides in).
+- **Mobile behavior:** At ≤1024px, sidebar becomes a fixed overlay that slides in/out. Toggled by `toggleSidebar()`.
+
+##### .backdrop (lines 111-112)
+```css
+.backdrop { display: none; }
+.backdrop.open {
+  display: block;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.55);
+  z-index: 40;
+}
+```
+- **States:** Hidden → `.open` (full-screen dark overlay, z-index:40, behind sidebar at z-index:50).
+- **Usage:** Mobile overlay when sidebar is open. Clicking backdrop calls `toggleSidebar(false)`.
+
+##### .floaty (line 99)
+```css
+.floaty { animation: float 4s ease-in-out infinite; }
+```
+- Applies `@keyframes float` (see §6.4).
+
+##### .spinner (lines 100-101)
+```css
+.spinner {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 3px solid rgba(255,255,255,.2);
+  border-top-color: white;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+  vertical-align: middle;
+}
+```
+- CSS-only loading spinner using border technique.
+
+##### .pulse-ring (lines 102-103)
+```css
+.pulse-ring { animation: pulse-ring 2s infinite; }
+```
+- Applies `@keyframes pulse-ring` (see §6.4).
+
+##### .grad-text (line 28)
+```css
+.grad-text {
+  background: linear-gradient(120deg, #a5b4fc, #22d3ee 50%, #a855f7);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+```
+- Gradient text effect: indigo→cyan→purple at 120deg. Text is transparent with gradient clipped to text shape.
+- **Usage:** "DE BMS" in sidebar logo, "Bem-vindo à" in Dashboard hero, headings.
+
+##### .font-display (line 26)
+```css
+.font-display { font-family: Sora, sans-serif; }
+```
+- Applies Sora font. Redundant with Tailwind `font-display` utility — both map to same font stack.
+
+##### .content-wrap (line 109)
+```css
+.content-wrap { margin-left: 0 !important; }
+```
+- Only defined in `@media (max-width: 1024px)` — removes left margin on mobile when sidebar is hidden.
 
 ### 7.1 Dashboard → {DOM:§2.2, APIs:—, State:§1.1, Routes:§3, CSS:§6.2}
 
