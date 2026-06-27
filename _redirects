@@ -1,0 +1,7 @@
+# Netlify CORS Proxy — rewrites /cf-api/* and /sms-api/* to upstream APIs
+# Matches instalarProxy() URL rewriting patterns (RECON.md §2.5, lines 1473-1484)
+# Local dev: instalarProxy() skips on file:// protocol. Use Netlify CLI (netlify dev) for local proxy.
+
+/cf-api/*  https://api.cloudflare.com/:splat  200
+/sms-api/* https://api.sms24h.org/:splat  200
+/sms-api/* https://sms24h.org/:splat  200
