@@ -57,9 +57,17 @@ Plans:
   2. Application data persists across browser sessions using `lab_bms_db_v1` and `lab_bms_settings_v1` localStorage keys with identical JSON structures to the original, including fallback defaults
   3. Toast notifications appear at bottom-center with emoji icons and auto-dismiss after 3 seconds; generic modals open/close with HTML content injection and background-click dismiss; clipboard copy works with toast feedback
   4. All formatting utilities produce outputs matching the original: CNPJ mask (##.###.###/####-##), BRL currency (R$ X.XXX,XX), pt-BR dates (DD/MM/AAAA), Brazilian phone format, slug generation, and HTML escaping
-  5. Dark theme renders pixel-identically to the original: glassmorphism cards, 3D buttons (8 color variants with press animation), icon cubes (5 color variants with gradient+shadow), responsive sidebar collapse at 1024px with overlay backdrop
+   5. Dark theme renders pixel-identically to the original: glassmorphism cards, 3D buttons (8 color variants with press animation), icon cubes (5 color variants with gradient+shadow), responsive sidebar collapse at 1024px with overlay backdrop
 
-**Plans**: TBD
+**Plans**: 5 plans in 2 waves
+
+Plans:
+- [ ] 02-01-PLAN.md — Project Scaffold & Entry Point: directory structure, index.html static shell, main.js entry with all imports + window exposure, Tailwind CDN config, _redirects, .gitignore
+- [ ] 02-02-PLAN.md — Stores & Persistence: localStorage DataStore (getDB/saveDB/getSettings/saveSettings), formatting utilities (fmtCNPJ/fmtMoney/fmtDate/formatBRPhone/calcAnos), string utils (onlyDigits/slugify/escapeHTML), header status + clipboard
+- [ ] 02-03-PLAN.md — Router & Layout: SPA router (go/ROUTES/VIEWS/toggleSidebar), 8 view stubs (placeholder HTML for all routes), complete navigation system
+- [ ] 02-04-PLAN.md — Widgets & UI Components: toast/modal/statCard/quickCard/stepBox/pill factory functions, clipboard copy with toast feedback
+- [ ] 02-05-PLAN.md — CSS Design System & CORS Proxy: 12 CSS files (theme/components/buttons/icon-cube/navigation/pills/inputs/steps/layout/misc/animations/responsive), instalarProxy() fetch monkey-patch
+
 **UI hint**: yes
 
 ### Phase 3: Views & Integrations
@@ -139,7 +147,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Reconnaissance & Extraction | 5/5 | Complete   | 2026-06-27 |
-| 2. Foundation | 0/0 | Not started | - |
+| 2. Foundation | 0/5 | Planned | - |
 | 3. Views & Integrations | 0/0 | Not started | - |
 | 4. Validation | 0/0 | Not started | - |
 | 5. Rebrand Foundation | 0/0 | Not started | - |
