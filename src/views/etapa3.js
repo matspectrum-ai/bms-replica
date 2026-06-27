@@ -159,25 +159,185 @@ async function carregarPDF(file) {
 }
 
 // =============================================================================
-// rerenderOverlays() — STUB (full implementation in Task 2)
-// Task 1: only logs overlay count; canvas click pushes to pdfState.overlays
-// Task 2: creates DOM overlay elements, drag handlers, delete buttons
+// TASK 2: OVERLAY SYSTEM — Draggable overlays, delete, overlay list
+// =============================================================================
+
+// =============================================================================
+// rerenderOverlays() — Full DOM overlay creation + drag + delete
+// Removes old overlay DOM, redraws all overlays from pdfState.overlays array
+// Each overlay div: contentEditable, draggable (mouse+touch), delete button
 // =============================================================================
 function rerenderOverlays() {
-  // STUB — will be fully implemented in Task 2
-  // For now, just indicate overlay state is being tracked
+  // Remove existing overlay DOM elements
+  document.querySelectorAll('.pdf-overlay-text').forEach(el => el.remove());
+
+  const viewer = document.getElementById('pdf-viewer');
+  if (!viewer) return;
+
+  // Create overlay div for each entry in pdfState.overlays
+  pdfState.overlays.forEach((ol, idx) => {
+    const wrap = viewer.querySelector(`.pdf-canvas-wrap[data-page="${ol.page}"]`);
+    if (!wrap) return;
+
+    const canvas = wrap.querySelector('canvas');
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = rect.width / ol.pageWidth;
+    const scaleY = rect.height / ol.pageHeight;
+
+    // Create overlay div
+    const div = document.createElement('div');
+    div.className = 'pdf-overlay-text';
+    div.contentEditable = 'true';
+    div.textContent = ol.text;
+    div.style.left = `${ol.x * scaleX}px`;
+    div.style.top = `${ol.y * scaleY}px`;
+    div.style.fontSize = `${ol.size * scaleX}px`;
+    div.style.position = 'absolute';
+    div.dataset.overlayIdx = idx;
+
+    // Update state on text change (input event)
+    div.addEventListener('input', () => {
+      pdfState.overlays[idx].text = div.textContent;
+      updateOverlayList();
+    });
+
+    // ---- Drag implementation (mouse) ----
+    let dragging = false, startX, startY, origX, origY;
+    div.addEventListener('mousedown', (e) => {
+      if (e.target.classList.contains('overlay-del-btn')) return;
+      dragging = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      origX = ol.x;
+      origY = ol.y;
+      e.preventDefault();
+    });
+    document.addEventListener('mousemove', (e) => {
+      if (!dragging) return;
+      const dx = (e.clientX - startX) / scaleX;
+      const dy = (e.clientY - startY) / scaleY;
+      ol.x = origX + dx;
+      ol.y = origY + dy;
+      div.style.left = `${ol.x * scaleX}px`;
+      div.style.top = `${ol.y * scaleY}px`;
+    });
+    document.addEventListener('mouseup', () => {
+      if (dragging) {
+        dragging = false;
+        updateOverlayList();
+      }
+    });
+
+    // ---- Drag implementation (touch) ----
+    div.addEventListener('touchstart', (e) => {
+      if (e.target.classList.contains('overlay-del-btn')) return;
+      dragging = true;
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      origX = ol.x;
+      origY = ol.y;
+      e.preventDefault();
+    }, { passive: false });
+    document.addEventListener('touchmove', (e) => {
+      if (!dragging) return;
+      const dx = (e.touches[0].clientX - startX) / scaleX;
+      const dy = (e.touches[0].clientY - startY) / scaleY;
+      ol.x = origX + dx;
+      ol.y = origY + dy;
+      div.style.left = `${ol.x * scaleX}px`;
+      div.style.top = `${ol.y * scaleY}px`;
+    });
+    document.addEventListener('touchend', () => {
+      if (dragging) {
+        dragging = false;
+        updateOverlayList();
+      }
+    });
+
+    // Delete button (× in top-right corner)
+    const delBtn = document.createElement('span');
+    delBtn.className = 'overlay-del-btn del';
+    delBtn.textContent = '×';
+    delBtn.title = 'Remover este campo';
+    delBtn.onclick = (e) => {
+      e.stopPropagation();
+      pdfState.overlays.splice(idx, 1);
+      rerenderOverlays();
+    };
+    div.appendChild(delBtn);
+
+    wrap.appendChild(div);
+  });
+
+  updateOverlayList();
+}
+
+// =============================================================================
+// updateOverlayList() — Refresh the #pdf-overlay-list panel
+// Shows all overlays with page number, text preview, and per-item delete button
+// =============================================================================
+function updateOverlayList() {
+  const list = document.getElementById('pdf-overlay-list');
+  if (!list) return;
+
+  if (pdfState.overlays.length === 0) {
+    list.innerHTML = '';
+    return;
+  }
+
+  list.innerHTML = pdfState.overlays.map((ol, i) => {
+    const preview = (ol.text || 'Texto').slice(0, 30);
+    return `<div class="copy-row" style="align-items:flex-start">
+      <span class="key">Pág. ${ol.page}</span>
+      <span class="val" style="flex:1">${escapeHTML(preview)}</span>
+      <button class="btn-3d ghost sm" onclick="window.removerOverlay(${i})" style="color:#f87171;padding:2px 8px;font-size:12px">×</button>
+    </div>`;
+  }).join('');
+
+  // Add bulk clear button when overlays exist
   if (pdfState.overlays.length > 0) {
-    console.log(`📝 ${pdfState.overlays.length} overlay(s) no estado`);
+    list.innerHTML += `<button class="btn-3d ghost sm mt-2" onclick="window.limparTudo()" style="color:#f87171;width:100%">🗑️ Limpar todos (${pdfState.overlays.length})</button>`;
   }
 }
 
 // =============================================================================
-// STUBS for Task 2/3 buttons (placeholders until implemented)
+// removerOverlay(idx) — Remove a specific overlay by index
+// Updates both the overlay DOM and the overlay list panel
 // =============================================================================
-function adicionarTexto() {
-  toast('⚠️ Funcionalidade em desenvolvimento — Task 2');
+function removerOverlay(idx) {
+  pdfState.overlays.splice(idx, 1);
+  rerenderOverlays();
+  toast('Campo removido');
 }
 
+// =============================================================================
+// adicionarTexto() — Add text overlay at center of last loaded page
+// Works without requiring a canvas click (toolbar button)
+// =============================================================================
+function adicionarTexto() {
+  if (!pdfState.pages.length) {
+    toast('⚠️ Carregue um PDF primeiro');
+    return;
+  }
+  const page = pdfState.pages[pdfState.pages.length - 1];
+  pdfState.overlays.push({
+    page: page.pageNum,
+    x: page.viewport.width / 2 - 50,
+    y: page.viewport.height / 2,
+    text: 'Novo texto',
+    size: 14,
+    pageWidth: page.viewport.width,
+    pageHeight: page.viewport.height
+  });
+  rerenderOverlays();
+  toast('✅ Campo adicionado');
+}
+
+// =============================================================================
+// limparTudo() — Clear all overlays with confirmation dialog
+// =============================================================================
 function limparTudo() {
   if (!pdfState.overlays.length) {
     toast('⚠️ Nenhum campo para remover');
@@ -190,6 +350,9 @@ function limparTudo() {
   }
 }
 
+// =============================================================================
+// STUBS for Task 3 features (implemented in next task)
+// =============================================================================
 function baixarPDF() {
   toast('⚠️ Funcionalidade em desenvolvimento — Task 3');
 }
@@ -200,12 +363,6 @@ function extrairEndereco() {
 
 function aplicarEndereco() {
   toast('⚠️ Funcionalidade em desenvolvimento — Task 3');
-}
-
-function removerOverlay(idx) {
-  // Stub — full impl in Task 2
-  pdfState.overlays.splice(idx, 1);
-  rerenderOverlays();
 }
 
 // =============================================================================
