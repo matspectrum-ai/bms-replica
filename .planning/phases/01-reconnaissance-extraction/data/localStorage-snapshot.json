@@ -113,10 +113,10 @@
       "accessor_write": "saveSettings(s)",
       "code_default": {},
       "effective_default_post_bootstrap": {
-        "cf_token": "<REDACTED-CF-TOKEN>",
-        "cf_account": "<REDACTED-CF-ACCOUNT>",
+        "cf_token": "<REDACTED>",
+        "cf_account": "<REDACTED>",
         "cf_account_name": "João Victor",
-        "sms_key": "<REDACTED-SMS-KEY>"
+        "sms_key": "<REDACTED>"
       },
       "note": "Hardcoded credentials seeded by autoConectarTokens() IIFE (lines 2089-2108). Clone must NOT replicate these — use empty defaults or user-provided values.",
       "fields": {

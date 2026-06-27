@@ -1675,10 +1675,10 @@ All fields confirmed from source code analysis:
 **Effective Default (bootstrap):** The `autoConectarTokens()` IIFE (lines 2089-2108) seeds hardcoded credentials if fields are missing — so a "fresh" settings object is effectively:
 ```json
 {
-  "cf_token": "<REDACTED-CF-TOKEN>",
-  "cf_account": "<REDACTED-CF-ACCOUNT>",
+  "cf_token": "<REDACTED — Cloudflare API Token, obtained from user in Configuracoes>",
+  "cf_account": "<REDACTED — Cloudflare Account ID, auto-detected from token>",
   "cf_account_name": "João Victor",
-  "sms_key": "<REDACTED-SMS-KEY>"
+  "sms_key": "<REDACTED — SMS24h API Key, obtained from user in Configuracoes>"
 }
 ```
 **Note:** These hardcoded tokens belong to the original author (João Victor) and are publicly exposed in the source code. The clone should use empty defaults or user-provided values — never ship hardcoded credentials.
@@ -2993,10 +2993,10 @@ Pure functions with no side effects (except `copyText` which is documented in §
 **Hardcoded Defaults (REDACT — DO NOT SHIP IN CLONE):**
 | Field | Hardcoded Value | Purpose |
 |-------|----------------|---------|
-| `cf_token` | `<REDACTED-CF-TOKEN>` | Cloudflare API token |
-| `cf_account` | `f52d55845182f7a903fbdb95d86c99e9` | Cloudflare Account ID |
+| `cf_token` | `<REDACTED>` | Cloudflare API token — user provides via Configuracoes |
+| `cf_account` | `<REDACTED>` | Cloudflare Account ID — auto-detected from token |
 | `cf_account_name` | `João Victor` | Display name |
-| `sms_key` | `<REDACTED-SMS-KEY>` | SMS24h API key |
+| `sms_key` | `<REDACTED>` | SMS24h API key — user provides via Configuracoes |
 
 #### instalarProxy() — IIFE
 
