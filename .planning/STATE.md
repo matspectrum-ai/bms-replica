@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
+status: executing
 stopped_at: Phase 1 context gathered
-last_updated: "2026-06-27T04:56:15.271Z"
-last_activity: 2026-06-27 — Roadmap created; 6 phases spanning 49 v1 + 9 v2 requirements
+last_updated: "2026-06-27T05:47:24.741Z"
+last_activity: 2026-06-27 -- Phase 01 execution started
 progress:
   total_phases: 6
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 5
+  completed_plans: 2
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-27)
 
 **Core value:** Réplica funcional exata da plataforma de gestão empresarial, com comportamento idêntico ao original, mas com identidade visual totalmente renovada.
-**Current focus:** Phase 1 — Reconnaissance & Extraction
+**Current focus:** Phase 01 — Reconnaissance & Extraction
 
 ## Current Position
 
-Phase: 1 of 6 (Reconnaissance & Extraction)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-06-27 — Roadmap created; 6 phases spanning 49 v1 + 9 v2 requirements
+Phase: 01 (Reconnaissance & Extraction) — EXECUTING
+Plan: 2 of 5
+Status: Ready to execute
+Last activity: 2026-06-27 -- Phase 01 execution started
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -47,6 +47,7 @@ Progress: [░░░░░░░░░░] 0%
 | - | - | - | - |
 
 *Updated after each plan completion*
+| Phase 01-reconnaissance-extraction P02 | 4 min | 3 tasks | 941 files |
 
 ## Accumulated Context
 
@@ -60,6 +61,9 @@ Key decisions logged in PROJECT.md Key Decisions table. Summary of decisions aff
 - CSS custom properties para theming — boundary entre clone e rebrand
 - Camada de mock para APIs externas — desenvolvimento offline
 - Horizontal Layers approach — foundation → views → validation → rebrand
+- [Phase ?]: ROUTES is a flat array, not an array of objects — title/subtitle live in a separate hardcoded titles object inside go()
+- [Phase ?]: VIEWS functions are pure string generators — no side effects during render, event handlers via inline onclick in templates
+- [Phase ?]: Zero History API usage — no pushState, no popstate, no hash changes, browser back button exits the app
 
 ### Pending Todos
 
@@ -74,6 +78,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-27T04:56:15.247Z
+Last session: 2026-06-27T05:47:04.075Z
 Stopped at: Phase 1 context gathered
 Resume file: .planning/phases/01-reconnaissance-extraction/01-CONTEXT.md
