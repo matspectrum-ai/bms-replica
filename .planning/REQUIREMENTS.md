@@ -29,55 +29,55 @@ Requisitos para clone fiel 100% do original. Sem alterações visuais na v1.
 
 ### Dashboard (DASH)
 
-- [ ] **DASH-01**: Cards de KPI — Empresas, Sites Criados, No Ar, Finalizados (statCard)
-- [ ] **DASH-02**: Quick Cards com ações rápidas (quickCard)
-- [ ] **DASH-03**: API Status Pills no header
+- [x] **DASH-01**: Cards de KPI — Empresas, Sites Criados, No Ar, Finalizados (statCard)
+- [x] **DASH-02**: Quick Cards com ações rápidas (quickCard)
+- [x] **DASH-03**: API Status Pills no header
 
 ### Etapa 1 — Wizard de Criação de Site (ETP1)
 
-- [ ] **ETP1-01**: CNPJ Lookup via BrasilAPI com normalização de response
-- [ ] **ETP1-02**: 5-Step Sequential Wizard (CNPJ → Domínio → Meta Tag → Gerar Site → Publicar) com progressive unlocking
-- [ ] **ETP1-03**: Domain Suggestion Engine com 7 algoritmos de geração
-- [ ] **ETP1-04**: Site HTML Generator — template engine ~300 linhas produzindo landing page SaaS completa
-- [ ] **ETP1-05**: Cloudflare Pages API Deployment — pipeline 5 passos (create project → JWT → BLAKE3 hash → upload → deploy)
+- [x] **ETP1-01**: CNPJ Lookup via BrasilAPI com normalização de response
+- [x] **ETP1-02**: 5-Step Sequential Wizard (CNPJ → Domínio → Meta Tag → Gerar Site → Publicar) com progressive unlocking
+- [x] **ETP1-03**: Domain Suggestion Engine com 7 algoritmos de geração
+- [x] **ETP1-04**: Site HTML Generator — template engine ~300 linhas produzindo landing page SaaS completa
+- [x] **ETP1-05**: Cloudflare Pages API Deployment — pipeline 5 passos (create project → JWT → BLAKE3 hash → upload → deploy)
 
 ### Etapa 2 — Compra de Número SMS (ETP2)
 
-- [ ] **ETP2-01**: SMS24h API Client wrapper (smsAPI)
-- [ ] **ETP2-02**: Compra de número virtual por país/serviço
-- [ ] **ETP2-03**: Auto-polling para código de ativação SMS (setInterval)
-- [ ] **ETP2-04**: Display de número formatado com botão de cópia
-- [ ] **ETP2-05**: Re-deploy do site no Cloudflare com novo número
+- [x] **ETP2-01**: SMS24h API Client wrapper (smsAPI)
+- [x] **ETP2-02**: Compra de número virtual por país/serviço
+- [x] **ETP2-03**: Auto-polling para código de ativação SMS (setInterval)
+- [x] **ETP2-04**: Display de número formatado com botão de cópia
+- [x] **ETP2-05**: Re-deploy do site no Cloudflare com novo número
 
 ### Etapa 3 — Editor PDF (ETP3)
 
-- [ ] **ETP3-01**: PDF Viewer com pdf.js — renderização multi-página
-- [ ] **ETP3-02**: Click-to-add overlays de texto (contentEditable, draggable, per-overlay delete)
-- [ ] **ETP3-03**: PDF Download com merge via pdf-lib
-- [ ] **ETP3-04**: Address Field Extractor — regex para 7 campos de endereço brasileiro
+- [x] **ETP3-01**: PDF Viewer com pdf.js — renderização multi-página
+- [x] **ETP3-02**: Click-to-add overlays de texto (contentEditable, draggable, per-overlay delete)
+- [x] **ETP3-03**: PDF Download com merge via pdf-lib
+- [x] **ETP3-04**: Address Field Extractor — regex para 7 campos de endereço brasileiro
 
 ### Banco de Empresas (BANC)
 
-- [ ] **BANC-01**: Grid de cards de empresa com renderização dinâmica
-- [ ] **BANC-02**: Busca textual e filtro por capital social (ideal: 10k-50k)
-- [ ] **BANC-03**: Ação "Usar na Etapa 1" que alimenta o wizard
+- [x] **BANC-01**: Grid de cards de empresa com renderização dinâmica
+- [x] **BANC-02**: Busca textual e filtro por capital social (ideal: 10k-50k)
+- [x] **BANC-03**: Ação "Usar na Etapa 1" que alimenta o wizard
 
 ### Planilha (PLAN)
 
-- [ ] **PLAN-01**: Tabela de 8 colunas (Empresa, CNPJ, Domínio/URL, Tel Empresa, Tel Nosso, Status, Atualizado, Ações)
-- [ ] **PLAN-02**: Status dropdown inline para alteração de estado
-- [ ] **PLAN-03**: Delete de registros
-- [ ] **PLAN-04**: Export CSV com BOM UTF-8 para Excel
+- [x] **PLAN-01**: Tabela de 8 colunas (Empresa, CNPJ, Domínio/URL, Tel Empresa, Tel Nosso, Status, Atualizado, Ações)
+- [x] **PLAN-02**: Status dropdown inline para alteração de estado
+- [x] **PLAN-03**: Delete de registros
+- [x] **PLAN-04**: Export CSV com BOM UTF-8 para Excel
 
 ### Configurações (CONF)
 
-- [ ] **CONF-01**: Cloudflare Token Management com auto-detecção de conta
-- [ ] **CONF-02**: SMS24h API Key input
-- [ ] **CONF-03**: Backup/Restore como arquivo JSON (download/upload)
+- [x] **CONF-01**: Cloudflare Token Management com auto-detecção de conta
+- [x] **CONF-02**: SMS24h API Key input
+- [x] **CONF-03**: Backup/Restore como arquivo JSON (download/upload)
 
 ### Ajuda (AJUD)
 
-- [ ] **AJUD-01**: Guias passo-a-passo como listas ordenadas com ícones
+- [x] **AJUD-01**: Guias passo-a-passo como listas ordenadas com ícones
 
 ### Responsividade e Tema (UI)
 
@@ -142,34 +142,34 @@ Requisitos para o rebranding e nova identidade visual.
 | CORE-07 | Phase 2 — Foundation | Complete |
 | CORE-08 | Phase 2 — Foundation | Complete |
 | CORE-09 | Phase 2 — Foundation | Complete |
-| DASH-01 | Phase 3 — Views & Integrations | Pending |
-| DASH-02 | Phase 3 — Views & Integrations | Pending |
-| DASH-03 | Phase 3 — Views & Integrations | Pending |
-| ETP1-01 | Phase 3 — Views & Integrations | Pending |
-| ETP1-02 | Phase 3 — Views & Integrations | Pending |
-| ETP1-03 | Phase 3 — Views & Integrations | Pending |
-| ETP1-04 | Phase 3 — Views & Integrations | Pending |
-| ETP1-05 | Phase 3 — Views & Integrations | Pending |
-| ETP2-01 | Phase 3 — Views & Integrations | Pending |
-| ETP2-02 | Phase 3 — Views & Integrations | Pending |
-| ETP2-03 | Phase 3 — Views & Integrations | Pending |
-| ETP2-04 | Phase 3 — Views & Integrations | Pending |
-| ETP2-05 | Phase 3 — Views & Integrations | Pending |
-| ETP3-01 | Phase 3 — Views & Integrations | Pending |
-| ETP3-02 | Phase 3 — Views & Integrations | Pending |
-| ETP3-03 | Phase 3 — Views & Integrations | Pending |
-| ETP3-04 | Phase 3 — Views & Integrations | Pending |
-| BANC-01 | Phase 3 — Views & Integrations | Pending |
-| BANC-02 | Phase 3 — Views & Integrations | Pending |
-| BANC-03 | Phase 3 — Views & Integrations | Pending |
-| PLAN-01 | Phase 3 — Views & Integrations | Pending |
-| PLAN-02 | Phase 3 — Views & Integrations | Pending |
-| PLAN-03 | Phase 3 — Views & Integrations | Pending |
-| PLAN-04 | Phase 3 — Views & Integrations | Pending |
-| CONF-01 | Phase 3 — Views & Integrations | Pending |
-| CONF-02 | Phase 3 — Views & Integrations | Pending |
-| CONF-03 | Phase 3 — Views & Integrations | Pending |
-| AJUD-01 | Phase 3 — Views & Integrations | Pending |
+| DASH-01 | Phase 3 — Views & Integrations | Complete |
+| DASH-02 | Phase 3 — Views & Integrations | Complete |
+| DASH-03 | Phase 3 — Views & Integrations | Complete |
+| ETP1-01 | Phase 3 — Views & Integrations | Complete |
+| ETP1-02 | Phase 3 — Views & Integrations | Complete |
+| ETP1-03 | Phase 3 — Views & Integrations | Complete |
+| ETP1-04 | Phase 3 — Views & Integrations | Complete |
+| ETP1-05 | Phase 3 — Views & Integrations | Complete |
+| ETP2-01 | Phase 3 — Views & Integrations | Complete |
+| ETP2-02 | Phase 3 — Views & Integrations | Complete |
+| ETP2-03 | Phase 3 — Views & Integrations | Complete |
+| ETP2-04 | Phase 3 — Views & Integrations | Complete |
+| ETP2-05 | Phase 3 — Views & Integrations | Complete |
+| ETP3-01 | Phase 3 — Views & Integrations | Complete |
+| ETP3-02 | Phase 3 — Views & Integrations | Complete |
+| ETP3-03 | Phase 3 — Views & Integrations | Complete |
+| ETP3-04 | Phase 3 — Views & Integrations | Complete |
+| BANC-01 | Phase 3 — Views & Integrations | Complete |
+| BANC-02 | Phase 3 — Views & Integrations | Complete |
+| BANC-03 | Phase 3 — Views & Integrations | Complete |
+| PLAN-01 | Phase 3 — Views & Integrations | Complete |
+| PLAN-02 | Phase 3 — Views & Integrations | Complete |
+| PLAN-03 | Phase 3 — Views & Integrations | Complete |
+| PLAN-04 | Phase 3 — Views & Integrations | Complete |
+| CONF-01 | Phase 3 — Views & Integrations | Complete |
+| CONF-02 | Phase 3 — Views & Integrations | Complete |
+| CONF-03 | Phase 3 — Views & Integrations | Complete |
+| AJUD-01 | Phase 3 — Views & Integrations | Complete |
 | UI-01 | Phase 2 — Foundation | Complete |
 | UI-02 | Phase 2 — Foundation | Complete |
 | UI-03 | Phase 2 — Foundation | Complete |

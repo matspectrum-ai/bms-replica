@@ -10,7 +10,7 @@ Clone funcional 100% do front-end de gestão empresarial brasileira (https://lab
 
 - [x] **Phase 1: Reconnaissance & Extraction** — Extrair e documentar sistematicamente DOM, APIs, estado, rotas e lógica de negócio do sistema original (completed 2026-06-27)
 - [x] **Phase 2: Foundation** — Infraestrutura completa: router SPA, persistência localStorage, widgets reutilizáveis, utilitários, layout, tema e proxy CORS (completed 2026-06-27)
-- [ ] **Phase 3: Views & Integrations** — Todas as 8 rotas com integrações de API: Dashboard, Etapa 1-3, Banco, Planilha, Configurações, Ajuda
+- [x] **Phase 3: Views & Integrations** — Todas as 8 rotas com integrações de API: Dashboard, Etapa 1-3, Banco, Planilha, Configurações, Ajuda (completed 2026-06-27)
 - [ ] **Phase 4: Validation** — Validação de paridade: A/B testing, compatibilidade de storage, responsividade, bundle size
 - [ ] **Phase 5: Rebrand Foundation** — Nova identidade visual estrutural: paleta, tipografia, layout Header+Mega Menu, ícones, nome/logotipo
 - [ ] **Phase 6: Rebrand Polish** — Refinamentos visuais: cards glassmorphism+neumorphism, micro-animações, copywriting, site gerado rebrandeado
@@ -91,11 +91,12 @@ Plans:
 
 Plans:
 
-- [ ] 03-01-PLAN.md — Dashboard, Ajuda + Configurações: KPIs computados, quick cards, API warning condicional, 3 guias estáticos, gestão de tokens Cloudflare/SMS24h com backup/restore JSON (DASH-01..03, AJUD-01, CONF-01..03)
-- [ ] 03-02-PLAN.md — Banco de Empresas + Planilha: grid de empresas com busca/filtro e cross-view transfer, tabela de sites 8-colunas com status dropdown inline, delete, e export CSV UTF-8 BOM (BANC-01..03, PLAN-01..04)
-- [ ] 03-03-PLAN.md — Etapa 1 Wizard: CNPJ lookup BrasilAPI → 5-step wizard state machine → 7-algoritmo domain engine → buildSiteHTML template (~285 linhas) → Cloudflare Pages 5-step deploy pipeline (ETP1-01..05)
-- [ ] 03-04-PLAN.md — Etapa 2 SMS: SMS24h API client wrapper → compra de número → auto-polling 5s com timer → display formatado + copy → re-deploy Cloudflare com novo número (ETP2-01..05)
-- [ ] 03-05-PLAN.md — Etapa 3 PDF Editor: CDN scripts pdf.js/pdf-lib → multi-page canvas viewer → overlays arrastáveis contentEditable → pdf-lib merge/download com Y-flip → regex extração 7 campos endereço brasileiro (ETP3-01..04)
+- [x] 03-01-PLAN.md — Dashboard, Ajuda + Configurações: KPIs computados, quick cards, API warning condicional, 3 guias estáticos, gestão de tokens Cloudflare/SMS24h com backup/restore JSON (DASH-01..03, AJUD-01, CONF-01..03)
+- [x] 03-02-PLAN.md — Banco de Empresas + Planilha: grid de empresas com busca/filtro e cross-view transfer, tabela de sites 8-colunas com status dropdown inline, delete, e export CSV UTF-8 BOM (BANC-01..03, PLAN-01..04)
+- [x] 03-03-PLAN.md — Etapa 1 Wizard: CNPJ lookup BrasilAPI → 5-step wizard state machine → 7-algoritmo domain engine → buildSiteHTML template (~285 linhas) → Cloudflare Pages 5-step deploy pipeline (ETP1-01..05)
+- [x] 03-04-PLAN.md — Etapa 2 SMS: SMS24h API client wrapper → compra de número → auto-polling 5s com timer → display formatado + copy → re-deploy Cloudflare com novo número (ETP2-01..05)
+- [x] 03-05-PLAN.md — Etapa 3 PDF Editor: CDN scripts pdf.js/pdf-lib → multi-page canvas viewer → overlays arrastáveis contentEditable → pdf-lib merge/download com Y-flip → regex extração 7 campos endereço brasileiro (ETP3-01..04)
+
 **UI hint**: yes
 
 ### Phase 4: Validation
@@ -157,7 +158,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Reconnaissance & Extraction | 5/5 | Complete   | 2026-06-27 |
 | 2. Foundation | 5/5 | Complete   | 2026-06-27 |
-| 3. Views & Integrations | 0/0 | Not started | - |
+| 3. Views & Integrations | 5/5 | Complete   | 2026-06-27 |
 | 4. Validation | 0/0 | Not started | - |
 | 5. Rebrand Foundation | 0/0 | Not started | - |
 | 6. Rebrand Polish | 0/0 | Not started | - |
