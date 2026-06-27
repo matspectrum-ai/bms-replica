@@ -99,7 +99,7 @@ Array of site objects. Each entry represents a generated site (Etapa 1 output).
 
 **Status: VESTIGIAL — initialized in default but never populated by any code path.**
 
-Array present in the default structure `{ empresas:[], sites:[], sms:[] }` but no function in the entire source code writes to `db.sms`. This is a dead/vestigial array — likely reserved for future SMS purchase history but never implemented. The clone may safely omit this array or keep it for structural compatibility.
+Array present in the default structure `{ empresas:[], sites:[], sms:[] }` but no function in the entire source code writes to `db.sms`. This is a dead/vestigial array — appears reserved for SMS purchase history but never implemented. The clone may safely omit this array or keep it for structural compatibility.
 
 **Confidence:** HIGH — grep of entire 2135-line source for `db.sms` and `.sms` returned zero matches outside the default initialization.
 
@@ -235,27 +235,216 @@ interface Settings {
 
 ### 1.3 Estado em Memória (In-Memory State Objects)
 
-*(To be filled by Task 01-01-03)*
+The original system uses 3 module-level `let` mutable state objects. All are declared at the top of their respective feature blocks. No additional state objects beyond these 3 exist in the source.
 
 #### 1.3.1 etapa1State
 
-*(To be documented)*
+**Declaration:** Line 391 (module-level `let`)
+**Scope:** All Etapa 1 functions (`VIEWS.etapa1`, `e1Buscar`, `e1Gerar`, `e1Publicar`, `resetEtapa1`, `salvarEmpresa`, `registrarSite`, render helpers)
+**Reset Trigger:** `resetEtapa1()` (line 905) — reinitializes all fields
+
+**Initial Value:**
+```javascript
+let etapa1State = {
+  empresa: null,        // {Object} — normalized company data from CNPJ lookup
+  dominio: '',          // {string} — selected subdomain slug
+  metatag: '',          // {string} — Facebook domain verification meta tag
+  htmlGerado: '',       // {string} — generated site HTML (full document)
+  publicado: null       // {Object|null} — {url, projectName, deploymentId} after Cloudflare deploy
+};
+```
+
+| Campo | Tipo | Default | Mutado Por (Linha) | Descrição |
+|-------|------|---------|---------------------|-----------|
+| `empresa` | object \| null | `null` | `e1Buscar()` success (497), `e1ManualSalvar()` (523), `usarEmpresaNaEtapa1()` (1471), inline onclick reset (459) | Full company object from `normalizarBrasilAPI()` |
+| `dominio` | string | `""` | `e1EscolherDominio(d)` (635), inline onclick reset (459, 610) | Subdomain slug (no `.pages.dev` suffix) |
+| `metatag` | string | `""` | `e1SalvarMeta()` (670), inline onclick reset (459, 650) | Facebook meta-tag HTML string or `<!-- meta tag não fornecida -->` |
+| `htmlGerado` | string | `""` | `e1Gerar()` (736), inline onclick reset (459, 688) | Complete HTML document (buildSiteHTML output + meta-tag injection) |
+| `publicado` | object \| null | `null` | `e1Publicar()` success (890), inline onclick reset (459) | `{url: string, projectName: string, deploymentId: string}` |
+
+**Step Transition Logic (Progressive Unlocking):**
+
+The wizard uses boolean flags derived from state, not explicit step numbers:
+
+| Step | Gate | Condition | Unlocks When |
+|------|------|-----------|-------------|
+| Step 1 (CNPJ) | Always enabled | — | Page load |
+| Step 2 (Domínio) | `!stepCnpj` | `!etapa1State.empresa` | `empresa !== null` |
+| Step 3 (Meta Tag) | `!stepDom` | `!etapa1State.dominio` | `dominio !== ''` |
+| Step 4 (Gerar Site) | `!stepMeta` | `!etapa1State.metatag` | `metatag !== ''` |
+| Step 5 (Publicar) | `!stepHTML` | `!etapa1State.htmlGerado` | `htmlGerado !== ''` |
+
+Each step's `stepBox()` call passes `disabled` based on the previous step's completion. Steps can be "reversed" by clearing the current step's field (inline onclick on "Trocar"/"Refazer" buttons), which cascades to clear all downstream fields.
+
+**Complete Field Mutation Trace:**
+
+| Mutation | Source Line | Trigger |
+|----------|------------|---------|
+| `empresa = e` | 497 | `e1Buscar()` — CNPJ lookup success |
+| `empresa = e` | 523 | `e1ManualSalvar()` — manual company registration |
+| `empresa = e` (via spread) | 1471 | `usarEmpresaNaEtapa1(cnpj)` — "Usar na Etapa 1" from Banco |
+| `empresa = null` (+ cascade) | 459 | User clicks "Trocar" on Step 1 |
+| `dominio = d` | 635 | `e1EscolherDominio(d)` — user selects domain suggestion |
+| `dominio = ''` (+ cascade) | 459, 610 | User clicks "Trocar" on Step 1 or 2 |
+| `metatag = v` | 670 | `e1SalvarMeta()` — user saves meta tag |
+| `metatag = ''` (+ cascade) | 459, 650 | User clicks "Trocar" on Step 1 or 3 |
+| `htmlGerado = html` | 736 | `e1Gerar()` — site HTML generation complete |
+| `htmlGerado = ''` (+ cascade) | 459, 688 | User clicks "Refazer" on Step 4 |
+| `publicado = {url, projectName, deploymentId}` | 890 | `e1Publicar()` — Cloudflare deploy success |
+| `publicado = null` (+ cascade) | 459 | User clicks "Trocar" on Step 1 |
+
+---
 
 #### 1.3.2 etapa2State
 
-*(To be documented)*
+**Declaration:** Line 915 (module-level `let`)
+**Scope:** All Etapa 2 functions (`VIEWS.etapa2`, `smsAPI`, `smsComprar`, `iniciarPollingSMS`, `smsCancelar`, `smsConfirmar`, `smsAtualizarSite`)
+**Reset Trigger:** None explicit — state resets naturally when new purchase starts
+
+**Initial Value:**
+```javascript
+let etapa2State = {
+  activationId: null,   // {string|null} — SMS24h activation ID
+  phone: '',            // {string} — purchased phone number (raw, unformatted)
+  code: '',             // {string} — received SMS activation code
+  timer: null           // {number|null} — setInterval ID for auto-polling
+};
+```
+
+| Campo | Tipo | Default | Mutado Por (Linha) | Descrição |
+|-------|------|---------|---------------------|-----------|
+| `activationId` | string \| null | `null` | `smsComprar()` (1052) | SMS24h activation ID, used for polling and status changes |
+| `phone` | string | `""` | `smsComprar()` (1053) | Raw phone number string (e.g., "5531990885354") |
+| `code` | string | `""` | `iniciarPollingSMS()` (1076), reset to `""` in `smsComprar()` (1054) | SMS activation code received from SMS24h polling |
+| `timer` | number \| null | `null` | `iniciarPollingSMS()` (1069), cleared in `smsCancelar()` (1088) and `smsConfirmar()` (1097) | `setInterval` ID for 5-second polling |
+
+**Polling Timer Details:**
+
+| Property | Value |
+|----------|-------|
+| Interval | 5,000ms (every 5 seconds) |
+| Timeout | 1,200 seconds (20 minutes) |
+| Start | `Date.now()` captured at `iniciarPollingSMS()` call |
+| Display | Updates `#sms-timer` element with elapsed seconds |
+| Termination | `clearInterval` on: SMS received, timeout (1200s), user cancel, or user confirm |
+| API Call | `smsAPI('getStatus', '&id={activationId}')` each interval |
+
+**Field Mutation Trace:**
+
+| Mutation | Source Line | Trigger |
+|----------|------------|---------|
+| `activationId, phone = id, phone` | 1052-1053 | `smsComprar()` — SMS24h purchase response `ACCESS_NUMBER:id:phone` |
+| `code = ''` | 1054 | `smsComprar()` — reset on new purchase |
+| `code = t.split(':')[1]` | 1076 | `iniciarPollingSMS()` — SMS received (`STATUS_OK:code`) |
+| `timer = setInterval(...)` | 1069 | `iniciarPollingSMS()` — polling started |
+| `clearInterval(timer)` | 1067, 1077, 1088, 1097 | Before new timer, on SMS received, on cancel, on confirm |
+
+---
 
 #### 1.3.3 pdfState
 
-*(To be documented)*
+**Declaration:** Line 1183 (module-level `let`)
+**Scope:** All Etapa 3 functions (`VIEWS.etapa3`, `carregarPDF`, `rerenderOverlays`, `baixarPDF`, `mapearCampos`, `extrairCamposEndereco`)
+**Reset Trigger:** Loading a new PDF (`carregarPDF`) resets `overlays` to `[]`
+
+**Initial Value:**
+```javascript
+let pdfState = {
+  fileBytes: null,      // {Uint8Array|null} — raw PDF file bytes
+  pdfDoc: null,         // {PDFDocumentProxy|null} — pdf.js document proxy
+  pages: [],            // {Array<{pageNum: number, viewport: Object}>} — rendered page info
+  overlays: []          // {Array<Overlay>} — text overlay objects
+};
+
+// Overlay type: {page, x, y, text, size, pageWidth, pageHeight}
+```
+
+**Overlay Data Structure (exact shape):**
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| `page` | number | Page number (1-indexed) where overlay appears |
+| `x` | number | X position (pixels, relative to canvas) |
+| `y` | number | Y position (pixels, relative to canvas) |
+| `text` | string | Text content of the overlay (contentEditable) |
+| `size` | number | Font size in pixels (default: 16) |
+| `pageWidth` | number | Viewport width of the page canvas |
+| `pageHeight` | number | Viewport height of the page canvas |
+
+**Field Mutation Trace:**
+
+| Campo | Mutado Por (Linha) | Descrição |
+|-------|---------------------|-----------|
+| `fileBytes` | `carregarPDF()` (1219) | Set to `new Uint8Array(buf)` on file load |
+| `pdfDoc` | `carregarPDF()` (1226) | `await loadingTask.promise` — pdf.js document proxy |
+| `pages` | `carregarPDF()` (1227, 1252) | Reset to `[]`, then `.push({pageNum, viewport})` for each page |
+| `overlays` | `carregarPDF()` (1220) | Reset to `[]` on new PDF load |
+| `overlays` | Canvas click handler (1249) | `.push({page, x, y, text:'Texto', size, pageWidth, pageHeight})` |
+| `overlays` | Delete button in `rerenderOverlays()` (1285) | `.splice(idx, 1)` — remove overlay at index |
+| `overlays` | Inline onclick (1208) | Set to `[]` via "Limpar textos" button |
+| `overlays[idx].text` | contentEditable `oninput` (1275) | Updated as user types in overlay |
+| `overlays[idx].x, .y` | Drag handler `onmouseup` (1282) | Updated when user drags overlay |
+
+**Overlay Rendering (`rerenderOverlays()`, line 1258):**
+- Iterates `pdfState.overlays.forEach()`
+- Creates `div.pdf-overlay-text` elements positioned absolutely over each page canvas
+- Each overlay is `contentEditable` with drag support (mousedown/mousemove/mouseup)
+- Delete button (`.del`) on each overlay removes it via `splice`
+- Overlay position clamped to page boundaries during drag
+
+---
+
+#### 1.3.4 Additional State Objects
+
+**TOAST TIMER: `window._tt`**
+
+| Property | Line | Type | Description |
+|----------|------|------|-------------|
+| `window._tt` | 242-243 | `number` (setTimeout ID) | Timer ID for auto-dismissing toast after 3000ms. `clearTimeout(window._tt)` before setting new toast prevents stacking. |
+
+No toast queue — single toast slot with timer-based dismissal. Concurrent toasts cancel the previous one.
+
+**UI State:**
+
+- **Sidebar:** No explicit `sidebarOpen` variable. `toggleSidebar(open)` (line 249) directly manipulates `classList` on `#sidebar` and `#backdrop`. State is read from DOM classes (`sidebar.open`, `backdrop.open`).
+- **Current Route:** No explicit `currentRoute` variable. Route state is implicit — `go(route)` (line 286) toggles `.active` class on `[data-route]` elements and calls `VIEWS[route]()` to render content. The active route can be determined by `document.querySelector('[data-route].active')?.dataset?.route`.
+- **Modals:** No modal state variable. `openModal(html)` / `closeModal()` directly toggle `#modal-back` classList.
+
+**Global Constants (not mutable state, but architecturally significant):**
+
+| Constant | Line | Value | Description |
+|----------|------|-------|-------------|
+| `STORAGE_KEY` | 209 | `'lab_bms_db_v1'` | localStorage key for app data |
+| `SETTINGS_KEY` | 210 | `'lab_bms_settings_v1'` | localStorage key for settings |
+| `ROUTES` | 284 | `['dashboard','etapa1','etapa2','etapa3','banco','planilha','config','ajuda']` | Valid route names (used by `go()` for validation) |
+| `VIEWS` | 307 | `{}` (populated progressively) | View function registry — keys are route names, values are render functions returning HTML strings |
+
+**sessionStorage:** **Not used.** grep for `sessionStorage` across entire 2135-line source returned zero matches. The entire app uses only `localStorage` for persistence and module-level `let` variables for transient session state.
 
 ---
 
 ### 1.4 Bootstrap / Initialization Sequence
 
-The app entry point is the bottom of the inline `<script>` block. The IIFE/self-executing code at the end:
+The app entry point is the bottom of the inline `<script>` block (lines 2086-2132). Execution order is top-to-bottom with three IIFEs at the end:
 
-*(To be documented — traced from source)*
+**Execution Order (confirmed from source):**
+
+| Order | Line | Action | Description |
+|-------|------|--------|-------------|
+| 1 | 2089-2108 | `autoConectarTokens()` (IIFE) | Seeds hardcoded credentials if `cf_token`, `cf_account`, or `sms_key` are missing. Calls `saveSettings()` if changes made. |
+| 2 | 2112-2123 | `instalarProxy()` (IIFE) | Monkey-patches `window.fetch` to rewrite Cloudflare and SMS24h API URLs through Netlify CORS proxy (`/cf-api/` and `/sms-api/`). Skips if `file:` protocol. |
+| 3 | 2125-2127 | pdf.js worker config | Sets `pdfjsLib.GlobalWorkerOptions.workerSrc` to the pinned CDN worker URL (if pdfjsLib is loaded). |
+| 4 | 2128-2129 | Global exposure | Exposes key functions to `window` for inline onclick handlers: `onlyDigits`, `copyText`, `escapeHTML`, `go`, `toggleSidebar`. |
+| 5 | 2130 | PDFLib stub | `window.PDFLib = window.PDFLib || {}` — ensures global exists before pdf-lib CDN script loads. |
+| 6 | 2131 | `refreshHeaderStatus()` | Updates Cloudflare and SMS24h API status pills in header. |
+| 7 | 2132 | **`go('dashboard')`** | Initial route render — loads Dashboard view, sets title, toggles nav-link active state. |
+
+**Key observations:**
+1. `autoConectarTokens()` runs FIRST — ensures settings exist before any code reads them
+2. `instalarProxy()` runs SECOND — URL rewriting is in place before any fetch calls
+3. No `DOMContentLoaded` listener — the inline `<script>` is at the end of `<body>`, so DOM is already available
+4. All state objects (`etapa1State`, `etapa2State`, `pdfState`) are initialized lazily when their `let` declarations are encountered during the top-to-bottom parse — they don't need to be in the bootstrap sequence
+5. `getDB()` is first called when `go('dashboard')` triggers `VIEWS.dashboard()` (line 313)
 
 ---
 
