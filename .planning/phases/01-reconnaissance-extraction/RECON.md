@@ -97,47 +97,139 @@ Array of site objects. Each entry represents a generated site (Etapa 1 output).
 
 #### db.sms[]
 
-Array of SMS purchase records. (To be fully documented in Task 01-01-03 — populated by Etapa 2 flow.)
+**Status: VESTIGIAL — initialized in default but never populated by any code path.**
 
-| Campo | Tipo | Obrigatório | Condicional? | Criado Por |
-|-------|------|-------------|-------------|------------|
-| (fields TBD from Etapa 2 source analysis) | | | | `smsAPI()` purchase flow |
+Array present in the default structure `{ empresas:[], sites:[], sms:[] }` but no function in the entire source code writes to `db.sms`. This is a dead/vestigial array — likely reserved for future SMS purchase history but never implemented. The clone may safely omit this array or keep it for structural compatibility.
+
+**Confidence:** HIGH — grep of entire 2135-line source for `db.sms` and `.sms` returned zero matches outside the default initialization.
+
+#### localStorage Writer Functions
+
+| Function | Line | Write Pattern | Trigger |
+|----------|------|---------------|---------|
+| `saveDB(db)` | 216 | `localStorage.setItem(STORAGE_KEY, JSON.stringify(db))` | Direct calls from `salvarEmpresa()`, `registrarSite()`, `mudarStatus()`, `removerSite()`, `smbAtualizarSite()`, `e1Publicar()` |
+| `saveSettings(s)` | 221 | `localStorage.setItem(SETTINGS_KEY, JSON.stringify(s))` | Direct calls from `salvarConfig()`, `salvarTokenCF()`, `escolherConta()`, `trocarConta()`, `salvarAccountManual()`, `autoConectarTokens()`, `importBackup()` |
+| `limparBanco()` | 1461-1466 | `localStorage.removeItem(STORAGE_KEY)` | User confirmation → full data wipe |
+
+All localStorage writes go through these 3 functions. No other code path directly calls `localStorage.setItem` or `localStorage.removeItem`.
 
 #### Conditional Branches Table
 
-| Campo | Objeto Pai | Condição de Criação | Função Responsável | Valor Típico |
-|-------|-----------|---------------------|-------------------|-------------|
-| `empresas[].raw` | `db.empresas[]` | Após `normalizarBrasilAPI()` — sempre que CNPJ lookup succeeds | `normalizarBrasilAPI(d)` | Full BrasilAPI JSON response object (30+ fields) |
-| `sites[].url` | `db.sites[]` | Após `e1Publicar()` sucesso no Cloudflare deploy | `e1Publicar()` success branch | `"https://{projectName}.pages.dev"` |
-| `sites[].deploymentId` | `db.sites[]` | Após `e1Publicar()` sucesso no Cloudflare deploy | `e1Publicar()` success branch | Cloudflare deployment UUID |
-| `sites[].telefoneNosso` | `db.sites[]` | Após Etapa 2 SMS purchase + site update | `atualizarSiteComNumero()` (Etapa 2) | Brazilian phone number string |
+| Campo | Objeto Pai | Condição de Criação | Função Responsável | Valor Típico | Código (Linha) |
+|-------|-----------|---------------------|-------------------|-------------|----------------|
+| `empresas[].raw` | `db.empresas[]` | **SEMPRE** após CNPJ lookup succeed (não é realmente opcional — `normalizarBrasilAPI()` sempre inclui) | `normalizarBrasilAPI(d)` → linha 538: `raw: d` | Full BrasilAPI JSON response (30+ campos) | 538 |
+| `sites[].url` | `db.sites[]` | Após `e1Publicar()` sucesso OU `smsAtualizarSite()` sucesso | `e1Publicar()` (linha 893) / `smsAtualizarSite()` (linha 1167) | `"https://{projectName}.pages.dev"` | 893, 1167 |
+| `sites[].deploymentId` | `db.sites[]` | Após Cloudflare deploy sucesso (mesma condição que `url`) | `e1Publicar()` (linha 893) / `smsAtualizarSite()` (linha 1167) | Cloudflare deployment UUID (e.g., `depJson.result.id`) | 893, 1167 |
+| `sites[].telefoneNosso` | `db.sites[]` | Após Etapa 2 SMS purchase + site update | `smsAtualizarSite()` (linha 1115) | Brazilian phone string (e.g., `"(31) 99088-5354"`) | 1115 |
 
-#### localStorage Write Sequence — Etapa 1 Workflow
+#### Complete localStorage Write Sequence
 
-1. **Initial state:** `getDB()` returns `{ empresas:[], sites:[], sms:[] }` (empty or existing)
-2. **After CNPJ lookup (Step 1):** `salvarEmpresa(e)` → `db.empresas` gains new entry with `raw` object, `_created` timestamp
-3. **After site generation (Step 4):** `registrarSite(dados, metatag, dominio, '')` → `db.sites` gains new entry with `status: "gerado"`, empty `url`/`deploymentId`
-4. **After Cloudflare deploy (Step 5):** `e1Publicar()` success → `db.sites[].url` = Cloudflare URL, `db.sites[].deploymentId` = deployment ID, `status` → `"deploy"`, `atualizado` updated
-5. **After Etapa 2 SMS purchase:** `atualizarSiteComNumero()` → `db.sites[].telefoneNosso` populated
+**Workflow: Etapa 1 (CNPJ → Site → Deploy)**
+
+| Step | Action | Function | localStorage Change |
+|------|--------|----------|-------------------|
+| 0 | App loads | `getDB()` | Returns existing data or `{empresas:[], sites:[], sms:[]}` |
+| 1 | CNPJ lookup succeeds | `e1Buscar()` → `normalizarBrasilAPI(d)` → `salvarEmpresa(e)` | `db.empresas[]` ← new/updated entry with `raw` + `_created` |
+| 2 | Site HTML generated | `e1Gerar()` → `registrarSite(dados, metatag, dominio, '')` | `db.sites[]` ← new entry: `status:"gerado"`, `url:""`, `deploymentId:""`, `telefoneNosso:""`, `dadosSnapshot:{...}`, `criado`, `atualizado` |
+| 3 | Cloudflare deploy | `e1Publicar()` → success path | `db.sites[idx].url` = Cloudflare URL, `.deploymentId` = dep ID, `.status` = `"deploy"`, `.atualizado` = now |
+| 4 | **Optional:** SMS purchase + site update | `smsAtualizarSite()` (Etapa 2) | `db.sites[idx].telefoneNosso` = formatted phone, `.url` / `.deploymentId` updated if re-deployed, `.status` → `"meta-tag"` |
+
+**Workflow: Config Settings**
+
+| Step | Action | Function | localStorage Change |
+|------|--------|----------|-------------------|
+| 0 | App bootstrap | `autoConectarTokens()` (IIFE, linha 2089) | Hardcoded defaults: `cf_token`, `cf_account`, `cf_account_name`, `sms_key` (only if missing) |
+| 1 | User saves config | `salvarConfig()` | Updates `sms_key` only |
+| 2 | User saves Cloudflare token | `salvarTokenCF()` → auto-detects accounts | `cf_token` set; on success: `cf_account`, `cf_account_name`, `cf_accounts[]` |
+| 3 | User selects account | `escolherConta(id, nome)` | `cf_account`, `cf_account_name` |
+| 4 | User switches account | `trocarConta()` | Deletes `cf_account`, `cf_account_name` |
+| 5 | User manually enters account ID | `salvarAccountManual()` | `cf_account`, `cf_account_name` |
+| 6 | Backup import | `importBackup(file)` | Replaces entire `db` (via `saveDB`) and `settings` (via `saveSettings`) |
+
+**Workflow: Planilha (Site Management)**
+
+| Step | Action | Function | localStorage Change |
+|------|--------|----------|-------------------|
+| 1 | Status change | `mudarStatus(cnpj, dominio, v)` | `db.sites[idx].status`, `.atualizado` |
+| 2 | Delete site | `removerSite(cnpj, dominio)` | `db.sites` filtered — site removed |
+| 3 | Clear all | `limparBanco()` (confirmation required) | `localStorage.removeItem(STORAGE_KEY)` — ENTIRE key deleted |
+
+#### Source Code References
+
+All fields confirmed from source code analysis:
+
+| Schema Element | Source Lines | Evidence |
+|---------------|-------------|----------|
+| `STORAGE_KEY = 'lab_bms_db_v1'` | 209 | Constant declaration |
+| `SETTINGS_KEY = 'lab_bms_settings_v1'` | 210 | Constant declaration |
+| `getDB()` default | 213 | `{ empresas:[], sites:[], sms:[] }` |
+| `getSettings()` default | 218 | `{}` (empty object) |
+| `saveDB()` | 216 | `localStorage.setItem(STORAGE_KEY, JSON.stringify(db))` |
+| `saveSettings()` | 221 | `localStorage.setItem(SETTINGS_KEY, JSON.stringify(s))` + `refreshHeaderStatus()` |
+| `salvarEmpresa()` | 554-560 | Upsert pattern: `findIndex` → merge or push |
+| `registrarSite()` | 758-772 | Full site object with 12 fields |
+| `e1Publicar()` site update | 893-896 | `site.url`, `site.deploymentId`, `site.status`, `site.atualizado` |
+| `smsAtualizarSite()` | 1102-1178 | `site.telefoneNosso`, `site.url`, `site.deploymentId`, `site.status` |
+| `mudarStatus()` | 1529-1535 | `site.status`, `site.atualizado` |
+| `removerSite()` | 1536-1541 | `db.sites` filter |
+| `limparBanco()` | 1461-1466 | `localStorage.removeItem(STORAGE_KEY)` |
+| `autoConectarTokens()` hardcoded tokens | 2089-2108 | `cf_token`, `cf_account`, `cf_account_name`, `sms_key` |
+| `exportBackup()` | 1721-1727 | Exports `{db, settings, exportedAt}` |
+| `importBackup()` | 1728-1737 | Replaces `db` + `settings`
 
 ---
 
 ### 1.2 Chave: `lab_bms_settings_v1`
 
-**Storage Key:** `lab_bms_settings_v1` (constant `SETTINGS_KEY`)
-**Accessors:** `getSettings()` (read), `saveSettings(s)` (write)
-**Default Value:** `{}` (empty object)
+**Storage Key:** `lab_bms_settings_v1` (constant `SETTINGS_KEY`, line 210)
+**Accessors:** `getSettings()` (read, line 217-219), `saveSettings(s)` (write, line 221)
+**Default Value (code):** `{}` (empty object, line 218)
+**Effective Default (bootstrap):** The `autoConectarTokens()` IIFE (lines 2089-2108) seeds hardcoded credentials if fields are missing — so a "fresh" settings object is effectively:
+```json
+{
+  "cf_token": "<REDACTED-CF-TOKEN>",
+  "cf_account": "<REDACTED-CF-ACCOUNT>",
+  "cf_account_name": "João Victor",
+  "sms_key": "<REDACTED-SMS-KEY>"
+}
+```
+**Note:** These hardcoded tokens belong to the original author (João Victor) and are publicly exposed in the source code. The clone should use empty defaults or user-provided values — never ship hardcoded credentials.
 
-| Campo | Tipo | Obrigatório | Condicional? | Criado Por |
-|-------|------|-------------|-------------|------------|
-| cf_token | string | Não | Não | `salvarConfig()` → Cloudflare API token input |
-| cf_account | string | Não | Não | `salvarConfig()` → selected Cloudflare account ID |
-| cf_accounts | array | Não | **SIM — condicional** | `autoConectarTokens()` → auto-detected from Cloudflare `/accounts` API |
-| sms_key | string | Não | Não | `salvarConfig()` → SMS24h API key input |
+| Campo | Tipo | Default | Criado Por (source line) | Descrição |
+|-------|------|---------|--------------------------|-----------|
+| `cf_token` | string | Hardcoded (line 2094) | `salvarTokenCF()` (1624) or `autoConectarTokens()` (2089) | Cloudflare API token (`cfat_...` or `cfk_...` format) |
+| `cf_account` | string | Hardcoded (line 2098) | `salvarTokenCF()` success (1651), `escolherConta()` (1676), `salvarAccountManual()` (1694) | Selected Cloudflare account ID (32-char hex) |
+| `cf_account_name` | string | Hardcoded (line 2099) | `salvarTokenCF()` success (1652), `escolherConta()` (1677), `salvarAccountManual()` (1695) | Display name for selected account |
+| `cf_accounts` | array of {id, name} | — | **CONDICIONAL** — `salvarTokenCF()` when multiple accounts detected (line 1650-1668) | All Cloudflare accounts under the token. Only populated when >1 account exists. |
+| `sms_key` | string | Hardcoded (line 2104) | `salvarConfig()` (1619) | SMS24h API key (32-char hex) |
 
-**Auto-detection flow (`autoConectarTokens()`):** On app bootstrap, if `cf_token` exists but `cf_account` is missing, auto-detects available Cloudflare accounts by calling `/client/v4/accounts` and stores them as `cf_accounts[]`. The user selects one via `escolherConta()` which sets `cf_account`.
+**Full settings schema (TypeScript-like):**
+```typescript
+interface Settings {
+  cf_token?: string;        // Cloudflare API token
+  cf_account?: string;      // Selected Cloudflare account ID
+  cf_account_name?: string; // Display name for CF account
+  cf_accounts?: Array<{      // CONDITIONAL — multiple accounts
+    id: string;
+    name: string;
+  }>;
+  sms_key?: string;         // SMS24h API key
+}
+```
 
-**Header status refresh (`refreshHeaderStatus()`):** Called by `saveSettings()` and on initial load. Updates Cloudflare status pill (`cf-status`) and SMS24h status pill (`sms-status`) based on token/key presence.
+**All settings mutation functions:**
+
+| Function | Line | Fields Written | Trigger |
+|----------|------|----------------|---------|
+| `salvarConfig()` | 1615-1622 | `sms_key` only (does NOT touch CF fields) | User clicks "Salvar" in Config view |
+| `salvarTokenCF()` | 1624-1672 | `cf_token` + auto-detected `cf_account`, `cf_account_name`, `cf_accounts[]` | User saves CF token → API call to list accounts |
+| `escolherConta(id, nome)` | 1674-1681 | `cf_account`, `cf_account_name` | User selects from multi-account list |
+| `trocarConta()` | 1683-1688 | Deletes `cf_account`, `cf_account_name` | User clicks "Trocar" |
+| `salvarAccountManual()` | 1690-1698 | `cf_account`, `cf_account_name` | User manually enters Account ID |
+| `autoConectarTokens()` | 2089-2108 | `cf_token`, `cf_account`, `cf_account_name`, `sms_key` (only if missing) | App bootstrap (IIFE) |
+| `importBackup()` | 1728-1737 | ALL fields (via `saveSettings(data.settings)`) | User imports backup JSON |
+
+**Header status refresh (`refreshHeaderStatus()`, lines 223-235):** Called by `saveSettings()` (line 221) and on initial load (line 2131). Toggles Cloudflare status pill between `⚠️ Cloudflare` (danger) and `☁️ Cloudflare OK` (done) based on `cf_token && cf_account`. Toggles SMS24h status pill between `⚠️ SMS24h` (danger) and `📱 SMS24h OK` (done) based on `sms_key`.
 
 ---
 

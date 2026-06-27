@@ -1,0 +1,131 @@
+{
+  "description": "Reconstructed DEFAULT state for localStorage keys — what a fresh install would contain",
+  "extraction_date": "2026-06-27",
+  "source": "Reverse-engineered from laboratoriodebms.netlify.app source code (lines 212-221)",
+  "keys": {
+    "lab_bms_db_v1": {
+      "accessor_read": "getDB()",
+      "accessor_write": "saveDB(db)",
+      "code_default": {
+        "empresas": [],
+        "sites": [],
+        "sms": []
+      },
+      "schema": {
+        "empresas": {
+          "type": "array",
+          "description": "Array of company objects (CNPJ lookup results)",
+          "item_schema": {
+            "cnpj": { "type": "string", "format": "##.###.###/####-##", "required": true, "conditional": false },
+            "razao_social": { "type": "string", "required": true, "conditional": false },
+            "fantasia": { "type": "string", "required": true, "conditional": false },
+            "capital_social": { "type": "number|null", "required": false, "conditional": false },
+            "porte": { "type": "string", "required": false, "conditional": false },
+            "situacao": { "type": "string", "required": false, "conditional": false },
+            "inicio": { "type": "string", "required": false, "conditional": false },
+            "natureza": { "type": "string", "required": false, "conditional": false },
+            "cnae_principal": { "type": "string", "required": false, "conditional": false },
+            "cnae_descricao": { "type": "string", "required": false, "conditional": false },
+            "cnaes_secundarios": { "type": "array", "required": false, "conditional": false, "item_schema": { "codigo": "string", "descricao": "string" } },
+            "logradouro": { "type": "string", "required": false, "conditional": false },
+            "complemento": { "type": "string", "required": false, "conditional": false },
+            "bairro": { "type": "string", "required": false, "conditional": false },
+            "municipio": { "type": "string", "required": false, "conditional": false },
+            "uf": { "type": "string", "required": false, "conditional": false },
+            "cep": { "type": "string", "required": false, "conditional": false },
+            "telefone": { "type": "string", "required": false, "conditional": false },
+            "email": { "type": "string", "required": false, "conditional": false },
+            "socios": { "type": "array", "required": false, "conditional": false, "item_schema": { "nome": "string", "qualif": "string" } },
+            "raw": { "type": "object", "required": false, "conditional": true, "condition": "Always populated by normalizarBrasilAPI() on CNPJ lookup success", "description": "Full raw BrasilAPI JSON response" },
+            "_created": { "type": "number", "required": false, "conditional": false, "description": "Epoch ms timestamp of first insert" },
+            "_updated": { "type": "number", "required": false, "conditional": false, "description": "Epoch ms timestamp of last update" }
+          }
+        },
+        "sites": {
+          "type": "array",
+          "description": "Array of generated site objects",
+          "item_schema": {
+            "cnpj": { "type": "string", "required": true, "conditional": false },
+            "razao": { "type": "string", "required": true, "conditional": false },
+            "fantasia": { "type": "string", "required": true, "conditional": false },
+            "dominio": { "type": "string", "required": true, "conditional": false, "format": "{slug}.pages.dev" },
+            "metatag": { "type": "string", "required": false, "conditional": false },
+            "telefoneEmpresa": { "type": "string", "required": false, "conditional": false },
+            "telefoneNosso": { "type": "string", "required": false, "conditional": true, "condition": "Only after Etapa 2 SMS purchase + site update" },
+            "status": { "type": "string", "required": true, "conditional": false, "enum": ["gerado", "deploy", "meta-tag", "finalizado"] },
+            "url": { "type": "string", "required": false, "conditional": true, "condition": "Only after Cloudflare deploy success (e1Publicar or smsAtualizarSite)" },
+            "deploymentId": { "type": "string", "required": false, "conditional": true, "condition": "Only after Cloudflare deploy success (same condition as url)" },
+            "dadosSnapshot": { "type": "object", "required": false, "conditional": false, "description": "Full dados object snapshot from site generation" },
+            "criado": { "type": "number", "required": false, "conditional": false, "description": "Epoch ms timestamp of creation" },
+            "atualizado": { "type": "number", "required": false, "conditional": false, "description": "Epoch ms timestamp of last update" }
+          }
+        },
+        "sms": {
+          "type": "array",
+          "description": "VESTIGIAL — initialized in default but NEVER populated by any code path. No function writes to db.sms.",
+          "item_schema": null
+        }
+      },
+      "conditional_branches": [
+        {
+          "field": "empresas[].raw",
+          "parent": "db.empresas[]",
+          "condition": "CNPJ lookup succeeds via BrasilAPI",
+          "function": "normalizarBrasilAPI(d)",
+          "source_line": 538,
+          "value_example": "{ full BrasilAPI JSON response }"
+        },
+        {
+          "field": "sites[].url",
+          "parent": "db.sites[]",
+          "condition": "Cloudflare Pages deploy succeeds",
+          "function": "e1Publicar() or smsAtualizarSite()",
+          "source_line": "893, 1167",
+          "value_example": "https://empresa01.pages.dev"
+        },
+        {
+          "field": "sites[].deploymentId",
+          "parent": "db.sites[]",
+          "condition": "Cloudflare Pages deploy succeeds (same condition as url)",
+          "function": "e1Publicar() or smsAtualizarSite()",
+          "source_line": "893, 1167",
+          "value_example": "depJson.result.id (UUID)"
+        },
+        {
+          "field": "sites[].telefoneNosso",
+          "parent": "db.sites[]",
+          "condition": "Etapa 2 SMS purchase completes + site update executed",
+          "function": "smsAtualizarSite()",
+          "source_line": 1115,
+          "value_example": "(31) 99088-5354"
+        }
+      ],
+      "write_sequence_etapa1": [
+        { "step": 0, "action": "App load", "function": "getDB()", "state": "{ empresas:[], sites:[], sms:[] }" },
+        { "step": 1, "action": "CNPJ lookup success", "function": "salvarEmpresa(e)", "state": "db.empresas[] gains entry with raw, _created" },
+        { "step": 2, "action": "Site HTML generated", "function": "registrarSite(...)", "state": "db.sites[] gains entry: status:'gerado', url:'', deploymentId:'', telefoneNosso:''" },
+        { "step": 3, "action": "Cloudflare deploy success", "function": "e1Publicar() success", "state": "site.url, site.deploymentId set; status → 'deploy'" },
+        { "step": 4, "action": "SMS purchase + re-deploy (optional)", "function": "smsAtualizarSite()", "state": "site.telefoneNosso set; status → 'meta-tag'" }
+      ]
+    },
+    "lab_bms_settings_v1": {
+      "accessor_read": "getSettings()",
+      "accessor_write": "saveSettings(s)",
+      "code_default": {},
+      "effective_default_post_bootstrap": {
+        "cf_token": "<REDACTED-CF-TOKEN>",
+        "cf_account": "<REDACTED-CF-ACCOUNT>",
+        "cf_account_name": "João Victor",
+        "sms_key": "<REDACTED-SMS-KEY>"
+      },
+      "note": "Hardcoded credentials seeded by autoConectarTokens() IIFE (lines 2089-2108). Clone must NOT replicate these — use empty defaults or user-provided values.",
+      "fields": {
+        "cf_token": { "type": "string", "default": "hardcoded", "created_by": "salvarTokenCF() or autoConectarTokens()", "source_line": "2094, 1630" },
+        "cf_account": { "type": "string", "default": "hardcoded", "created_by": "salvarTokenCF(), escolherConta(), or salvarAccountManual()", "source_line": "2098, 1651, 1676, 1694" },
+        "cf_account_name": { "type": "string", "default": "hardcoded", "created_by": "salvarTokenCF(), escolherConta(), or salvarAccountManual()", "source_line": "2099, 1652, 1677, 1695" },
+        "cf_accounts": { "type": "array", "default": "not set", "conditional": true, "condition": "Only when >1 Cloudflare account detected under token", "created_by": "salvarTokenCF()", "source_line": "1650-1668" },
+        "sms_key": { "type": "string", "default": "hardcoded", "created_by": "salvarConfig() or autoConectarTokens()", "source_line": "2104, 1619" }
+      }
+    }
+  }
+}
