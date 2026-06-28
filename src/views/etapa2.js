@@ -43,8 +43,12 @@ export async function smsAPI(action, extra = '') {
   if (!k) throw new Error('Sem API key SMS24h. Configure primeiro.');
   const url = `https://api.sms24h.org/stubs/handler_api?api_key=${encodeURIComponent(k)}&action=${encodeURIComponent(action)}${extra}`;
   const r = await fetch(url, { method: 'GET' });
-  if (!r.ok) throw new Error('HTTP ' + r.status);
-  return await r.text(); // NOTE: Returns text, NOT JSON
+  const txt = await r.text();
+  if (txt === 'BAD_KEY') throw new Error('Chave SMS24h inválida. Verifique nas Configurações.');
+  if (txt === 'BAD_ACTION') throw new Error('Ação SMS24h inválida.');
+  if (txt === 'NO_BALANCE') throw new Error('Saldo SMS24h insuficiente.');
+  if (txt === 'NO_NUMBERS') throw new Error('Sem números disponíveis.');
+  return txt;
 }
 
 // =============================================================================
