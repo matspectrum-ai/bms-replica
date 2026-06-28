@@ -179,9 +179,9 @@ Plans:
 
 Plans:
 
-- [ ] 07-01-PLAN.md — Netlify Functions Backend: 8 funções serverless (auth-register, auth-login, auth-count, waitlist-join, ip-check, ip-request, ip-manage, accounts-list) + camada de dados compartilhada
-- [ ] 07-02-PLAN.md — Auth Foundation: módulo de sessão (login/logout/checkAuth) em src/auth/session.js + módulo IP gate (checkIpAccess/requestAccess) em src/auth/ip-gate.js
-- [ ] 07-03-PLAN.md — Auth & Admin Views: views de login, register, waitlist, access-denied e adm-panel integradas ao VIEWS registry existente
+- [x] 07-01-PLAN.md — Netlify Functions Backend: 8 funções serverless (auth-register, auth-login, auth-count, waitlist-join, ip-check, ip-request, ip-manage, accounts-list) + camada de dados compartilhada
+- [x] 07-02-PLAN.md — Auth Foundation: módulo de sessão (login/logout/checkAuth) em src/auth/session.js + módulo IP gate (checkIpAccess/requestAccess) em src/auth/ip-gate.js
+- [x] 07-03-PLAN.md — Auth & Admin Views: views de login, register, waitlist, access-denied e adm-panel integradas ao VIEWS registry existente
 - [ ] 07-04-PLAN.md — Integration: rewire do bootstrap em main.js (IP→auth→app), extensão do router (12 rotas), sidebar condicional com link ADM
 
 ## Progress
@@ -194,4 +194,4 @@ Plans:
 | 4. Validation | 2/2 | Complete   | 2026-06-27 |
 | 5. Rebrand Foundation | 0/0 | Not started | - |
 | 6. Rebrand Polish | 0/0 | Not started | - |
-| 7. Account System & IP Access Control | 0/4 | Planned | 2026-06-28 |
+| 7. Account System & IP Access Control | 3/4 | In Progress|  |

@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 02-foundation-05-PLAN.md
-last_updated: "2026-06-27T08:28:14.139Z"
+stopped_at: Completed 07-03-PLAN.md
+last_updated: "2026-06-28T21:38:03.253Z"
 last_activity: 2026-06-27 -- Phase 03 execution started
 progress:
-  total_phases: 6
+  total_phases: 7
   completed_phases: 4
-  total_plans: 17
-  completed_plans: 17
-  percent: 67
+  total_plans: 21
+  completed_plans: 20
+  percent: 57
 ---
 
 # Project State
@@ -59,6 +59,9 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 03-views-integrations P05 | 6min | 3 tasks | 3 files |
 | Phase 04-validation P01 | 5min | 3 tasks | 3 files |
 | Phase 04-validation P02 | 4min | 3 tasks | 3 files |
+| Phase 07-account-system P07-01 | 2min | 3 tasks | 9 files |
+| Phase 07-account-system P02 | 3 min | 2 tasks | 2 files |
+| Phase 07-account-system P03 | 4 min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -97,6 +100,11 @@ Key decisions logged in PROJECT.md Key Decisions table. Summary of decisions aff
 - [Phase ?]: Backup/restore localStorage guard pattern — test suite never corrupts real user data
 - [Phase 04-validation]: Async test runners with bootstrap guard — waits for window.go to be defined before navigating, 5s timeout — ES module loading in main.js is async; tests need guard to prevent 'go is not a function' errors
 - [Phase 04-validation]: 80% threshold for visual test pass rate — some assertions depend on data state — Dashboard icon-cube count varies with empty vs populated localStorage data; structural markers unaffected
+- [Phase 07-account-system]: SHA-256 + static salt for password hashing (not bcrypt) — acceptable for beta with max 2 accounts — No external dependencies needed in Netlify Functions
+- [Phase 07-account-system]: Deliberately duplicated auth/IP utility code across Lambda-isolated functions for deploy isolation — Functions are isolated; small duplication (~10 lines each) is intentional
+- [Phase 07-account-system]: Empty IP allowlist grants access to all for first-run zero-config and local dev — Enables first-run zero-config and local dev workflows without manual IP seeding
+- [Phase ?]: All views use post-render hook pattern (window.after_{route}) for JavaScript logic — keeps HTML generation pure and side-effect-free per D-03
+- [Phase ?]: Access Denied view renders standalone full-screen (no sidebar/header dependency) for IP gate enforcement
 
 ### Pending Todos
 
@@ -111,6 +119,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-27T08:27:30.877Z
-Stopped at: Completed 02-foundation-05-PLAN.md
+Last session: 2026-06-28T21:38:03.232Z
+Stopped at: Completed 07-03-PLAN.md
 Resume file: None
