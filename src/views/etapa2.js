@@ -39,11 +39,13 @@ export let etapa2State = {
 // =============================================================================
 
 export async function smsAPI(action, extra = '') {
-  const k = getSettings().sms_key;
+  const k = (getSettings().sms_key || '').trim();
   if (!k) throw new Error('Sem API key SMS24h. Configure primeiro.');
   const url = `https://api.sms24h.org/stubs/handler_api?api_key=${encodeURIComponent(k)}&action=${encodeURIComponent(action)}${extra}`;
+  console.log('[SMS24h]', action, url.replace(k, '***'));
   const r = await fetch(url, { method: 'GET' });
   const txt = await r.text();
+  console.log('[SMS24h] response:', txt);
   if (txt === 'BAD_KEY' || txt === 'errorBadKey') throw new Error('Chave SMS24h inválida.');
   if (txt === 'BAD_ACTION' || txt === 'errorBadAction') throw new Error('Ação SMS24h inválida.');
   if (txt === 'NO_BALANCE') throw new Error('Saldo SMS24h insuficiente.');
@@ -128,6 +130,7 @@ window.e2Comprar = async function e2Comprar() {
     go('etapa2'); // Re-render to show step 2 (polling)
   } catch (e) {
     toast('❌ Erro ao comprar: ' + escapeHTML(e.message), '⚠️');
+    console.error('[e2Comprar]', e);
   }
 };
 
