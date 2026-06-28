@@ -2,7 +2,7 @@
 
 ## Overview
 
-Clone funcional 100% do front-end de gestão empresarial brasileira (https://laboratoriodebms.netlify.app/) via engenharia reversa caixa-preta, seguido de rebranding completo. A jornada começa com extração sistemática (RECON), avança pela fundação de infraestrutura (router + persistência + widgets + UI), constrói todas as 8 views com integrações de API, valida paridade funcional contra o original, e finaliza com nova identidade visual em duas ondas — fundação estrutural do rebrand e refinamento visual.
+Clone funcional 100% do front-end de gestão empresarial brasileira (https://laboratoriodebms.netlify.app/) via engenharia reversa caixa-preta, seguido de rebranding completo. A jornada começa com extração sistemática (RECON), avança pela fundação de infraestrutura (router + persistência + widgets + UI), constrói todas as 8 views com integrações de API, valida paridade funcional contra o original, finaliza com nova identidade visual em duas ondas — fundação estrutural do rebrand e refinamento visual — e adiciona sistema de contas com controle de acesso por IP.
 
 **Abordagem:** Horizontal Layers — cada fase completa uma camada técnica inteira antes de avançar para a próxima.
 
@@ -14,6 +14,7 @@ Clone funcional 100% do front-end de gestão empresarial brasileira (https://lab
 - [x] **Phase 4: Validation** — Validação de paridade: A/B testing, compatibilidade de storage, responsividade, bundle size (completed 2026-06-27)
 - [ ] **Phase 5: Rebrand Foundation** — Nova identidade visual estrutural: paleta, tipografia, layout Header+Mega Menu, ícones, nome/logotipo
 - [ ] **Phase 6: Rebrand Polish** — Refinamentos visuais: cards glassmorphism+neumorphism, micro-animações, copywriting, site gerado rebrandeado
+- [ ] **Phase 7: Account System & IP Access Control** — Sistema de contas com controle de acesso por IP: login com usuário+senha, limite de 2 contas no beta, lista de espera, painel ADM para gerenciar IPs, tela de acesso negado para IPs não autorizados. Backend via Netlify Functions + JSON
 
 ## Phase Details
 
@@ -157,6 +158,32 @@ Plans:
 **Plans**: TBD
 **UI hint**: yes
 
+### Phase 7: Account System & IP Access Control
+
+**Goal**: Sistema de contas com controle de acesso por IP integrado à aplicação BMS Replica existente. Login com usuário + senha, limite de 2 contas no beta, lista de espera após o limite, painel ADM para gerenciamento de IPs, e tela de acesso negado para IPs não autorizados. Backend serverless via Netlify Functions com persistência JSON.
+
+**Depends on**: Phase 4 (clone validado e estável)
+
+**Requirements**: AUTH-01, AUTH-02, AUTH-03, AUTH-04, AUTH-05, AUTH-06
+
+**Success Criteria** (what must be TRUE):
+
+  1. Usuário pode criar conta com username + senha, fazer login e receber token de sessão armazenado em localStorage — credenciais ADM fixas no código (D-01, D-04)
+  2. Limite de 2 contas no beta é aplicado — ao atingir o limite, formulário de registro é substituído por lista de espera com coleta de email (D-05)
+  3. IP do cliente é verificado no carregamento do app contra lista de IPs permitidos — IPs não autorizados veem tela "Acesso Negado" com botão para solicitar acesso (D-06)
+  4. ADM acessa painel exclusivo "Gerenciar Acesso" via sidebar condicional, onde pode adicionar/remover/visualizar IPs autorizados e listar contas cadastradas (D-02)
+  5. Todas as 8 views originais continuam funcionando identicamente para usuários autenticados — zero regressão funcional
+  6. Backend Netlify Functions responde em todos os endpoints (registro, login, contagem, IP check, IP request, IP CRUD, waitlist, listagem de contas) com persistência JSON via fs (D-03)
+
+**Plans**: 4 plans in 3 waves
+
+Plans:
+
+- [ ] 07-01-PLAN.md — Netlify Functions Backend: 8 funções serverless (auth-register, auth-login, auth-count, waitlist-join, ip-check, ip-request, ip-manage, accounts-list) + camada de dados compartilhada
+- [ ] 07-02-PLAN.md — Auth Foundation: módulo de sessão (login/logout/checkAuth) em src/auth/session.js + módulo IP gate (checkIpAccess/requestAccess) em src/auth/ip-gate.js
+- [ ] 07-03-PLAN.md — Auth & Admin Views: views de login, register, waitlist, access-denied e adm-panel integradas ao VIEWS registry existente
+- [ ] 07-04-PLAN.md — Integration: rewire do bootstrap em main.js (IP→auth→app), extensão do router (12 rotas), sidebar condicional com link ADM
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
@@ -167,3 +194,4 @@ Plans:
 | 4. Validation | 2/2 | Complete   | 2026-06-27 |
 | 5. Rebrand Foundation | 0/0 | Not started | - |
 | 6. Rebrand Polish | 0/0 | Not started | - |
+| 7. Account System & IP Access Control | 0/4 | Planned | 2026-06-28 |
