@@ -3,7 +3,8 @@
 // same-origin proxy paths (/cf-api/, /sms-api/) for Netlify deployment.
 
 export function instalarProxy() {
-  if (location.protocol === 'file:') return; // local: no proxy needed
+  if (location.protocol === 'file:') return;
+  if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') return;
   const orig = window.fetch;
   window.fetch = function(url, opts) {
     if (typeof url === 'string') {

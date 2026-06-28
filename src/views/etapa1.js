@@ -397,6 +397,13 @@ export function e1Preview() {
 // Pitfall 6: Auth switching — API token for steps 1,2,5; JWT for steps 3,4
 // Pitfall 3: BLAKE3 hash uses deprecated unescape+encodeURIComponent pattern
 // =============================================================================
+async function safeJson(r) {
+  const text = await r.text();
+  try { return JSON.parse(text); } catch(e) {
+    throw new Error(`API retornou HTML/erro (HTTP ${r.status}): ${text.slice(0, 200)}`);
+  }
+}
+
 export async function e1Publicar() {
   const s = getSettings();
   if (!s.cf_token || !s.cf_account) {
@@ -420,13 +427,12 @@ export async function e1Publicar() {
     const base = `https://api.cloudflare.com/client/v4/accounts/${s.cf_account}/pages`;
 
     // Step 1: Create project (idempotent — handles "already exists")
-    // Auth: API token
     if (log) log.innerHTML = '📦 Criando projeto...';
     const r1 = await fetch(`${base}/projects`, {
       method: 'POST', headers: apiHeaders,
       body: JSON.stringify({ name: projectName, production_branch: 'main' })
     });
-    const d1 = await r1.json();
+    const d1 = await safeJson(r1);
     if (!d1.success && !(d1.errors || []).some(e =>
       e.code === 8000007 || e.code === 8000031 || (e.message || '').toLowerCase().includes('exists')
     )) {
@@ -438,7 +444,7 @@ export async function e1Publicar() {
     // Auth: API token
     if (log) log.innerHTML = '🔑 Obtendo token de upload...';
     const r2 = await fetch(`${base}/projects/${projectName}/upload-token`, { headers: apiHeaders });
-    const d2 = await r2.json();
+    const d2 = await safeJson(r2);
     if (!d2.success) throw new Error('JWT: ' + JSON.stringify(d2));
     const jwt = d2.result.jwt;
     if (log) log.innerHTML = '🔑 Token de upload obtido ✅';
@@ -463,7 +469,7 @@ export async function e1Publicar() {
       method: 'POST', headers: uploadHeaders,
       body: JSON.stringify([{ key: fileHash, value: b64, base64: true, metadata: { contentType: 'text/html' } }])
     });
-    const upRes = await r4.json();
+    const upRes = await safeJson(r4);
     if (!upRes.success) throw new Error('UPLOAD: ' + JSON.stringify(upRes));
     if (log) log.innerHTML = '📤 Arquivo enviado ✅';
 
@@ -477,7 +483,7 @@ export async function e1Publicar() {
       headers: { 'Authorization': `Bearer ${s.cf_token}` },
       body: fd
     });
-    const depJson = await r5.json();
+    const depJson = await safeJson(r5);
     if (!depJson.success) throw new Error('DEPLOY: ' + JSON.stringify(depJson));
 
     // Success
