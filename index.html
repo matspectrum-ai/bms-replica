@@ -92,6 +92,13 @@
         Planilha
       </div>
 
+      <!-- CONTA (novo — Phase 07) -->
+      <div class="text-[10px] uppercase tracking-widest text-slate-500 px-3 mt-4 mb-1">CONTA</div>
+      <div class="nav-link" data-route="login" onclick="go('login')">
+        <span class="nav-emoji">🔐</span>
+        Login
+      </div>
+
       <!-- SISTEMA -->
       <div class="text-[10px] uppercase tracking-widest text-slate-500 px-3 mt-4 mb-1">SISTEMA</div>
       <div class="nav-link" data-route="config" onclick="go('config')">
@@ -102,6 +109,10 @@
         <span class="nav-emoji">❓</span>
         Ajuda
       </div>
+      <div class="nav-link hidden" id="nav-adm" data-route="adm" onclick="go('adm')">
+        <span class="nav-emoji">🛡️</span>
+        Gerenciar Acesso
+      </div>
     </nav>
 
     <!-- Tip Card -->
@@ -109,6 +120,11 @@
       <div class="icon-cube cyan" style="width:36px;height:36px;font-size:16px;">⭐</div>
       <div class="font-bold">Dica</div>
       <p class="text-sm">Capital social entre <span class="text-cyan-300">R$ 10k</span> e <span class="text-cyan-300">R$ 50k</span> é a faixa ideal.</p>
+    </div>
+
+    <!-- Logout (Phase 07 — hidden until authenticated) -->
+    <div class="mt-4 hidden" id="nav-logout">
+      <button class="btn-3d ghost w-full text-sm" onclick="window._logout()">🚪 Sair</button>
     </div>
   </aside>
 

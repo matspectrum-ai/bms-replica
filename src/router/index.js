@@ -1,6 +1,6 @@
 // src/router/index.js
 // SPA Router — hash-free, history-free navigation (matches original RECON.md lines 286-305)
-// Part of: Phase 02-03 (SPA Router + View Stubs)
+// Part of: Phase 02-03 (SPA Router + View Stubs), Phase 07-04 (Auth integration)
 //
 // Design decisions per STATE.md:
 // - ROUTES is a flat array of strings (not objects)
@@ -8,6 +8,11 @@
 // - VIEWS functions are pure string generators with no side effects
 // - ZERO History API usage
 // - No duplicate-navigation guard
+//
+// Phase 07-04 additions:
+// - ROUTES extended from 8 to 13 entries (login, register, waitlist, adm, access-denied)
+// - Auth guard redirects unauthenticated users to login for all non-public routes
+// - checkAuth imported from auth/session.js (called at runtime, not at module eval time)
 
 // =============================================================================
 // ROUTES — Flat array of 8 route name strings
@@ -21,8 +26,19 @@ export const ROUTES = [
   'banco',
   'planilha',
   'config',
-  'ajuda'
+  'ajuda',
+  'login',
+  'register',
+  'waitlist',
+  'adm',
+  'access-denied'
 ];
+
+// =============================================================================
+// AUTH GUARD — Imported here, called at runtime inside go() (not at module eval time)
+// This avoids the circular dependency trap noted in data.js line 8-12.
+// =============================================================================
+import { checkAuth } from '../auth/session.js';
 
 // =============================================================================
 // VIEWS — Empty registry object
@@ -50,6 +66,16 @@ export function go(route) {
   // Step 1: Validate — invalid routes default to 'dashboard'
   if (!ROUTES.includes(route)) route = 'dashboard';
 
+  // Step 1b: Auth guard — redirect unauthenticated users to login (Phase 07-04)
+  // Only protects the 8 existing app routes + adm. Public routes are always accessible.
+  const publicRoutes = ['login', 'register', 'waitlist', 'access-denied'];
+  if (!publicRoutes.includes(route)) {
+    const auth = checkAuth();
+    if (!auth.authenticated) {
+      route = 'login';
+    }
+  }
+
   // Step 2: Nav-link active toggle
   // Remove .active from all [data-route] elements, add to the matching one
   document.querySelectorAll('[data-route]').forEach(el => {
@@ -67,7 +93,12 @@ export function go(route) {
     banco:     ['💼 Banco de Empresas',      'Histórico de CNPJs consultados'],
     planilha:  ['📊 Planilha de Sites',      'Status de cada site publicado'],
     config:    ['⚙️ Configurações',          'Tokens e chaves de API'],
-    ajuda:     ['❓ Ajuda',                  'Como cada parte funciona']
+    ajuda:     ['❓ Ajuda',                  'Como cada parte funciona'],
+    login:          ['🔐 Login',                  'Entre com suas credenciais'],
+    register:       ['✨ Criar Conta',             'Cadastre-se para acessar'],
+    waitlist:       ['⏳ Lista de Espera',         'Beta limitado a 2 contas'],
+    adm:            ['🛡️ Gerenciar Acesso',       'Painel do Administrador (ADM)'],
+    'access-denied':['🚫 Acesso Negado',           'IP não autorizado']
   };
 
   // Step 4: Update page title
