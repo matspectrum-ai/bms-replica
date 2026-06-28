@@ -44,10 +44,11 @@ export async function smsAPI(action, extra = '') {
   const url = `https://api.sms24h.org/stubs/handler_api?api_key=${encodeURIComponent(k)}&action=${encodeURIComponent(action)}${extra}`;
   const r = await fetch(url, { method: 'GET' });
   const txt = await r.text();
-  if (txt === 'BAD_KEY') throw new Error('Chave SMS24h inválida. Verifique nas Configurações.');
-  if (txt === 'BAD_ACTION') throw new Error('Ação SMS24h inválida.');
+  if (txt === 'BAD_KEY' || txt === 'errorBadKey') throw new Error('Chave SMS24h inválida.');
+  if (txt === 'BAD_ACTION' || txt === 'errorBadAction') throw new Error('Ação SMS24h inválida.');
   if (txt === 'NO_BALANCE') throw new Error('Saldo SMS24h insuficiente.');
   if (txt === 'NO_NUMBERS') throw new Error('Sem números disponíveis.');
+  if (txt === 'WRONG_SERVICE' || txt === 'BAD_SERVICE' || txt === 'errorBadService') throw new Error('Código de serviço inválido. Use o código exato do painel SMS24h.');
   return txt;
 }
 
@@ -142,26 +143,36 @@ function renderStep1SMS() {
 
   // Common countries and services
   const countries = [
-    { value: '22', label: '🇧🇷 Brasil (+55)' },
+    { value: '73', label: '🇧🇷 Brasil (+55)' },
     { value: '12', label: '🇺🇸 USA (+1)' },
+    { value: '22', label: '🇷🇺 Rússia (+7)' },
     { value: '6',  label: '🇮🇩 Indonésia (+62)' },
-    { value: '0',  label: '🇷🇺 Rússia (+7)' },
     { value: '43', label: '🇬🇧 Reino Unido (+44)' },
     { value: '36', label: '🇻🇳 Vietnã (+84)' },
-    { value: '21', label: '🇨🇦 Canadá (+1)' }
+    { value: '3',  label: '🇨🇦 Canadá (+1)' },
+    { value: '15', label: '🇮🇳 Índia (+91)' }
   ];
 
   const services = [
-    { value: 'vk', label: 'VKontakte (VK)' },
-    { value: 'ok', label: 'Odnoklassniki (OK)' },
-    { value: 'wa', label: 'WhatsApp' },
-    { value: 'tg', label: 'Telegram' },
-    { value: 'go', label: 'Google' },
-    { value: 'ig', label: 'Instagram' },
-    { value: 'av', label: 'Avito' },
-    { value: 'ym', label: 'Yandex' },
-    { value: 'ma', label: 'Mail.ru' },
-    { value: 'ot', label: 'Outro / Generic' }
+    { value: 'Facebook', label: 'Facebook' },
+    { value: 'Instagram', label: 'Instagram' },
+    { value: 'Whatsapp', label: 'WhatsApp' },
+    { value: 'Telegram', label: 'Telegram' },
+    { value: 'Google', label: 'Google' },
+    { value: 'TikTok', label: 'TikTok' },
+    { value: 'Tinder', label: 'Tinder' },
+    { value: 'Nubank', label: 'Nubank' },
+    { value: 'Mercado', label: 'Mercado Livre' },
+    { value: 'Amazon', label: 'Amazon' },
+    { value: 'Netflix', label: 'Netflix' },
+    { value: 'Shopee', label: 'Shopee' },
+    { value: 'Uber', label: 'Uber' },
+    { value: 'Discord', label: 'Discord' },
+    { value: 'Snapchat', label: 'Snapchat' },
+    { value: 'OpenAI', label: 'OpenAI / ChatGPT' },
+    { value: 'Twitter', label: 'Twitter / X' },
+    { value: 'vk.com', label: 'VKontakte' },
+    { value: 'Ok.ru', label: 'Odnoklassniki' }
   ];
 
   let body = `
