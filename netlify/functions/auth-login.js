@@ -7,7 +7,7 @@
  */
 
 const crypto = require('crypto');
-const { readJSON } = require('./_shared/data');
+const { readJSON, writeJSON } = require('./_shared/data');
 
 const SALT = 'bms-salt-2026';
 
