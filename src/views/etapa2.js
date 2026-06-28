@@ -85,11 +85,12 @@ window.e2VerSaldo = async function e2VerSaldo() {
 
 window.e2Comprar = async function e2Comprar() {
   const countryEl = document.getElementById('sms-country');
-  const serviceEl = document.getElementById('sms-service');
-  if (!countryEl || !serviceEl) return;
+  const customEl = document.getElementById('sms-service-custom');
+  if (!countryEl) return;
 
   const country = countryEl.value;
-  const service = serviceEl.value;
+  const service = (customEl && customEl.value.trim()) ? customEl.value.trim() : 
+    (document.getElementById('sms-service')?.value || 'vk');
 
   toast('⏳ Comprando número...');
 
@@ -200,9 +201,11 @@ function renderStep1SMS() {
         </div>
         <div>
           <label class="text-slate-400 text-xs mb-1 block">Serviço</label>
-          <select id="sms-service" class="input w-full">
+          <select id="sms-service" class="input w-full" onchange="document.getElementById('sms-service-custom').value=this.value">
             ${services.map(s => `<option value="${s.value}">${s.label}</option>`).join('')}
           </select>
+          <input id="sms-service-custom" class="input w-full mt-1" type="text" placeholder="Ou digite o código manualmente (ex: vk, fb, opt70)" value="vk">
+          <span class="text-slate-500 text-xs">Use o código exato do serviço no painel SMS24h</span>
         </div>
       </div>
       <button id="btn-buy" class="btn-3d purple w-full mt-3" disabled onclick="window.e2Comprar()">
