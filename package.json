@@ -1,0 +1,20 @@
+{
+  "name": "fabrica-de-bms",
+  "version": "1.0.0",
+  "description": "[![Bundle Size](https://img.shields.io/badge/bundle-41%20kB%20gzipped-brightgreen)](https://github.com/matspectrum-ai/bms-replica) [![Phases](https://img.shields.io/badge/phases-4%2F6%20complete-blue)](https://github.com/matspectrum-ai/bms-replica) [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "dependencies": {
+    "@netlify/blobs": "^10.7.9",
+    "playwright": "^1.61.1",
+    "playwright-core": "^1.61.1"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
