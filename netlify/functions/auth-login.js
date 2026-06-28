@@ -50,7 +50,19 @@ exports.handler = async function (event, context) {
     }
 
     // Load accounts
-    const accounts = readJSON('accounts.json') || [];
+    let accounts = readJSON('accounts.json') || [];
+
+    // Seed admin account if no accounts exist or admin not found (first-run)
+    if (!accounts.find(acc => acc.username === 'admin')) {
+      const adminToken = crypto.randomBytes(24).toString('hex');
+      accounts.push({
+        username: 'admin',
+        passwordHash: hashPassword('admin123'),
+        token: adminToken,
+        createdAt: new Date().toISOString()
+      });
+      writeJSON('accounts.json', accounts);
+    }
 
     // Find account by username
     const account = accounts.find(acc => acc.username === username);
