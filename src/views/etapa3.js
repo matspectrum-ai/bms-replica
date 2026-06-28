@@ -77,27 +77,22 @@ function renderEtapa3() {
 // Matches RESEARCH.md lines 488-541
 // =============================================================================
 async function carregarPDF(file) {
-  // Library availability check
-  if (typeof pdfjsLib === 'undefined') {
+  const pdfjs = window.pdfjsLib;
+  if (!pdfjs) {
     toast('❌ pdf.js não foi carregado. Recarregue a página.', '⚠️');
     return;
   }
 
-  // Pitfall 2 compliance: pin worker to matching version 3.11.174
-  pdfjsLib.GlobalWorkerOptions.workerSrc =
+  pdfjs.GlobalWorkerOptions.workerSrc =
     'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
   try {
-    // Read file as ArrayBuffer and store raw bytes for pdf-lib merge (Task 3)
     const buf = await file.arrayBuffer();
     pdfState.fileBytes = new Uint8Array(buf);
-
-    // Reset state
     pdfState.overlays = [];
     pdfState.pages = [];
 
-    // Load PDF document
-    const loadingTask = pdfjsLib.getDocument({ data: pdfState.fileBytes });
+    const loadingTask = pdfjs.getDocument({ data: pdfState.fileBytes });
     pdfState.pdfDoc = await loadingTask.promise;
 
     // Clear viewer and render each page as canvas at scale 1.4
@@ -360,7 +355,8 @@ function limparTudo() {
 // pdf.js: Y=0 at top, Y increases downward | pdf-lib: Y=0 at bottom, Y increases upward
 // =============================================================================
 async function baixarPDF() {
-  if (typeof PDFLib === 'undefined') {
+  const PDFLib = window.PDFLib;
+  if (!PDFLib) {
     toast('❌ pdf-lib não foi carregado. Recarregue a página.', '⚠️');
     return;
   }
