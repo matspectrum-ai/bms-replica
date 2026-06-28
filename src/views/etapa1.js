@@ -376,6 +376,30 @@ export function gerarSiteHTML() {
   };
 
   etapa1State.htmlGerado = buildSiteHTML(dados);
+
+  // Save site to database so it appears in Planilha immediately
+  const db = getDB();
+  const existing = db.sites.find(s => s.dominio === dominio);
+  if (!existing) {
+    db.sites.push({
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
+      cnpj: empresa.cnpj,
+      razao: empresa.razao_social,
+      fantasia: empresa.nome_fantasia,
+      dominio: dominio,
+      metatag: metatag,
+      telefoneEmpresa: empresa.ddd_telefone_1 && empresa.telefone_1
+        ? empresa.ddd_telefone_1 + empresa.telefone_1 : '',
+      telefoneNosso: '',
+      status: 'criado',
+      url: '',
+      deploymentId: '',
+      criadoEm: new Date().toISOString(),
+      atualizado: Date.now()
+    });
+    saveDB(db);
+  }
+
   toast('Site gerado!', '✅');
   window.go('etapa1');
 }
