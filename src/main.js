@@ -99,7 +99,7 @@ window.openModal = openModal;
 // Phase 07-04: Logout function exposed for sidebar button
 window._logout = () => {
   logout();
-  go('login');
+  window.location.href = 'login.html';
 };
 
 // =============================================================================
@@ -149,30 +149,19 @@ window._logout = () => {
   const auth = checkAuth();
   const isAdminUser = auth.isAdmin;
 
-  // Step 3: Show/hide sidebar elements based on auth state
-  const navAdm = document.getElementById('nav-adm');
-  const navLogout = document.getElementById('nav-logout');
-
-  if (isAdminUser && navAdm) {
-    navAdm.classList.remove('hidden'); // Show ADM panel link (D-01, D-02)
-  }
-  if (auth.authenticated && navLogout) {
-    navLogout.classList.remove('hidden'); // Show logout button
-  }
-
-  // Step 4: If not authenticated, go to login
-  // The auth guard in go() (Task 04-01) handles subsequent navigations,
-  // but the initial load needs explicit handling
+  // Step 3: If not authenticated, redirect to standalone login page
   if (!auth.authenticated) {
-    // Still need to init proxy + headerStatus for when user logs in
-    instalarProxy();
-    refreshHeaderStatus();
-    go('login');
+    window.location.href = 'login.html';
     return;
   }
 
+  // Step 4: Show/hide sidebar elements based on auth state
+  const navAdm = document.getElementById('nav-adm');
+  const navLogout = document.getElementById('nav-logout');
+  if (isAdminUser && navAdm) navAdm.classList.remove('hidden');
+  if (auth.authenticated && navLogout) navLogout.classList.remove('hidden');
+
   // Step 5: Authenticated — full normal bootstrap
-  // Matches original bootstrap sequence exactly for authenticated users
   instalarProxy();
   refreshHeaderStatus();
   go('dashboard');
