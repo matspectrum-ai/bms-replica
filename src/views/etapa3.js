@@ -37,7 +37,7 @@ function renderEtapa3() {
     <!-- Toolbar (hidden until PDF is loaded) -->
     <div id="pdf-toolbar" class="hidden glass rounded-2xl p-4 flex flex-wrap items-center gap-3">
       <span id="pdf-page-count" class="text-sm font-bold text-indigo-300 mr-2"></span>
-      <button class="btn-3d ghost sm" onclick="window.adicionarTexto()">➕ Adicionar texto</button>
+      <span class="text-xs text-slate-400">📌 Clique no PDF para adicionar texto editável</span>
       <button class="btn-3d ghost sm" onclick="window.baixarPDF()">📥 Baixar PDF</button>
       <button class="btn-3d ghost sm" onclick="window.extrairEndereco()">📝 Extrair Endereço</button>
       <button class="btn-3d ghost sm" onclick="window.limparTudo()" style="color:#f87171">🗑️ Limpar tudo</button>
@@ -121,7 +121,7 @@ async function carregarPDF(file) {
       const ctx = canvas.getContext('2d');
       await page.render({ canvasContext: ctx, viewport }).promise;
 
-      // Click handler: add text overlay at click position (overlay rendering in Task 2)
+      // Click handler: add text overlay at click position
       canvas.addEventListener('click', (e) => {
         const rect = canvas.getBoundingClientRect();
         const scaleX = viewport.width / rect.width;
@@ -130,12 +130,25 @@ async function carregarPDF(file) {
           page: i,
           x: (e.clientX - rect.left) * scaleX,
           y: (e.clientY - rect.top) * scaleY,
-          text: 'Texto',
-          size: 14,
+          text: 'Clique e digite aqui',
+          size: 18,
           pageWidth: viewport.width,
           pageHeight: viewport.height
         });
-        rerenderOverlays(); // stub in Task 1, full impl in Task 2
+        rerenderOverlays();
+        // Auto-focus the newly created overlay for immediate editing
+        setTimeout(() => {
+          const newOverlay = wrap.querySelector('.pdf-overlay-text:last-child');
+          if (newOverlay) {
+            newOverlay.focus();
+            // Select all text so user can just type
+            const sel = window.getSelection();
+            const range = document.createRange();
+            range.selectNodeContents(newOverlay);
+            sel.removeAllRanges();
+            sel.addRange(range);
+          }
+        }, 50);
       });
 
       viewer.appendChild(wrap);

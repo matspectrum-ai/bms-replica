@@ -95,18 +95,23 @@
 .pdf-overlay-text {
   position: absolute;
   min-width: 60px;
-  padding: 2px 6px;
-  font-size: 14px;
-  color: #000;
-  background: rgba(255,235,59,.25);
-  border: 1px dashed #f59e0b;
+  padding: 6px 10px;
+  font-size: 16px;
+  color: #1e293b;
+  background: rgba(255,235,59,.85);
+  border: 2px dashed #f59e0b;
   border-radius: 4px;
-  cursor: move;
+  cursor: text;
   outline: none;
+  font-family: Arial, sans-serif;
+  z-index: 10;
+  box-shadow: 0 2px 6px rgba(0,0,0,.15);
 }
 .pdf-overlay-text:focus {
-  background: rgba(255,235,59,.45);
+  background: rgba(255,235,59,.95);
   border-style: solid;
+  border-color: #eab308;
+  box-shadow: 0 0 0 3px rgba(234,179,8,.3);
 }
 .pdf-overlay-text .del {
   position: absolute;
