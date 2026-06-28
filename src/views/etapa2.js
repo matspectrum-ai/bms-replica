@@ -94,7 +94,7 @@ window.e2Comprar = async function e2Comprar() {
   toast('⏳ Comprando número...');
 
   try {
-    const txt = await smsAPI('getNumber', `&service=${encodeURIComponent(service)}&country=${encodeURIComponent(country)}`);
+    const txt = await smsAPI('getNumber', `&service=${encodeURIComponent(service)}&country=${encodeURIComponent(country)}&operator=any`);
     // Response format: "ACCESS_NUMBER:activationId:phoneNumber"
     // Split by ':' — bounds check per T-03-18 mitigation
     const parts = txt.split(':');
@@ -144,17 +144,23 @@ function renderStep1SMS() {
     { value: '22', label: '🇧🇷 Brasil (+55)' },
     { value: '12', label: '🇺🇸 USA (+1)' },
     { value: '6',  label: '🇮🇩 Indonésia (+62)' },
+    { value: '0',  label: '🇷🇺 Rússia (+7)' },
     { value: '43', label: '🇬🇧 Reino Unido (+44)' },
+    { value: '36', label: '🇻🇳 Vietnã (+84)' },
     { value: '21', label: '🇨🇦 Canadá (+1)' }
   ];
 
   const services = [
-    { value: 'fb', label: 'Facebook' },
-    { value: 'go', label: 'Google' },
+    { value: 'vk', label: 'VKontakte (VK)' },
+    { value: 'ok', label: 'Odnoklassniki (OK)' },
     { value: 'wa', label: 'WhatsApp' },
-    { value: 'ig', label: 'Instagram' },
     { value: 'tg', label: 'Telegram' },
-    { value: 'tw', label: 'Twitter/X' }
+    { value: 'go', label: 'Google' },
+    { value: 'ig', label: 'Instagram' },
+    { value: 'av', label: 'Avito' },
+    { value: 'ym', label: 'Yandex' },
+    { value: 'ma', label: 'Mail.ru' },
+    { value: 'ot', label: 'Outro / Generic' }
   ];
 
   let body = `
