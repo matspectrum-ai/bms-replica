@@ -3,18 +3,18 @@ import { VIEWS } from '../router/index.js';
 import { escapeHTML } from '../utils/string.js';
 import { toast } from '../widgets/toast.js';
 
-let pdfState = { fileBytes: null, pdfDoc: null, pages: [], overlays: [] };
+let pdfState = { pdfBytes: null, pdfDoc: null, pages: [], overlays: [] };
 
 function renderEtapa3() {
   return `<div class="space-y-6">
     <div class="glass rounded-2xl p-6 flex items-center gap-4">
       <div class="icon-cube green" style="width:64px;height:64px;font-size:32px;flex-shrink:0">📄</div>
-      <div><h2 class="font-display text-2xl">Etapa 3 — Editor PDF</h2><p class="text-slate-400 mt-1">Clique no PDF para adicionar texto editável</p></div>
+      <div><h2 class="font-display text-2xl">Etapa 3 — Editor PDF</h2><p class="text-slate-400 mt-1">Clique no PDF para adicionar texto • Arraste para mover • Depois baixe</p></div>
     </div>
     <div id="pdf-toolbar" class="hidden glass rounded-2xl p-4 flex flex-wrap items-center gap-3">
       <span id="pdf-page-count" class="text-sm font-bold text-indigo-300 mr-2"></span>
-      <span class="text-xs text-slate-400">📌 Clique no PDF para adicionar texto • Clique no campo para editar • Arraste para mover</span>
-      <button class="btn-3d ghost sm" onclick="window.baixarPDF()">📥 Baixar PDF</button>
+      <span class="text-xs text-slate-400">📌 Clique no PDF para adicionar texto editável</span>
+      <button class="btn-3d purple sm" onclick="window.baixarPDF()">📥 Baixar PDF</button>
       <button class="btn-3d ghost sm" onclick="window.extrairEndereco()">📝 Extrair Endereço</button>
       <button class="btn-3d ghost sm" onclick="window.limparTudo()" style="color:#f87171">🗑️ Limpar</button>
     </div>
@@ -41,16 +41,16 @@ function renderEtapa3() {
 // =============================================================================
 async function carregarPDF(file) {
   const pdfjs = window.pdfjsLib;
-  if (!pdfjs) { toast('❌ pdf.js não carregado', '⚠️'); return; }
+  if (!pdfjs) { toast('pdf.js nao carregado', '⚠️'); return; }
   pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
   try {
     const buf = await file.arrayBuffer();
-    pdfState.fileBytes = new Uint8Array(buf);
+    pdfState.pdfBytes = buf;
     pdfState.overlays = [];
     pdfState.pages = [];
 
-    const loadingTask = pdfjs.getDocument({ data: pdfState.fileBytes });
+    const loadingTask = pdfjs.getDocument({ data: buf });
     pdfState.pdfDoc = await loadingTask.promise;
     const viewer = document.getElementById('pdf-viewer');
     viewer.innerHTML = '';
@@ -77,35 +77,33 @@ async function carregarPDF(file) {
       const ctx = canvas.getContext('2d');
       await page.render({ canvasContext: ctx, viewport }).promise;
 
-      (function(viewport, w, pageNum) {
-        canvas.addEventListener('click', (e) => {
-          if (e.target.closest('.pdf-overlay-text')) return;
-          const rect = canvas.getBoundingClientRect();
-          const scaleX = viewport.width / rect.width;
-          const scaleY = viewport.height / rect.height;
-          const idx = pdfState.overlays.length;
-          pdfState.overlays.push({
-            page: pageNum, x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY,
-            text: '', size: 18, pageWidth: viewport.width, pageHeight: viewport.height
-          });
-          crearOverlay(w, idx);
+      canvas.addEventListener('click', (e) => {
+        if (e.target.closest('.pdf-overlay-text')) return;
+        const rect = canvas.getBoundingClientRect();
+        const scX = viewport.width / rect.width;
+        const scY = viewport.height / rect.height;
+        const idx = pdfState.overlays.length;
+        pdfState.overlays.push({
+          page: i, x: (e.clientX - rect.left) * scX, y: (e.clientY - rect.top) * scY,
+          text: '', size: 18, pageWidth: viewport.width, pageHeight: viewport.height
         });
-      })(viewport, wrap, i);
+        crearOverlay(wrap, idx);
+      });
 
       viewer.appendChild(wrap);
     }
 
     document.getElementById('pdf-toolbar').classList.remove('hidden');
-    document.getElementById('pdf-page-count').textContent = `📄 ${pdfState.pdfDoc.numPages} página(s)`;
-    toast(`✅ PDF carregado! ${pdfState.pdfDoc.numPages} página(s)`);
+    document.getElementById('pdf-page-count').textContent = `📄 ${pdfState.pdfDoc.numPages} pagina(s)`;
+    toast(`PDF carregado! ${pdfState.pdfDoc.numPages} pagina(s)`);
   } catch (err) {
     console.error(err);
-    toast('❌ Erro ao carregar o PDF', '⚠️');
+    toast('Erro ao carregar o PDF', '⚠️');
   }
 }
 
 // =============================================================================
-// crearOverlay — cria um overlay e foca para edição imediata
+// crearOverlay
 // =============================================================================
 function crearOverlay(wrap, idx) {
   const ol = pdfState.overlays[idx];
@@ -113,79 +111,64 @@ function crearOverlay(wrap, idx) {
   if (!canvas) return;
 
   const rect = canvas.getBoundingClientRect();
-  const scaleX = rect.width / ol.pageWidth;
-  const scaleY = rect.height / ol.pageHeight;
+  const scX = rect.width / ol.pageWidth;
+  const scY = rect.height / ol.pageHeight;
 
   const div = document.createElement('div');
   div.className = 'pdf-overlay-text';
   div.setAttribute('contenteditable', 'true');
   div.textContent = 'Digite aqui...';
-  div.style.left = `${ol.x * scaleX}px`;
-  div.style.top = `${ol.y * scaleY}px`;
-  div.style.fontSize = `${ol.size * scaleX}px`;
+  div.style.left = (ol.x * scX) + 'px';
+  div.style.top = (ol.y * scY) + 'px';
+  div.style.fontSize = (ol.size * scX) + 'px';
 
-  // Salvar texto ao digitar — usa referência direta ao objeto, não índice
-  const overlayRef = ol;
-  div.addEventListener('input', () => { overlayRef.text = div.textContent; });
+  const ref = ol;
+  div.addEventListener('input', () => { ref.text = div.textContent; });
 
-  // DRAG — usando pointer events (funciona em mouse + touch)
-  let dragging = false, startX, startY, origLeft, origTop;
-
+  // DRAG
+  let dragging = false, sx, sy, ox, oy;
   div.addEventListener('pointerdown', (e) => {
     if (e.target.classList.contains('del')) return;
-    startX = e.clientX; startY = e.clientY;
-    origLeft = ol.x; origTop = ol.y;
+    sx = e.clientX; sy = e.clientY; ox = ref.x; oy = ref.y;
     div.setPointerCapture(e.pointerId);
     dragging = false;
   });
-
   div.addEventListener('pointermove', (e) => {
     if (!div.hasPointerCapture(e.pointerId)) return;
-    const dx = Math.abs(e.clientX - startX);
-    const dy = Math.abs(e.clientY - startY);
-    if (dx > 3 || dy > 3) dragging = true;
+    if (Math.abs(e.clientX - sx) > 3 || Math.abs(e.clientY - sy) > 3) dragging = true;
     if (!dragging) return;
-    ol.x = origLeft + (e.clientX - startX) / scaleX;
-    ol.y = origTop + (e.clientY - startY) / scaleY;
-    div.style.left = `${ol.x * scaleX}px`;
-    div.style.top = `${ol.y * scaleY}px`;
+    ref.x = ox + (e.clientX - sx) / scX;
+    ref.y = oy + (e.clientY - sy) / scY;
+    div.style.left = (ref.x * scX) + 'px';
+    div.style.top = (ref.y * scY) + 'px';
   });
-
   div.addEventListener('pointerup', (e) => {
     div.releasePointerCapture(e.pointerId);
-    // Se não arrastou, foca para editar
-    if (!dragging) {
-      div.focus();
-      selectAll(div);
-    }
+    if (!dragging) { div.focus(); selectAll(div); }
   });
 
-  // Botão de deletar
-  const delBtn = document.createElement('span');
-  delBtn.className = 'del';
-  delBtn.textContent = '×';
-  delBtn.addEventListener('pointerdown', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    // Remove do array sem quebrar índices — usa referência direta
-    const pos = pdfState.overlays.indexOf(ol);
+  // DELETE
+  const del = document.createElement('span');
+  del.className = 'del';
+  del.textContent = '×';
+  del.addEventListener('pointerdown', (e) => {
+    e.preventDefault(); e.stopPropagation();
+    const pos = pdfState.overlays.indexOf(ref);
     if (pos !== -1) pdfState.overlays.splice(pos, 1);
     div.remove();
   });
-  div.appendChild(delBtn);
-
+  div.appendChild(del);
   wrap.appendChild(div);
 
-  // Focar automaticamente
   setTimeout(() => { div.focus(); selectAll(div); }, 100);
 }
 
 function selectAll(el) {
-  const sel = window.getSelection();
-  const range = document.createRange();
-  range.selectNodeContents(el);
-  sel.removeAllRanges();
-  sel.addRange(range);
+  const s = window.getSelection();
+  const r = document.createRange();
+  r.selectNodeContents(el);
+  s.removeAllRanges();
+  s.addRange(r);
 }
 
 function limparTudo() {
@@ -193,37 +176,27 @@ function limparTudo() {
   if (confirm(`Remover ${pdfState.overlays.length} campos?`)) {
     pdfState.overlays.length = 0;
     document.querySelectorAll('.pdf-overlay-text').forEach(e => e.remove());
-    toast('🗑️ Limpo');
+    toast('Limpo');
   }
 }
 
 // =============================================================================
-// baixarPDF — merge overlays no PDF via pdf-lib
+// baixarPDF — merge overlays via pdf-lib
 // =============================================================================
 async function baixarPDF() {
   const PDFLib = window.PDFLib;
-  if (!PDFLib) { toast('❌ pdf-lib não carregado', '⚠️'); return; }
-  if (!pdfState.fileBytes) { toast('⚠️ Carregue um PDF primeiro'); return; }
-
-  // Se não tem overlays, cria um automaticamente no centro da primeira página
-  if (!pdfState.overlays.length) {
-    const page = pdfState.pages[0];
-    if (!page) { toast('⚠️ PDF sem páginas'); return; }
-    pdfState.overlays.push({
-      page: 1, x: 50, y: 100, text: '', size: 18,
-      pageWidth: page.viewport.width, pageHeight: page.viewport.height
-    });
-  }
+  if (!PDFLib) { toast('pdf-lib nao carregado', '⚠️'); return; }
+  if (!pdfState.pdfBytes) { toast('Carregue um PDF primeiro'); return; }
 
   try {
-    toast('⏳ Gerando PDF...');
-    const pdfDoc = await PDFLib.PDFDocument.load(pdfState.fileBytes);
+    toast('Gerando PDF...');
+    const pdfDoc = await PDFLib.PDFDocument.load(pdfState.pdfBytes);
     const pages = pdfDoc.getPages();
     const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
     let drawn = 0;
 
     for (const ol of pdfState.overlays) {
-      if (ol.page < 1 || ol.page > pages.length || !ol.text) continue;
+      if (!ol.text || ol.page < 1 || ol.page > pages.length) continue;
       const page = pages[ol.page - 1];
       const { width, height } = page.getSize();
       const scX = width / ol.pageWidth;
@@ -237,7 +210,7 @@ async function baixarPDF() {
       drawn++;
     }
 
-    if (!drawn) { toast('⚠️ Nenhum texto para salvar'); return; }
+    if (!drawn) { toast('Nenhum texto para salvar no PDF'); return; }
 
     const pdfBytes = await pdfDoc.save();
     const blob = new Blob([pdfBytes], { type: 'application/pdf' });
@@ -246,10 +219,10 @@ async function baixarPDF() {
     a.href = url; a.download = 'documento-editado.pdf';
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    toast(`✅ PDF baixado com ${drawn} campo(s)!`);
+    toast(`PDF baixado com ${drawn} campo(s)!`);
   } catch (err) {
     console.error('baixarPDF:', err);
-    toast('❌ Erro: ' + (err.message || 'desconhecido'), '⚠️');
+    toast('Erro: ' + (err.message || 'desconhecido'), '⚠️');
   }
 }
 
@@ -257,9 +230,9 @@ async function baixarPDF() {
 // extrairEndereco
 // =============================================================================
 async function extrairEndereco() {
-  if (!pdfState.pdfDoc) { toast('⚠️ Carregue um PDF primeiro'); return; }
+  if (!pdfState.pdfDoc) { toast('Carregue um PDF primeiro'); return; }
   try {
-    toast('🔍 Extraindo...');
+    toast('Extraindo...');
     const parts = [];
     for (let i = 1; i <= pdfState.pdfDoc.numPages; i++) {
       const page = await pdfState.pdfDoc.getPage(i);
@@ -284,17 +257,17 @@ async function extrairEndereco() {
     if (ex.cep !== '—' && ex.cep.length === 8) ex.cep = ex.cep.slice(0,5)+'-'+ex.cep.slice(5);
 
     const fd = document.getElementById('pdf-address-fields');
-    const labels = { cep:'CEP', logradouro:'Logradouro', numero:'Número', complemento:'Complemento', bairro:'Bairro', municipio:'Município', uf:'UF' };
+    const labels = { cep:'CEP', logradouro:'Logradouro', numero:'Numero', complemento:'Complemento', bairro:'Bairro', municipio:'Municipio', uf:'UF' };
     if (fd) {
       fd.innerHTML = Object.entries(labels).map(([k,l]) => {
         const v = escapeHTML(ex[k]||'—');
-        return `<div class="copy-row"><span class="key">${l}</span><span class="val">${v}</span><button class="btn-3d ghost sm" onclick="window.copyText('${v.replace(/'/g,"\\'")}','${l} copiado!')">📋</button></div>`;
+        return `<div class="copy-row"><span class="key">${l}</span><span class="val">${v}</span><button class="btn-3d ghost sm" onclick="copyText('${v.replace(/'/g,"\\'")}','${l} copiado!')">📋</button></div>`;
       }).join('');
     }
     document.getElementById('pdf-address-results').classList.remove('hidden');
     const found = Object.values(ex).filter(v=>v!=='—').length;
-    toast(found ? `✅ ${found} campos encontrados` : '⚠️ Nenhum endereço encontrado');
-  } catch (err) { console.error(err); toast('❌ Erro ao extrair', '⚠️'); }
+    toast(found ? `${found} campos encontrados` : 'Nenhum endereco encontrado');
+  } catch (err) { console.error(err); toast('Erro ao extrair', '⚠️'); }
 }
 
 // =============================================================================
