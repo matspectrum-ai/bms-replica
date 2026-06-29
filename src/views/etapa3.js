@@ -1,90 +1,48 @@
-// src/views/etapa3.js
-// Etapa 3 — PDF Editor (Phase 03-05)
-// Task 1: CDN Setup + pdf.js Multi-Page Viewer (ETP3-01)
-// Replaces 17-line stub with PDF rendering via pdf.js 3.11.174
-// Matches RESEARCH.md Patterns 7 (CDN Lazy Loading), §PDF.js Integration
-
+// src/views/etapa3.js — PDF Editor
 import { VIEWS } from '../router/index.js';
 import { escapeHTML } from '../utils/string.js';
 import { toast } from '../widgets/toast.js';
 
-// =============================================================================
-// PDF Editor Module State
-// Matches RESEARCH.md lines 488-541
-// =============================================================================
-let pdfState = {
-  fileBytes: null,       // Uint8Array — raw PDF bytes for pdf-lib merge
-  pdfDoc: null,          // pdf.js document object
-  pages: [],             // [{pageNum, viewport}] — page metadata
-  overlays: []           // [{page, x, y, text, size, pageWidth, pageHeight}]
-};
+let pdfState = { fileBytes: null, pdfDoc: null, pages: [], overlays: [] };
 
-// =============================================================================
-// VIEW RENDERER — Registered in VIEWS.etapa3
-// Called by go('etapa3') via main.js → initEtapa3()
-// =============================================================================
 function renderEtapa3() {
   return `<div class="space-y-6">
-    <!-- Header Card -->
     <div class="glass rounded-2xl p-6 flex items-center gap-4">
       <div class="icon-cube green" style="width:64px;height:64px;font-size:32px;flex-shrink:0">📄</div>
-      <div>
-        <h2 class="font-display text-2xl">Etapa 3 — Editor PDF</h2>
-        <p class="text-slate-400 mt-1">Carregue, edite e baixe PDFs com campos de endereço mapeados</p>
-      </div>
+      <div><h2 class="font-display text-2xl">Etapa 3 — Editor PDF</h2><p class="text-slate-400 mt-1">Clique no PDF para adicionar texto editável</p></div>
     </div>
-
-    <!-- Toolbar (hidden until PDF is loaded) -->
     <div id="pdf-toolbar" class="hidden glass rounded-2xl p-4 flex flex-wrap items-center gap-3">
       <span id="pdf-page-count" class="text-sm font-bold text-indigo-300 mr-2"></span>
-      <span class="text-xs text-slate-400">📌 Clique no PDF para adicionar texto editável</span>
+      <span class="text-xs text-slate-400">📌 Clique no PDF para adicionar texto • Clique no campo para editar • Arraste para mover</span>
       <button class="btn-3d ghost sm" onclick="window.baixarPDF()">📥 Baixar PDF</button>
       <button class="btn-3d ghost sm" onclick="window.extrairEndereco()">📝 Extrair Endereço</button>
-      <button class="btn-3d ghost sm" onclick="window.limparTudo()" style="color:#f87171">🗑️ Limpar tudo</button>
+      <button class="btn-3d ghost sm" onclick="window.limparTudo()" style="color:#f87171">🗑️ Limpar</button>
     </div>
-
-    <!-- PDF Viewer Area -->
     <div id="pdf-viewer" class="space-y-4">
-      <div class="file-drop" onclick="document.getElementById('pdf-file-input').click()">
+      <div class="file-drop" onclick="document.getElementById('pdf-file-input').click()" ondrop="event.preventDefault();window.carregarPDF(event.dataTransfer.files[0])" ondragover="event.preventDefault()">
         <div style="font-size:48px;margin-bottom:12px">📁</div>
         <div class="font-bold text-lg">Clique para selecionar um PDF</div>
         <div class="text-slate-400 mt-1">Ou arraste e solte o arquivo aqui</div>
         <input type="file" id="pdf-file-input" accept="application/pdf" onchange="window.carregarPDF(this.files[0])" style="display:none">
       </div>
     </div>
-
-    <!-- Address Extraction Results (hidden until extraction — Task 3) -->
     <div id="pdf-address-results" class="hidden glass rounded-2xl p-6 space-y-4">
       <div class="flex items-center gap-2 mb-3">
         <div class="icon-cube purple" style="width:40px;height:40px;font-size:18px;flex-shrink:0">📍</div>
-        <div>
-          <div class="font-display font-bold">Endereço Extraído</div>
-          <div class="text-xs text-slate-400">Clique para copiar cada campo</div>
-        </div>
+        <div><div class="font-display font-bold">Endereço Extraído</div><div class="text-xs text-slate-400">Clique para copiar cada campo</div></div>
       </div>
       <div id="pdf-address-fields" class="space-y-2"></div>
-      <button class="btn-3d ghost sm" onclick="window.aplicarEndereco()">📝 Preencher campos no PDF</button>
     </div>
-
-    <!-- Overlay List (Task 2) -->
-    <div id="pdf-overlay-list" class="space-y-2"></div>
   </div>`;
 }
 
 // =============================================================================
-// carregarPDF(file) — Load and render PDF via pdf.js 3.11.174
-// Exposed to window for inline onchange handler
-// Matches RESEARCH.md lines 488-541
+// carregarPDF
 // =============================================================================
 async function carregarPDF(file) {
   const pdfjs = window.pdfjsLib;
-  if (!pdfjs) {
-    toast('❌ pdf.js não foi carregado. Recarregue a página.', '⚠️');
-    return;
-  }
-
-  pdfjs.GlobalWorkerOptions.workerSrc =
-    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  if (!pdfjs) { toast('❌ pdf.js não carregado', '⚠️'); return; }
+  pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
   try {
     const buf = await file.arrayBuffer();
@@ -94,8 +52,6 @@ async function carregarPDF(file) {
 
     const loadingTask = pdfjs.getDocument({ data: pdfState.fileBytes });
     pdfState.pdfDoc = await loadingTask.promise;
-
-    // Clear viewer and render each page as canvas at scale 1.4
     const viewer = document.getElementById('pdf-viewer');
     viewer.innerHTML = '';
 
@@ -104,497 +60,234 @@ async function carregarPDF(file) {
       const viewport = page.getViewport({ scale: 1.4 });
       pdfState.pages.push({ pageNum: i, viewport });
 
-      // Create page wrapper
       const wrap = document.createElement('div');
       wrap.className = 'pdf-canvas-wrap';
       wrap.dataset.page = i;
+      wrap.style.position = 'relative';
+      wrap.style.display = 'inline-block';
 
-      // Create canvas at viewport dimensions
       const canvas = document.createElement('canvas');
       canvas.width = viewport.width;
       canvas.height = viewport.height;
       canvas.style.maxWidth = '100%';
       canvas.style.height = 'auto';
+      canvas.style.display = 'block';
       wrap.appendChild(canvas);
 
-      // Render page to canvas
       const ctx = canvas.getContext('2d');
       await page.render({ canvasContext: ctx, viewport }).promise;
 
-      // Click handler: add text overlay at click position
-      canvas.addEventListener('click', (e) => {
-        const rect = canvas.getBoundingClientRect();
-        const scaleX = viewport.width / rect.width;
-        const scaleY = viewport.height / rect.height;
-        pdfState.overlays.push({
-          page: i,
-          x: (e.clientX - rect.left) * scaleX,
-          y: (e.clientY - rect.top) * scaleY,
-          text: 'Clique e digite aqui',
-          size: 18,
-          pageWidth: viewport.width,
-          pageHeight: viewport.height
+      (function(viewport, w, pageNum) {
+        canvas.addEventListener('click', (e) => {
+          if (e.target.closest('.pdf-overlay-text')) return;
+          const rect = canvas.getBoundingClientRect();
+          const scaleX = viewport.width / rect.width;
+          const scaleY = viewport.height / rect.height;
+          const idx = pdfState.overlays.length;
+          pdfState.overlays.push({
+            page: pageNum, x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY,
+            text: '', size: 18, pageWidth: viewport.width, pageHeight: viewport.height
+          });
+          crearOverlay(w, idx);
         });
-        rerenderOverlays();
-        // Auto-focus the newly created overlay for immediate editing
-        setTimeout(() => {
-          const newOverlay = wrap.querySelector('.pdf-overlay-text:last-child');
-          if (newOverlay) {
-            newOverlay.focus();
-            // Select all text so user can just type
-            const sel = window.getSelection();
-            const range = document.createRange();
-            range.selectNodeContents(newOverlay);
-            sel.removeAllRanges();
-            sel.addRange(range);
-          }
-        }, 50);
-      });
+      })(viewport, wrap, i);
 
       viewer.appendChild(wrap);
     }
 
-    // Show toolbar with page count
     document.getElementById('pdf-toolbar').classList.remove('hidden');
-    document.getElementById('pdf-page-count').textContent =
-      `📄 ${pdfState.pdfDoc.numPages} página(s) — escala 1.4`;
+    document.getElementById('pdf-page-count').textContent = `📄 ${pdfState.pdfDoc.numPages} página(s)`;
     toast(`✅ PDF carregado! ${pdfState.pdfDoc.numPages} página(s)`);
-
   } catch (err) {
-    console.error('Erro ao carregar PDF:', err);
-    toast('❌ Erro ao carregar o PDF. Verifique o arquivo.', '⚠️');
+    console.error(err);
+    toast('❌ Erro ao carregar o PDF', '⚠️');
   }
 }
 
 // =============================================================================
-// TASK 2: OVERLAY SYSTEM — Draggable overlays, delete, overlay list
+// crearOverlay — cria um overlay e foca para edição imediata
 // =============================================================================
+function crearOverlay(wrap, idx) {
+  const ol = pdfState.overlays[idx];
+  const canvas = wrap.querySelector('canvas');
+  if (!canvas) return;
 
-// =============================================================================
-// rerenderOverlays() — Full DOM overlay creation + drag + delete
-// Removes old overlay DOM, redraws all overlays from pdfState.overlays array
-// Each overlay div: contentEditable, draggable (mouse+touch), delete button
-// =============================================================================
-function rerenderOverlays() {
-  // Remove existing overlay DOM elements
-  document.querySelectorAll('.pdf-overlay-text').forEach(el => el.remove());
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = rect.width / ol.pageWidth;
+  const scaleY = rect.height / ol.pageHeight;
 
-  const viewer = document.getElementById('pdf-viewer');
-  if (!viewer) return;
+  const div = document.createElement('div');
+  div.className = 'pdf-overlay-text';
+  div.setAttribute('contenteditable', 'true');
+  div.textContent = 'Digite aqui...';
+  div.style.left = `${ol.x * scaleX}px`;
+  div.style.top = `${ol.y * scaleY}px`;
+  div.style.fontSize = `${ol.size * scaleX}px`;
 
-  // Create overlay div for each entry in pdfState.overlays
-  pdfState.overlays.forEach((ol, idx) => {
-    const wrap = viewer.querySelector(`.pdf-canvas-wrap[data-page="${ol.page}"]`);
-    if (!wrap) return;
+  // Salvar texto ao digitar
+  div.addEventListener('input', () => { ol.text = div.textContent; });
 
-    const canvas = wrap.querySelector('canvas');
-    if (!canvas) return;
+  // DRAG — usando pointer events (funciona em mouse + touch)
+  let dragging = false, startX, startY, origLeft, origTop;
 
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = rect.width / ol.pageWidth;
-    const scaleY = rect.height / ol.pageHeight;
+  div.addEventListener('pointerdown', (e) => {
+    if (e.target.classList.contains('del')) return;
+    startX = e.clientX; startY = e.clientY;
+    origLeft = ol.x; origTop = ol.y;
+    div.setPointerCapture(e.pointerId);
+    dragging = false;
+  });
 
-    // Create overlay div
-    const div = document.createElement('div');
-    div.className = 'pdf-overlay-text';
-    div.contentEditable = 'true';
-    div.textContent = ol.text;
+  div.addEventListener('pointermove', (e) => {
+    if (!div.hasPointerCapture(e.pointerId)) return;
+    const dx = Math.abs(e.clientX - startX);
+    const dy = Math.abs(e.clientY - startY);
+    if (dx > 3 || dy > 3) dragging = true;
+    if (!dragging) return;
+    ol.x = origLeft + (e.clientX - startX) / scaleX;
+    ol.y = origTop + (e.clientY - startY) / scaleY;
     div.style.left = `${ol.x * scaleX}px`;
     div.style.top = `${ol.y * scaleY}px`;
-    div.style.fontSize = `${ol.size * scaleX}px`;
-    div.style.position = 'absolute';
-    div.dataset.overlayIdx = idx;
-
-    // Update state on text change (input event)
-    div.addEventListener('input', () => {
-      pdfState.overlays[idx].text = div.textContent;
-      updateOverlayList();
-    });
-
-    // ---- Drag implementation (mouse) ----
-    let dragging = false, startX, startY, origX, origY;
-    div.addEventListener('mousedown', (e) => {
-      if (e.target.classList.contains('overlay-del-btn')) return;
-      dragging = true;
-      startX = e.clientX;
-      startY = e.clientY;
-      origX = ol.x;
-      origY = ol.y;
-      e.preventDefault();
-    });
-    document.addEventListener('mousemove', (e) => {
-      if (!dragging) return;
-      const dx = (e.clientX - startX) / scaleX;
-      const dy = (e.clientY - startY) / scaleY;
-      ol.x = origX + dx;
-      ol.y = origY + dy;
-      div.style.left = `${ol.x * scaleX}px`;
-      div.style.top = `${ol.y * scaleY}px`;
-    });
-    document.addEventListener('mouseup', () => {
-      if (dragging) {
-        dragging = false;
-        updateOverlayList();
-      }
-    });
-
-    // ---- Drag implementation (touch) ----
-    div.addEventListener('touchstart', (e) => {
-      if (e.target.classList.contains('overlay-del-btn')) return;
-      dragging = true;
-      startX = e.touches[0].clientX;
-      startY = e.touches[0].clientY;
-      origX = ol.x;
-      origY = ol.y;
-      e.preventDefault();
-    }, { passive: false });
-    document.addEventListener('touchmove', (e) => {
-      if (!dragging) return;
-      const dx = (e.touches[0].clientX - startX) / scaleX;
-      const dy = (e.touches[0].clientY - startY) / scaleY;
-      ol.x = origX + dx;
-      ol.y = origY + dy;
-      div.style.left = `${ol.x * scaleX}px`;
-      div.style.top = `${ol.y * scaleY}px`;
-    });
-    document.addEventListener('touchend', () => {
-      if (dragging) {
-        dragging = false;
-        updateOverlayList();
-      }
-    });
-
-    // Delete button (× in top-right corner)
-    const delBtn = document.createElement('span');
-    delBtn.className = 'overlay-del-btn del';
-    delBtn.textContent = '×';
-    delBtn.title = 'Remover este campo';
-    delBtn.onclick = (e) => {
-      e.stopPropagation();
-      pdfState.overlays.splice(idx, 1);
-      rerenderOverlays();
-    };
-    div.appendChild(delBtn);
-
-    wrap.appendChild(div);
   });
 
-  updateOverlayList();
-}
-
-// =============================================================================
-// updateOverlayList() — Refresh the #pdf-overlay-list panel
-// Shows all overlays with page number, text preview, and per-item delete button
-// =============================================================================
-function updateOverlayList() {
-  const list = document.getElementById('pdf-overlay-list');
-  if (!list) return;
-
-  if (pdfState.overlays.length === 0) {
-    list.innerHTML = '';
-    return;
-  }
-
-  list.innerHTML = pdfState.overlays.map((ol, i) => {
-    const preview = (ol.text || 'Texto').slice(0, 30);
-    return `<div class="copy-row" style="align-items:flex-start">
-      <span class="key">Pág. ${ol.page}</span>
-      <span class="val" style="flex:1">${escapeHTML(preview)}</span>
-      <button class="btn-3d ghost sm" onclick="window.removerOverlay(${i})" style="color:#f87171;padding:2px 8px;font-size:12px">×</button>
-    </div>`;
-  }).join('');
-
-  // Add bulk clear button when overlays exist
-  if (pdfState.overlays.length > 0) {
-    list.innerHTML += `<button class="btn-3d ghost sm mt-2" onclick="window.limparTudo()" style="color:#f87171;width:100%">🗑️ Limpar todos (${pdfState.overlays.length})</button>`;
-  }
-}
-
-// =============================================================================
-// removerOverlay(idx) — Remove a specific overlay by index
-// Updates both the overlay DOM and the overlay list panel
-// =============================================================================
-function removerOverlay(idx) {
-  pdfState.overlays.splice(idx, 1);
-  rerenderOverlays();
-  toast('Campo removido');
-}
-
-// =============================================================================
-// adicionarTexto() — Add text overlay at center of last loaded page
-// Works without requiring a canvas click (toolbar button)
-// =============================================================================
-function adicionarTexto() {
-  if (!pdfState.pages.length) {
-    toast('⚠️ Carregue um PDF primeiro');
-    return;
-  }
-  const page = pdfState.pages[pdfState.pages.length - 1];
-  pdfState.overlays.push({
-    page: page.pageNum,
-    x: page.viewport.width / 2 - 50,
-    y: page.viewport.height / 2,
-    text: 'Novo texto',
-    size: 14,
-    pageWidth: page.viewport.width,
-    pageHeight: page.viewport.height
+  div.addEventListener('pointerup', (e) => {
+    div.releasePointerCapture(e.pointerId);
+    // Se não arrastou, foca para editar
+    if (!dragging) {
+      div.focus();
+      selectAll(div);
+    }
   });
-  rerenderOverlays();
-  toast('✅ Campo adicionado');
+
+  // Botão de deletar
+  const delBtn = document.createElement('span');
+  delBtn.className = 'del';
+  delBtn.textContent = '×';
+  delBtn.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    pdfState.overlays.splice(idx, 1);
+    div.remove();
+    // Reindexar overlays restantes (os indices no DOM ficam certos via array)
+  });
+  div.appendChild(delBtn);
+
+  wrap.appendChild(div);
+
+  // Focar automaticamente
+  setTimeout(() => { div.focus(); selectAll(div); }, 100);
 }
 
-// =============================================================================
-// limparTudo() — Clear all overlays with confirmation dialog
-// =============================================================================
+function selectAll(el) {
+  const sel = window.getSelection();
+  const range = document.createRange();
+  range.selectNodeContents(el);
+  sel.removeAllRanges();
+  sel.addRange(range);
+}
+
 function limparTudo() {
-  if (!pdfState.overlays.length) {
-    toast('⚠️ Nenhum campo para remover');
-    return;
-  }
-  if (confirm(`Remover todos os ${pdfState.overlays.length} campos?`)) {
+  if (!pdfState.overlays.length) { toast('Nada para limpar'); return; }
+  if (confirm(`Remover ${pdfState.overlays.length} campos?`)) {
     pdfState.overlays = [];
-    rerenderOverlays();
-    toast('🗑️ Todos os campos removidos');
+    document.querySelectorAll('.pdf-overlay-text').forEach(e => e.remove());
+    toast('🗑️ Limpo');
   }
 }
 
 // =============================================================================
-// TASK 3: PDF MERGE/DOWNLOAD + ADDRESS EXTRACTION
-// =============================================================================
-
-// =============================================================================
-// baixarPDF() — Merge overlays into PDF via pdf-lib 1.17.1 and trigger download
-// Pitfall 3 compliance: Y-coordinate flipped for pdf-lib coordinate system
-// pdf.js: Y=0 at top, Y increases downward | pdf-lib: Y=0 at bottom, Y increases upward
+// baixarPDF — merge overlays no PDF via pdf-lib
 // =============================================================================
 async function baixarPDF() {
   const PDFLib = window.PDFLib;
-  if (!PDFLib) {
-    toast('❌ pdf-lib não foi carregado. Recarregue a página.', '⚠️');
-    return;
-  }
-  if (!pdfState.fileBytes) {
-    toast('⚠️ Carregue um PDF primeiro');
-    return;
-  }
+  if (!PDFLib) { toast('❌ pdf-lib não carregado', '⚠️'); return; }
+  if (!pdfState.fileBytes) { toast('⚠️ Carregue um PDF primeiro'); return; }
 
   try {
-    toast('⏳ Gerando PDF...', '⏳');
-
-    // Load PDF from stored file bytes
+    toast('⏳ Gerando PDF...');
     const pdfDoc = await PDFLib.PDFDocument.load(pdfState.fileBytes);
     const pages = pdfDoc.getPages();
-
-    // Embed standard font once for all overlays (efficiency)
     const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
 
-    // Draw each overlay on the corresponding page
     for (const ol of pdfState.overlays) {
       if (ol.page < 1 || ol.page > pages.length) continue;
-
       const page = pages[ol.page - 1];
       const { width, height } = page.getSize();
-
-      // Scale from viewport coordinates to actual PDF page dimensions
-      const scaleX = width / ol.pageWidth;
-      const scaleY = height / ol.pageHeight;
-
-      // Pitfall 3: Y-coordinate flip
-      // pdf.js canvas: Y=0 at top, Y increases downward
-      // pdf-lib: Y=0 at bottom, Y increases upward
-      // Formula: yPdf = height - (y_viewport * scaleY) - (size * scaleY * 0.8)
-      const xPdf = ol.x * scaleX;
-      const textHeight = ol.size * scaleY * 0.8;
-      const yPdf = height - (ol.y * scaleY) - textHeight;
-
-      page.drawText(ol.text || 'Texto', {
-        x: xPdf,
-        y: yPdf,
-        size: ol.size * scaleY,
-        font: font,
-        color: PDFLib.rgb(0, 0, 0)
+      const scX = width / ol.pageWidth;
+      const scY = height / ol.pageHeight;
+      page.drawText(ol.text || '', {
+        x: ol.x * scX,
+        y: height - (ol.y * scY) - (ol.size * scY * 0.8),
+        size: ol.size * scY,
+        font, color: PDFLib.rgb(0, 0, 0)
       });
     }
 
-    // Save merged PDF and trigger browser download
     const pdfBytes = await pdfDoc.save();
     const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-    const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url;
+    a.href = URL.createObjectURL(blob);
     a.download = 'documento-editado.pdf';
-    document.body.appendChild(a);
     a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-
+    URL.revokeObjectURL(a.href);
     toast('✅ PDF baixado!');
   } catch (err) {
-    console.error('Erro ao gerar PDF:', err);
-    toast('❌ Erro ao gerar o PDF. Tente novamente.', '⚠️');
+    console.error(err);
+    toast('❌ Erro ao gerar PDF', '⚠️');
   }
 }
 
 // =============================================================================
-// extrairEndereco() — Extract 7 Brazilian address fields from PDF text content
-// Uses pdf.js getTextContent() across all pages, then applies regex patterns
-// for CEP, logradouro, numero, complemento, bairro, municipio, UF
+// extrairEndereco
 // =============================================================================
 async function extrairEndereco() {
-  if (!pdfState.pdfDoc) {
-    toast('⚠️ Carregue um PDF primeiro');
-    return;
-  }
-
+  if (!pdfState.pdfDoc) { toast('⚠️ Carregue um PDF primeiro'); return; }
   try {
-    toast('🔍 Extraindo endereço...', '🔍');
-
-    // Collect text from all PDF pages
-    const textParts = [];
+    toast('🔍 Extraindo...');
+    const parts = [];
     for (let i = 1; i <= pdfState.pdfDoc.numPages; i++) {
       const page = await pdfState.pdfDoc.getPage(i);
-      const textContent = await page.getTextContent();
-      const pageText = textContent.items.map(item => item.str).join(' ');
-      textParts.push(pageText);
+      const tc = await page.getTextContent();
+      parts.push(tc.items.map(it => it.str).join(' '));
     }
-    const fullText = textParts.join('\n');
-
-    // 7 Brazilian address regex patterns (matches PLAN.md action block)
-    const patterns = {
-      cep:           /\b(\d{5}-?\d{3})\b/,
-      logradouro:    /(?:Rua|Avenida|Av\.?|Travessa|Praça|Alameda|Rodovia|Estrada)\s+([^,;\n]{3,60}?)(?:\s*,?\s*(?:,|\d|nº|n\.?|Bairro|CEP|$))/i,
-      numero:        /(?:nº?|n\.?|número)\s*(\d+[A-Za-z]?)/i,
-      complemento:   /(?:complemento|comp\.?|apto|apartamento|sala|andar)\s*:?\s*([^,;\n]{2,40})/i,
-      bairro:        /(?:Bairro|Bairro:)\s*([^,;\n\-]{3,40}?)(?:\s*[,\-]|\s*(?:CEP|Município|Cidade|$))/i,
-      municipio:     /(?:Município|Cidade|município|cidade)(?:\s*:\s*|\s+)([^,;\n\-\/]{3,50}?)(?:\s*[,\-\/]|\s*(?:Estado|UF|CEP|$))/i,
-      uf:            /\b([A-Z]{2})\b(?=\s*(?:,|$|\d{5}|CEP|\n))/
+    const full = parts.join('\n');
+    const pat = {
+      cep: /\b(\d{5}-?\d{3})\b/,
+      logradouro: /(?:Rua|Avenida|Av\.?|Travessa|Praça|Alameda|Rodovia|Estrada)\s+([^,;\n]{3,60}?)(?:\s*,?\s*(?:,|\d|nº|n\.?|Bairro|CEP|$))/i,
+      numero: /(?:nº?|n\.?|número)\s*(\d+[A-Za-z]?)/i,
+      complemento: /(?:complemento|comp\.?|apto|apartamento|sala|andar)\s*:?\s*([^,;\n]{2,40})/i,
+      bairro: /(?:Bairro)\s*([^,;\n\-]{3,40}?)(?:\s*[,\-]|\s*(?:CEP|Município|Cidade|$))/i,
+      municipio: /(?:Município|Cidade)\s*(?::\s*|\s+)([^,;\n\-\/]{3,50}?)(?:\s*[,\-\/]|\s*(?:Estado|UF|CEP|$))/i,
+      uf: /\b([A-Z]{2})\b(?=\s*(?:,|$|\d{5}|CEP|\n))/
     };
-
-    // Extract each field from full text
-    const extracted = {};
-    for (const [field, regex] of Object.entries(patterns)) {
-      const match = fullText.match(regex);
-      extracted[field] = match ? match[1].trim() : '—';
+    const ex = {};
+    for (const [k, r] of Object.entries(pat)) {
+      const m = full.match(r);
+      ex[k] = m ? m[1].trim() : '—';
     }
+    if (ex.cep !== '—' && ex.cep.length === 8) ex.cep = ex.cep.slice(0,5)+'-'+ex.cep.slice(5);
 
-    // Format CEP with dash: XXXXX-XXX
-    if (extracted.cep !== '—' && extracted.cep.length === 8) {
-      extracted.cep = extracted.cep.slice(0, 5) + '-' + extracted.cep.slice(5);
+    const fd = document.getElementById('pdf-address-fields');
+    const labels = { cep:'CEP', logradouro:'Logradouro', numero:'Número', complemento:'Complemento', bairro:'Bairro', municipio:'Município', uf:'UF' };
+    if (fd) {
+      fd.innerHTML = Object.entries(labels).map(([k,l]) => {
+        const v = escapeHTML(ex[k]||'—');
+        return `<div class="copy-row"><span class="key">${l}</span><span class="val">${v}</span><button class="btn-3d ghost sm" onclick="window.copyText('${v.replace(/'/g,"\\'")}','${l} copiado!')">📋</button></div>`;
+      }).join('');
     }
-
-    // Display results in address card
-    const resultsDiv = document.getElementById('pdf-address-results');
-    const fieldsDiv = document.getElementById('pdf-address-fields');
-    if (!resultsDiv || !fieldsDiv) return;
-
-    const fieldLabels = {
-      cep: 'CEP',
-      logradouro: 'Logradouro',
-      numero: 'Número',
-      complemento: 'Complemento',
-      bairro: 'Bairro',
-      municipio: 'Município',
-      uf: 'UF'
-    };
-
-    fieldsDiv.innerHTML = Object.entries(fieldLabels).map(([key, label]) => {
-      const val = extracted[key] || '—';
-      const escapedVal = escapeHTML(val);
-      // Pattern 4: Copy-to-Clipboard — each field has a copy button
-      return `<div class="copy-row">
-        <span class="key">${label}</span>
-        <span class="val">${escapedVal}</span>
-        <button class="btn-3d ghost sm" onclick="window.copyText('${escapedVal.replace(/'/g, "\\'")}', '${label} copiado!')" style="padding:4px 8px;font-size:12px">📋</button>
-      </div>`;
-    }).join('');
-
-    resultsDiv.classList.remove('hidden');
-
-    const foundCount = Object.values(extracted).filter(v => v !== '—').length;
-    if (foundCount > 0) {
-      toast(`✅ Endereço extraído! ${foundCount} campos encontrados`);
-    } else {
-      toast('⚠️ Nenhum endereço encontrado no PDF');
-    }
-
-  } catch (err) {
-    console.error('Erro ao extrair endereço:', err);
-    toast('❌ Erro ao extrair endereço do PDF', '⚠️');
-  }
+    document.getElementById('pdf-address-results').classList.remove('hidden');
+    const found = Object.values(ex).filter(v=>v!=='—').length;
+    toast(found ? `✅ ${found} campos encontrados` : '⚠️ Nenhum endereço encontrado');
+  } catch (err) { console.error(err); toast('❌ Erro ao extrair', '⚠️'); }
 }
 
 // =============================================================================
-// aplicarEndereco() — Create text overlays from extracted address fields
-// Reads values from the #pdf-address-fields DOM (populated by extrairEndereco)
-// Overlays stacked vertically starting at y=100 with 30px spacing
+// INIT
 // =============================================================================
-function aplicarEndereco() {
-  if (!pdfState.pages.length) {
-    toast('⚠️ Carregue um PDF primeiro');
-    return;
-  }
-
-  // Read extracted values from the address results DOM
-  const rows = document.querySelectorAll('#pdf-address-fields .copy-row');
-  if (!rows.length) {
-    toast('⚠️ Extraia o endereço primeiro');
-    return;
-  }
-
-  const fields = {};
-  rows.forEach(row => {
-    const keyEl = row.querySelector('.key');
-    const valEl = row.querySelector('.val');
-    if (keyEl && valEl) {
-      const key = keyEl.textContent.trim();
-      const val = valEl.textContent.trim();
-      if (val !== '—' && val) {
-        fields[key] = val;
-      }
-    }
-  });
-
-  if (Object.keys(fields).length === 0) {
-    toast('⚠️ Nenhum campo para preencher');
-    return;
-  }
-
-  // Use last page (typically where address appears)
-  const page = pdfState.pages[pdfState.pages.length - 1];
-  const startY = 100;
-  const spacing = 30;
-
-  Object.entries(fields).forEach(([label, value], i) => {
-    pdfState.overlays.push({
-      page: page.pageNum,
-      x: 50,
-      y: startY + (i * spacing),
-      text: `${label}: ${value}`,
-      size: 12,
-      pageWidth: page.viewport.width,
-      pageHeight: page.viewport.height
-    });
-  });
-
-  rerenderOverlays();
-  toast(`✅ ${Object.keys(fields).length} campos adicionados ao PDF`);
-}
-
-// =============================================================================
-// INIT + EXPORTS
-// =============================================================================
-
-// Register view renderer in the VIEWS registry
 export function initEtapa3() {
   VIEWS.etapa3 = renderEtapa3;
+  window.carregarPDF = carregarPDF;
+  window.limparTudo = limparTudo;
+  window.baixarPDF = baixarPDF;
+  window.extrairEndereco = extrairEndereco;
 }
-
-// Window exports for inline onclick handlers
-window.carregarPDF = carregarPDF;
-window.rerenderOverlays = rerenderOverlays;
-window.removerOverlay = removerOverlay;
-window.adicionarTexto = adicionarTexto;
-window.limparTudo = limparTudo;
-window.baixarPDF = baixarPDF;
-window.extrairEndereco = extrairEndereco;
-window.aplicarEndereco = aplicarEndereco;
