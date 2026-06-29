@@ -62,10 +62,12 @@ async function carregarPDF(file) {
 
   try {
     const buf = await file.arrayBuffer();
-    pdfState.fileBytes = new Uint8Array(buf);
+    const bytes = new Uint8Array(buf);
+    pdfState.fileBytes = bytes;
     pdfState.overlays = [];
     pdfState.pages = [];
-    const loadingTask = pdfjs.getDocument({ data: pdfState.fileBytes });
+    
+    const loadingTask = pdfjs.getDocument({ data: bytes.slice() });
     pdfState.pdfDoc = await loadingTask.promise;
 
     const viewer = document.getElementById('pdf-viewer');
@@ -189,11 +191,15 @@ function limparTudo() {
 async function baixarPDF() {
   const PDFLib = window.PDFLib;
   if (!PDFLib) { toast('pdf-lib nao carregado', '⚠️'); return; }
-  if (!pdfState.fileBytes || !pdfState.fileBytes.length) { toast('Carregue um PDF primeiro'); return; }
+  
+  const bytes = pdfState.fileBytes;
+  if (!bytes || !bytes.length) { toast('Carregue um PDF primeiro'); return; }
 
   try {
     toast('Gerando PDF...');
-    const pdfDoc = await PDFLib.PDFDocument.load(pdfState.fileBytes);
+    // Create a copy to avoid any buffer detachment issues
+    const copy = bytes.slice();
+    const pdfDoc = await PDFLib.PDFDocument.load(copy);
     const pages = pdfDoc.getPages();
     const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
     let drawn = 0;
