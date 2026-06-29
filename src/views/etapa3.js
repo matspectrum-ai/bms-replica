@@ -200,40 +200,45 @@ function limparTudo() {
 // =============================================================================
 async function baixarPDF() {
   const PDFLib = window.PDFLib;
-  if (!PDFLib) { toast('❌ pdf-lib não carregado', '⚠️'); return; }
+  if (!PDFLib) { toast('❌ pdf-lib não carregado. Recarregue a página.', '⚠️'); return; }
   if (!pdfState.fileBytes) { toast('⚠️ Carregue um PDF primeiro'); return; }
+  if (!pdfState.overlays.length) { toast('⚠️ Adicione pelo menos um texto ao PDF'); return; }
 
   try {
     toast('⏳ Gerando PDF...');
     const pdfDoc = await PDFLib.PDFDocument.load(pdfState.fileBytes);
     const pages = pdfDoc.getPages();
     const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
+    let drawn = 0;
 
     for (const ol of pdfState.overlays) {
-      if (ol.page < 1 || ol.page > pages.length) continue;
+      if (ol.page < 1 || ol.page > pages.length || !ol.text) continue;
       const page = pages[ol.page - 1];
       const { width, height } = page.getSize();
       const scX = width / ol.pageWidth;
       const scY = height / ol.pageHeight;
-      page.drawText(ol.text || '', {
+      page.drawText(ol.text, {
         x: ol.x * scX,
         y: height - (ol.y * scY) - (ol.size * scY * 0.8),
         size: ol.size * scY,
         font, color: PDFLib.rgb(0, 0, 0)
       });
+      drawn++;
     }
+
+    if (!drawn) { toast('⚠️ Nenhum texto para salvar'); return; }
 
     const pdfBytes = await pdfDoc.save();
     const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'documento-editado.pdf';
-    a.click();
-    URL.revokeObjectURL(a.href);
-    toast('✅ PDF baixado!');
+    a.href = url; a.download = 'documento-editado.pdf';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast(`✅ PDF baixado com ${drawn} campo(s)!`);
   } catch (err) {
-    console.error(err);
-    toast('❌ Erro ao gerar PDF', '⚠️');
+    console.error('baixarPDF:', err);
+    toast('❌ Erro: ' + (err.message || 'desconhecido'), '⚠️');
   }
 }
 
