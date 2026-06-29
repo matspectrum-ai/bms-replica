@@ -124,8 +124,9 @@ function crearOverlay(wrap, idx) {
   div.style.top = `${ol.y * scaleY}px`;
   div.style.fontSize = `${ol.size * scaleX}px`;
 
-  // Salvar texto ao digitar
-  div.addEventListener('input', () => { ol.text = div.textContent; });
+  // Salvar texto ao digitar — usa referência direta ao objeto, não índice
+  const overlayRef = ol;
+  div.addEventListener('input', () => { overlayRef.text = div.textContent; });
 
   // DRAG — usando pointer events (funciona em mouse + touch)
   let dragging = false, startX, startY, origLeft, origTop;
@@ -166,9 +167,10 @@ function crearOverlay(wrap, idx) {
   delBtn.addEventListener('pointerdown', (e) => {
     e.preventDefault();
     e.stopPropagation();
-    pdfState.overlays.splice(idx, 1);
+    // Remove do array sem quebrar índices — usa referência direta
+    const pos = pdfState.overlays.indexOf(ol);
+    if (pos !== -1) pdfState.overlays.splice(pos, 1);
     div.remove();
-    // Reindexar overlays restantes (os indices no DOM ficam certos via array)
   });
   div.appendChild(delBtn);
 
@@ -189,7 +191,7 @@ function selectAll(el) {
 function limparTudo() {
   if (!pdfState.overlays.length) { toast('Nada para limpar'); return; }
   if (confirm(`Remover ${pdfState.overlays.length} campos?`)) {
-    pdfState.overlays = [];
+    pdfState.overlays.length = 0;
     document.querySelectorAll('.pdf-overlay-text').forEach(e => e.remove());
     toast('🗑️ Limpo');
   }
@@ -200,9 +202,18 @@ function limparTudo() {
 // =============================================================================
 async function baixarPDF() {
   const PDFLib = window.PDFLib;
-  if (!PDFLib) { toast('❌ pdf-lib não carregado. Recarregue a página.', '⚠️'); return; }
+  if (!PDFLib) { toast('❌ pdf-lib não carregado', '⚠️'); return; }
   if (!pdfState.fileBytes) { toast('⚠️ Carregue um PDF primeiro'); return; }
-  if (!pdfState.overlays.length) { toast('⚠️ Adicione pelo menos um texto ao PDF'); return; }
+
+  // Se não tem overlays, cria um automaticamente no centro da primeira página
+  if (!pdfState.overlays.length) {
+    const page = pdfState.pages[0];
+    if (!page) { toast('⚠️ PDF sem páginas'); return; }
+    pdfState.overlays.push({
+      page: 1, x: 50, y: 100, text: '', size: 18,
+      pageWidth: page.viewport.width, pageHeight: page.viewport.height
+    });
+  }
 
   try {
     toast('⏳ Gerando PDF...');
