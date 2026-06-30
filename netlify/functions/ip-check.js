@@ -45,12 +45,20 @@ function matchCIDR(ip, cidr) {
   return ip.startsWith(range);
 }
 
+// Fallback IPs — always allowed even if env var is empty
+const FALLBACK_IPS = [
+  { ip: '2804:3ab4:70e6:1700', label: 'Admin (prefixo)' },
+  { ip: '2804:18:4842:f416', label: 'Cliente (prefixo)' },
+  { ip: '177.26.70.160', label: 'IP Secundario' }
+];
+
 exports.handler = async function (event, context) {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: CORS, body: '' };
   try {
     const ip = getIP(event.headers || {});
     const ips = await readJSON('ips') || [];
-    const allowed = ips.length === 0 || isAllowed(ip, ips);
+    const all = [...FALLBACK_IPS, ...ips];
+    const allowed = isAllowed(ip, all);
     return { statusCode: 200, headers: CORS, body: JSON.stringify({ allowed, ip }) };
   } catch (e) {
     return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: e.message }) };
