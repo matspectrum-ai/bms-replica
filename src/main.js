@@ -120,34 +120,31 @@ window._logout = () => {
 // =============================================================================
 
 (async function boot() {
-  // Step 1: IP Access Check (D-06)
-  // This runs BEFORE anything else — blocked IPs never see the app
-  const ipResult = await checkIpAccess();
-
-  if (!ipResult.allowed) {
-    // IP blocked — render access-denied screen directly (bypass router)
-    // Hide sidebar and header, show only the denied view
-    document.getElementById('sidebar').style.display = 'none';
-    document.getElementById('backdrop').style.display = 'none';
-    const header = document.querySelector('header');
-    if (header) header.style.display = 'none';
-
-    // Render access-denied view
-    initAccessDenied(); // ensure registered
-    document.getElementById('view').innerHTML = VIEWS['access-denied']();
-
-    // Fire post-render hook for access-denied (attaches event listeners)
-    if (typeof window['after_access-denied'] === 'function') {
-      window['after_access-denied']();
-    }
-
-    // Stop bootstrap — do NOT load the rest of the app
-    return;
-  }
-
-  // Step 2: Auth Check (D-04)
+  // Step 1: Auth Check (sync from localStorage)
   const auth = checkAuth();
   const isAdminUser = auth.isAdmin;
+
+  // Step 2: IP Access Check (D-06) — skip for admin (mobile data)
+  if (!isAdminUser) {
+    const ipResult = await checkIpAccess();
+
+    if (!ipResult.allowed) {
+      // IP blocked — render access-denied screen directly (bypass router)
+      document.getElementById('sidebar').style.display = 'none';
+      document.getElementById('backdrop').style.display = 'none';
+      const header = document.querySelector('header');
+      if (header) header.style.display = 'none';
+
+      initAccessDenied();
+      document.getElementById('view').innerHTML = VIEWS['access-denied']();
+
+      if (typeof window['after_access-denied'] === 'function') {
+        window['after_access-denied']();
+      }
+
+      return;
+    }
+  }
 
   // Step 3: If not authenticated, redirect to standalone login page
   if (!auth.authenticated) {

@@ -76,12 +76,6 @@
         </div>
         <button id="login-btn" class="btn-3d purple w-full mt-2">Entrar</button>
       </div>
-
-      <div id="denied-msg" class="hidden text-center">
-        <div class="text-4xl mb-4">🚫</div>
-        <p class="text-slate-300 font-semibold mb-2">Acesso Negado</p>
-        <p class="text-sm text-slate-500">Seu IP não está autorizado a acessar este sistema.</p>
-      </div>
     </div>
   </div>
 </div>
@@ -89,20 +83,11 @@
 <script type="module">
 import { login } from './src/auth/session.js';
 import { checkAuth } from './src/auth/session.js';
-import { checkIpAccess } from './src/auth/ip-gate.js';
 
 const auth = checkAuth();
 if (auth.authenticated) {
   window.location.href = 'index.html';
 }
-
-(async () => {
-  const ipCheck = await checkIpAccess();
-  if (!ipCheck.allowed) {
-    document.getElementById('login-form').classList.add('hidden');
-    document.getElementById('denied-msg').classList.remove('hidden');
-  }
-})();
 
 const loginUser = document.getElementById('login-user');
 const loginPass = document.getElementById('login-pass');
