@@ -1,0 +1,14 @@
+[build]
+  publish = "."
+
+[[redirects]]
+  from = "/cf-api/*"
+  to = "https://api.cloudflare.com/client/v4/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/sms-api/*"
+  to = "https://api.sms24h.org/stubs/handler_api/:splat"
+  status = 200
+  force = true

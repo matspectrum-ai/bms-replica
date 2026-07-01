@@ -1,0 +1,116 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e5]: 🧪
+      - generic [ref=e6]:
+        - generic [ref=e7]:
+          - text: LABORATÓRIO
+          - text: DE BMS 🎈
+        - generic [ref=e8]: "ADM: João Victor"
+    - navigation [ref=e9]:
+      - generic [ref=e10] [cursor=pointer]:
+        - generic [ref=e11]: 🏠
+        - text: Início
+      - generic [ref=e12]: FLUXO PRINCIPAL
+      - generic [ref=e13] [cursor=pointer]:
+        - generic [ref=e14]: 🧬
+        - text: Etapa 1 — Criar Site
+      - generic [ref=e15] [cursor=pointer]:
+        - generic [ref=e16]: 📱
+        - text: Etapa 2 — Comprar Número
+      - generic [ref=e17] [cursor=pointer]:
+        - generic [ref=e18]: 📄
+        - text: Etapa 3 — Editor PDF
+      - generic [ref=e19]: DADOS
+      - generic [ref=e20] [cursor=pointer]:
+        - generic [ref=e21]: 💼
+        - text: Banco de Empresas
+      - generic [ref=e22] [cursor=pointer]:
+        - generic [ref=e23]: 📊
+        - text: Planilha
+      - generic [ref=e24]: SISTEMA
+      - generic [ref=e25] [cursor=pointer]:
+        - generic [ref=e26]: ⚙️
+        - text: Configurações
+      - generic [ref=e27] [cursor=pointer]:
+        - generic [ref=e28]: ❓
+        - text: Ajuda
+    - generic [ref=e29]:
+      - generic [ref=e30]:
+        - generic [ref=e31]: ⭐
+        - generic [ref=e32]: Dica
+      - paragraph [ref=e33]: Capital social entre R$ 10k e R$ 50k é a faixa ideal.
+  - main [ref=e34]:
+    - generic [ref=e35]:
+      - generic [ref=e37]:
+        - generic [ref=e38]: 🏠 Início
+        - generic [ref=e39]: Bem-vindo, João Victor!
+      - generic [ref=e40]:
+        - generic [ref=e41]: ☁️ Cloudflare OK
+        - generic [ref=e42]: 📱 SMS24h OK
+        - generic [ref=e43]: JV
+    - generic [ref=e44]:
+      - generic [ref=e45]:
+        - generic [ref=e47]: 🧪
+        - generic [ref=e48]: 🎈 Laboratório aberto
+        - heading "Bom dia, João Victor" [level=1] [ref=e49]
+        - paragraph [ref=e50]: Painel central do Laboratório de BMs. Cadastra a empresa, cria o site automaticamente, verifica na Meta, compra número e edita PDF — tudo daqui.
+        - generic [ref=e51]:
+          - button "🧬 Iniciar fluxo de site" [ref=e52] [cursor=pointer]
+          - button "📱 Comprar número" [ref=e53] [cursor=pointer]
+          - button "📄 Editor de PDF" [ref=e54] [cursor=pointer]
+      - generic [ref=e55]:
+        - generic [ref=e56]:
+          - generic [ref=e57]: 💼
+          - generic [ref=e58]: "0"
+          - generic [ref=e59]: Empresas
+        - generic [ref=e60]:
+          - generic [ref=e61]: 🎨
+          - generic [ref=e62]: "0"
+          - generic [ref=e63]: Sites criados
+        - generic [ref=e64]:
+          - generic [ref=e65]: 🌐
+          - generic [ref=e66]: "0"
+          - generic [ref=e67]: No ar
+        - generic [ref=e68]:
+          - generic [ref=e69]: 🏁
+          - generic [ref=e70]: "0"
+          - generic [ref=e71]: Finalizados
+      - heading "🧪 Áreas do laboratório" [level=2] [ref=e72]
+      - generic [ref=e73]:
+        - generic [ref=e75] [cursor=pointer]:
+          - generic [ref=e76]: 🧬
+          - generic [ref=e77]:
+            - generic [ref=e78]: Etapa 1 — Criar Site
+            - generic [ref=e79]: CNPJ + domínio + meta + site + publicar Cloudflare.
+            - generic [ref=e80]: Abrir →
+        - generic [ref=e82] [cursor=pointer]:
+          - generic [ref=e83]: 📱
+          - generic [ref=e84]:
+            - generic [ref=e85]: Etapa 2 — Número SMS
+            - generic [ref=e86]: Compra número SMS24h e atualiza site no ar.
+            - generic [ref=e87]: Abrir →
+        - generic [ref=e89] [cursor=pointer]:
+          - generic [ref=e90]: 📄
+          - generic [ref=e91]:
+            - generic [ref=e92]: Etapa 3 — Editor PDF
+            - generic [ref=e93]: Edita PDF, mapeia campos do endereço, baixa.
+            - generic [ref=e94]: Abrir →
+        - generic [ref=e96] [cursor=pointer]:
+          - generic [ref=e97]: 💼
+          - generic [ref=e98]:
+            - generic [ref=e99]: Banco de Empresas
+            - generic [ref=e100]: Histórico de CNPJs consultados.
+            - generic [ref=e101]: Abrir →
+        - generic [ref=e103] [cursor=pointer]:
+          - generic [ref=e104]: 📊
+          - generic [ref=e105]:
+            - generic [ref=e106]: Planilha
+            - generic [ref=e107]: Status, link, meta-tag, número.
+            - generic [ref=e108]: Abrir →
+        - generic [ref=e110] [cursor=pointer]:
+          - generic [ref=e111]: ⚙️
+          - generic [ref=e112]:
+            - generic [ref=e113]: Configurações
+            - generic [ref=e114]: Tokens Cloudflare e SMS24h.
+            - generic [ref=e115]: Abrir →
