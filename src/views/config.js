@@ -1,283 +1,219 @@
-// src/views/config.js
-// Full implementation: Phase 03 Plan 01 Task 3
-// Source: RESEARCH.md §Pattern 8 — Config View Pattern
-//
-// Form-based settings view for Cloudflare API token, SMS24h API key,
-// and full JSON backup/restore. Business logic functions (save, test,
-// backup, import) exposed to window for inline onclick handlers.
-//
-// Threat mitigations applied:
-//   T-03-02: escapeHTML() on all user-provided values before HTML interpolation
-//   T-03-03: JSON.parse in try/catch with structure validation for backup import
-//   T-03-04: Token inputs use type="password" (masked in DOM)
-//   T-03-05: Import confirmation dialog before overwriting localStorage
-
-import { VIEWS } from '../router/index.js';
-import { getSettings, saveSettings, getDB, saveDB } from '../stores/data.js';
-import { refreshHeaderStatus } from '../utils/header.js';
+import { getSettings, saveSettings } from '../stores/data.js';
+import { toast } from '../widgets/toast.js';
 import { escapeHTML } from '../utils/string.js';
 
-// =============================================================================
-// VIEWS.config — render function (pure HTML string generator)
-// =============================================================================
+let _initialized = false;
 export function initConfig() {
-  VIEWS.config = () => {
+  if (_initialized) return;
+  _initialized = true;
+  const R = window.VIEWS;
+  if (!R) return;
+
+  R.config = () => {
     const s = getSettings();
-
-    return `<div class="space-y-6">
-      <!-- Header card -->
-      <div class="glass rounded-3xl p-6 sm:p-8 flex flex-wrap gap-6 items-center">
-        <div class="icon-cube purple" style="width:80px;height:80px;font-size:40px;border-radius:20px">⚙️</div>
-        <div class="flex-1">
-          <h2 class="font-display text-2xl sm:text-3xl">Configurações</h2>
-          <p class="text-slate-300 mt-2">Tokens e chaves de API</p>
+    const accountInfo = s.cf_account
+      ? `<div class="glass rounded-xl p-3 mb-3 flex items-center gap-2"><span class="pill done">✓ Conta detectada</span> <span class="text-sm">${s.cf_account_name || s.cf_account}</span> <button class="btn-3d ghost sm ml-auto" onclick="trocarConta()">🔄 Trocar</button></div>`
+      : '';
+    return `
+    <div class="grid lg:grid-cols-2 gap-4">
+      <div class="glass rounded-3xl p-6">
+        <div class="flex items-start gap-3 mb-4">
+          <div class="icon-cube cyan">☁️</div>
+          <div><div class="font-display text-xl font-bold">Cloudflare API</div><div class="text-sm text-slate-400">Cola só o token — a gente descobre o resto</div></div>
         </div>
+        <label class="text-xs text-slate-400">API Token (precisa de permissão Cloudflare Pages:Edit)</label>
+        <input id="cfg_cf_token" class="input mt-1 mb-3" type="password" placeholder="cole o token aqui (cfut_... ou cfk_...)" value="${s.cf_token || ''}"/>
+        ${accountInfo}
+        <div class="flex gap-2 flex-wrap">
+          <button class="btn-3d success" onclick="salvarTokenCF()">💾 Salvar e descobrir conta</button>
+          <button class="btn-3d cyan" onclick="testarCloudflare()" ${!s.cf_account ? 'disabled' : ''}>🧪 Testar Pages</button>
+          <a class="btn-3d ghost" href="https://dash.cloudflare.com/profile/api-tokens" target="_blank">🔑 Criar token</a>
+        </div>
+        <div id="cf-save-log" class="mt-3"></div>
+        <details class="mt-3"><summary class="text-sm text-cyan-300 cursor-pointer">Token sem permissão de listar contas? Cadastrar Account ID manual</summary>
+        <div class="text-sm text-slate-300 mt-2 space-y-2">
+          <input id="cfg_cf_account_manual" class="input" placeholder="ex: a1b2c3d4e5f6..." value="${s.cf_account || ''}"/>
+          <button class="btn-3d ghost sm mt-2" onclick="salvarAccountManual()">Salvar Account ID</button>
+          <p class="text-xs text-slate-400 mt-2">Pegue em <a class="text-cyan-300 underline" target="_blank" href="https://dash.cloudflare.com">dash.cloudflare.com</a> → canto direito da tela (em "API").</p>
+        </div></details>
+        <details class="mt-3"><summary class="text-sm text-cyan-300 cursor-pointer">Como criar um token novo?</summary>
+        <p class="text-sm text-slate-300 mt-2">Vai em <a class="text-cyan-300 underline" target="_blank" href="https://dash.cloudflare.com/profile/api-tokens">Profile → API Tokens</a> → Create Token → Custom Token. Permissões: <code>Account → Cloudflare Pages → Edit</code> e <code>Account → Account Settings → Read</code> (essa segunda é só pra autodescobrir o ID).</p></details>
       </div>
 
-      <!-- Cloudflare Configuration card (CONF-01) -->
-      <div class="glass rounded-2xl p-5 sm:p-6">
-        <div class="flex items-center gap-3 mb-4">
-          <span class="text-2xl">☁️</span>
-          <span class="font-display font-bold text-lg">Cloudflare</span>
+      <div class="glass rounded-3xl p-6">
+        <div class="flex items-start gap-3 mb-4">
+          <div class="icon-cube purple">📱</div>
+          <div><div class="font-display text-xl font-bold">SMS24h.org API</div><div class="text-sm text-slate-400">Para comprar números virtuais</div></div>
         </div>
-
-        <div class="space-y-3">
-          <div>
-            <label class="text-sm text-slate-400" for="cf-token">API Token</label>
-            <input id="cf-token" class="input w-full mt-1" type="password" value="${escapeHTML(s.cf_token || '')}" placeholder="Cloudflare API Token">
-          </div>
-          <div>
-            <label class="text-sm text-slate-400" for="cf-account">Account ID</label>
-            <input id="cf-account" class="input w-full mt-1" value="${escapeHTML(s.cf_account || '')}" placeholder="Cloudflare Account ID">
-          </div>
-          <div id="cf-account-info" class="text-sm text-slate-400"></div>
-          <div class="flex flex-wrap gap-2">
-            <button class="btn-3d purple sm" onclick="salvouCfToken()">💾 Salvar</button>
-            <button class="btn-3d cyan sm" onclick="testarCloudflare()">🔍 Testar Conexão</button>
-          </div>
+        <label class="text-xs text-slate-400">API Key</label>
+        <input id="cfg_sms_key" class="input mt-1 mb-3" type="password" placeholder="cole sua API key" value="${s.sms_key || ''}"/>
+        <div class="flex gap-2 flex-wrap">
+          <button class="btn-3d success" onclick="salvarConfig()">💾 Salvar</button>
+          <button class="btn-3d purple" onclick="testarSMS()">🧪 Testar (saldo)</button>
+          <a class="btn-3d ghost" href="https://sms24h.org" target="_blank">🌐 Abrir SMS24h</a>
         </div>
-
-        <!-- Expandable instructions -->
-        <details class="mt-4 text-sm text-slate-400">
-          <summary class="cursor-pointer hover:text-slate-300">📖 Como criar um token Cloudflare</summary>
-          <div class="mt-2 space-y-1 pl-2 border-l border-white/10">
-            <p>1. Acesse <a href="https://dash.cloudflare.com/profile/api-tokens" target="_blank" class="text-cyan-300 underline">dash.cloudflare.com/profile/api-tokens</a></p>
-            <p>2. Clique em "Criar Token" → Usar modelo "Edit Cloudflare Pages"</p>
-            <p>3. Permissões necessárias: <strong>Pages:Edit</strong> e <strong>Account Settings:Read</strong></p>
-            <p>4. O Account ID está na página inicial do dashboard (barra lateral direita)</p>
-          </div>
-        </details>
+        <details class="mt-3"><summary class="text-sm text-cyan-300 cursor-pointer">Como pegar?</summary>
+        <p class="text-sm text-slate-300 mt-2">Entre em <a class="text-cyan-300 underline" target="_blank" href="https://sms24h.org">sms24h.org</a> → Perfil → API. Lá tem a sua API Key pessoal.</p></details>
       </div>
 
-      <!-- SMS24h Configuration card (CONF-02) -->
-      <div class="glass rounded-2xl p-5 sm:p-6">
-        <div class="flex items-center gap-3 mb-4">
-          <span class="text-2xl">📱</span>
-          <span class="font-display font-bold text-lg">SMS24h</span>
+      <div class="glass rounded-3xl p-6 lg:col-span-2">
+        <div class="flex items-start gap-3 mb-4">
+          <div class="icon-cube amber">🛟</div>
+          <div><div class="font-display text-xl font-bold">Backup / Restaurar</div><div class="text-sm text-slate-400">Exporte seus dados como arquivo</div></div>
         </div>
-
-        <div class="space-y-3">
-          <div>
-            <label class="text-sm text-slate-400" for="sms-key">API Key</label>
-            <input id="sms-key" class="input w-full mt-1" type="password" value="${escapeHTML(s.sms_key || '')}" placeholder="SMS24h API Key">
-          </div>
-          <div class="text-xs text-slate-400">Chave encontrada em <a href="https://sms24h.org" target="_blank" class="text-cyan-300 underline">sms24h.org</a> → Perfil → API</div>
-          <div class="flex flex-wrap gap-2">
-            <button class="btn-3d purple sm" onclick="salvouSmsKey()">💾 Salvar</button>
-            <button class="btn-3d cyan sm" onclick="testarSMS()">🔍 Testar Conexão</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Data Management card (CONF-03) -->
-      <div class="glass rounded-2xl p-5 sm:p-6">
-        <div class="flex items-center gap-3 mb-4">
-          <span class="text-2xl">💾</span>
-          <span class="font-display font-bold text-lg">Backup e Restauração</span>
-        </div>
-
-        <div class="space-y-3">
-          <p class="text-sm text-slate-400">Exporte todos os dados (empresas, sites, configurações) para um arquivo JSON. Use para backup ou transferência entre dispositivos.</p>
-          <button class="btn-3d amber sm" onclick="exportarBackup()">📥 Exportar Backup</button>
-
-          <div class="border-t border-white/10 pt-4 mt-4">
-            <p class="text-sm text-slate-400 mb-2">Importe um arquivo de backup JSON para restaurar todos os dados.</p>
-            <div class="flex flex-wrap gap-2 items-center">
-              <input id="import-file" class="input" type="file" accept=".json" style="max-width:260px">
-              <button class="btn-3d rose sm" onclick="importarBackup()">📤 Importar Backup</button>
-            </div>
-            <p class="text-xs text-amber-300 mt-2">⚠️ A importação substituirá todos os dados atuais.</p>
-          </div>
+        <div class="flex gap-2 flex-wrap">
+          <button class="btn-3d cyan" onclick="exportBackup()">📤 Exportar backup</button>
+          <button class="btn-3d ghost" onclick="document.getElementById('imp-file').click()">📥 Importar backup</button>
+          <input type="file" id="imp-file" accept="application/json" class="hidden" onchange="if(this.files[0])importBackup(this.files[0])">
         </div>
       </div>
     </div>`;
   };
 
-  // =============================================================================
-  // BUSINESS LOGIC FUNCTIONS (exposed to window for inline onclick)
-  // =============================================================================
+  window.salvarConfig = salvarConfig;
+  window.salvarTokenCF = salvarTokenCF;
+  window.escolherConta = escolherConta;
+  window.trocarConta = trocarConta;
+  window.salvarAccountManual = salvarAccountManual;
+  window.testarCloudflare = testarCloudflare;
+  window.testarSMS = testarSMS;
+  window.exportBackup = exportBackup;
+  window.importBackup = importBackup;
+}
 
-  /**
-   * Saves Cloudflare API token and account ID from form inputs to settings.
-   * Reads #cf-token and #cf-account values, updates settings, refreshes header.
-   */
-  window.salvouCfToken = () => {
-    const token = document.getElementById('cf-token')?.value || '';
-    const account = document.getElementById('cf-account')?.value || '';
-    const s = getSettings();
-    s.cf_token = token;
-    s.cf_account = account;
-    saveSettings(s);
-    // saveSettings already calls refreshHeaderStatus() internally
-    window.toast?.('Token Cloudflare salvo!', '✅');
-  };
+function salvarConfig() {
+  const s = getSettings();
+  const get = id => document.getElementById(id)?.value?.trim();
+  if (document.getElementById('cfg_sms_key')) s.sms_key = get('cfg_sms_key');
+  saveSettings(s);
+  toast('Configurações salvas', '💾');
+}
 
-  /**
-   * Saves SMS24h API key from form input to settings.
-   * Reads #sms-key value, updates settings, refreshes header.
-   */
-  window.salvouSmsKey = () => {
-    const key = document.getElementById('sms-key')?.value || '';
-    const s = getSettings();
-    s.sms_key = key;
-    saveSettings(s);
-    // saveSettings already calls refreshHeaderStatus() internally
-    window.toast?.('Chave SMS24h salva!', '✅');
-  };
-
-  /**
-   * Tests Cloudflare API connectivity by listing Pages projects.
-   * Uses Fetch API with Bearer token auth. Displays result count or error.
-   */
-  window.testarCloudflare = async () => {
-    const s = getSettings();
-    const token = document.getElementById('cf-token')?.value || s.cf_token;
-    const account = document.getElementById('cf-account')?.value || s.cf_account;
-
-    if (!token || !account) {
-      window.toast?.('Preencha o token e o Account ID primeiro.', '⚠️');
+async function salvarTokenCF() {
+  const token = document.getElementById('cfg_cf_token')?.value?.trim();
+  const log = document.getElementById('cf-save-log');
+  if (!token) { toast('Cole o token primeiro', '⚠️'); return; }
+  log.innerHTML = '<div class="text-sm text-slate-300"><span class="spinner"></span> Salvando e descobrindo sua conta...</div>';
+  const s = getSettings();
+  s.cf_token = token;
+  saveSettings(s);
+  try {
+    const r = await fetch('https://api.cloudflare.com/client/v4/accounts', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const d = await r.json();
+    if (!d.success) {
+      const msg = d.errors?.[0]?.message || 'Erro desconhecido';
+      log.innerHTML = `<div class="glass rounded-xl p-3 text-sm" style="border-color:rgba(245,158,11,.4)">
+        ⚠️ Token salvo, mas não consegui listar suas contas: <b>${escapeHTML(msg)}</b><br>
+        <span class="text-xs text-slate-400">Adicione o Account ID manualmente abaixo (clique em "Token sem permissão...").</span>
+      </div>`;
       return;
     }
-
-    const info = document.getElementById('cf-account-info');
-    if (info) info.innerHTML = '<span class="text-slate-400">⏳ Testando conexão...</span>';
-
-    try {
-      const r = await fetch(
-        `https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(account)}/pages/projects`,
-        { headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } }
-      );
-      const d = await r.json();
-      if (d.success && d.result) {
-        const projectCount = Array.isArray(d.result) ? d.result.length : 0;
-        if (info) info.innerHTML = `<span class="text-green-300">✅ Conectado! ${escapeHTML(String(projectCount))} projeto(s) encontrado(s)</span>`;
-        window.toast?.(`✅ Conectado! ${projectCount} projeto(s)`, '☁️');
-      } else {
-        const errMsg = d.errors?.[0]?.message || 'Token inválido ou sem permissão';
-        if (info) info.innerHTML = `<span class="text-rose-300">❌ ${escapeHTML(errMsg)}</span>`;
-        window.toast?.('❌ ' + errMsg, '⚠️');
-      }
-    } catch (e) {
-      if (info) info.innerHTML = `<span class="text-rose-300">❌ ${escapeHTML(e.message || 'Erro de conexão')}</span>`;
-      window.toast?.('❌ Erro de conexão. Verifique o token.', '⚠️');
-    }
-  };
-
-  /**
-   * Tests SMS24h API connectivity by querying balance.
-   * Uses query-parameter auth pattern matching smsAPI() from Phase 03 Plan 02.
-   */
-  window.testarSMS = async () => {
-    const key = document.getElementById('sms-key')?.value || getSettings().sms_key;
-
-    if (!key) {
-      window.toast?.('Preencha a chave API primeiro.', '⚠️');
+    const contas = d.result || [];
+    if (contas.length === 0) {
+      log.innerHTML = '<div class="text-rose-300">❌ Nenhuma conta encontrada nesse token.</div>';
       return;
     }
-
-    try {
-      const r = await fetch(
-        `https://api.sms24h.org/stubs/handler_api?api_key=${encodeURIComponent(key)}&action=getBalance`
-      );
-      const t = await r.text();
-      if (t.startsWith('ACCESS_BALANCE:')) {
-        const balance = t.split(':')[1];
-        window.toast?.(`✅ Saldo: R$ ${escapeHTML(balance)}`, '📱');
-      } else if (t === 'BAD_KEY') {
-        window.toast?.('❌ Chave inválida', '⚠️');
-      } else {
-        window.toast?.(`❌ ${escapeHTML(t)}`, '⚠️');
-      }
-    } catch (e) {
-      window.toast?.('❌ Erro de conexão. Verifique a chave.', '⚠️');
+    if (contas.length === 1) {
+      s.cf_account = contas[0].id;
+      s.cf_account_name = contas[0].name;
+      saveSettings(s);
+      log.innerHTML = `<div class="glass rounded-xl p-3 text-sm neon" style="border-color:rgba(16,185,129,.4)">
+        ✅ Conta detectada e salva: <b>${escapeHTML(contas[0].name)}</b><br>
+        <span class="text-xs text-slate-400 font-mono">${contas[0].id}</span>
+      </div>`;
+      toast('Tudo configurado!', '✅');
+      setTimeout(() => window.go('config'), 1500);
+    } else {
+      log.innerHTML = `<div class="glass rounded-xl p-3 text-sm">
+        Você tem ${contas.length} contas. Escolha qual usar:
+        ${contas.map(c => `<div class="flex items-center justify-between gap-2 mt-2 p-2 rounded-lg" style="background:rgba(255,255,255,.03);">
+          <div><b>${escapeHTML(c.name)}</b><div class="text-xs text-slate-400 font-mono">${c.id}</div></div>
+          <button class="btn-3d cyan sm" onclick="escolherConta('${c.id}','${escapeHTML(c.name).replace(/'/g, "\\'")}')">Usar essa</button>
+        </div>`).join('')}
+      </div>`;
     }
-  };
+  } catch (e) {
+    log.innerHTML = `<div class="text-rose-300">❌ Erro: ${escapeHTML(e.message)}</div>`;
+  }
+}
 
-  /**
-   * Exports full database + settings as a downloadable JSON backup file.
-   * Serializes {db, settings, exportedAt} and triggers browser download.
-   */
-  window.exportarBackup = () => {
-    const data = {
-      db: getDB(),
-      settings: getSettings(),
-      exportedAt: new Date().toISOString()
-    };
-    const json = JSON.stringify(data, null, 2);
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    const dateStr = new Date().toISOString().slice(0, 10);
-    a.href = url;
-    a.download = `laboratorio-backup-${dateStr}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    window.toast?.('💾 Backup exportado!', '📥');
-  };
+function escolherConta(id, nome) {
+  const s = getSettings();
+  s.cf_account = id;
+  s.cf_account_name = nome;
+  saveSettings(s);
+  toast('Conta selecionada: ' + nome, '✅');
+  window.go('config');
+}
 
-  /**
-   * Imports a JSON backup file, validates structure, and applies to localStorage.
-   * Shows confirmation before overwriting current data.
-   */
-  window.importarBackup = () => {
-    const fileInput = document.getElementById('import-file');
-    if (!fileInput?.files?.length) {
-      window.toast?.('Selecione um arquivo de backup primeiro.', '⚠️');
-      return;
-    }
+function trocarConta() {
+  const s = getSettings();
+  delete s.cf_account;
+  delete s.cf_account_name;
+  saveSettings(s);
+  window.go('config');
+}
 
-    const file = fileInput.files[0];
-    const reader = new FileReader();
+function salvarAccountManual() {
+  const id = document.getElementById('cfg_cf_account_manual')?.value?.trim();
+  if (!id) { toast('Cole o Account ID', '⚠️'); return; }
+  const s = getSettings();
+  s.cf_account = id;
+  s.cf_account_name = 'Conta ' + id.slice(0, 8);
+  saveSettings(s);
+  toast('Account ID salvo', '💾');
+  window.go('config');
+}
 
-    reader.onload = (e) => {
-      try {
-        const data = JSON.parse(e.target.result);
+async function testarCloudflare() {
+  const s = getSettings();
+  if (!s.cf_token) { toast('Salve o token primeiro', '⚠️'); return; }
+  if (!s.cf_account) { toast('Account ID não detectado. Salve o token primeiro.', '⚠️'); return; }
+  try {
+    const r = await fetch(`https://api.cloudflare.com/client/v4/accounts/${s.cf_account}/pages/projects`, {
+      headers: { 'Authorization': `Bearer ${s.cf_token}` }
+    });
+    const d = await r.json();
+    if (d.success) { toast(`✅ OK! Você tem ${d.result_info?.total_count || d.result.length} projeto(s) Pages`, '☁️'); }
+    else { toast('❌ ' + (d.errors?.[0]?.message || 'Erro'), '❌'); }
+  } catch (e) { toast('Erro: ' + e.message, '❌'); }
+}
 
-        // Validate structure
-        if (!data || typeof data !== 'object') throw new Error('Formato inválido');
-        if (!data.db || typeof data.db !== 'object') throw new Error('Dados ausentes (db)');
-        if (!data.settings || typeof data.settings !== 'object') throw new Error('Dados ausentes (settings)');
+async function testarSMS() {
+  salvarConfig();
+  const k = getSettings().sms_key;
+  if (!k) { toast('Configure a API key primeiro', '⚠️'); return; }
+  try {
+    const r = await fetch(`https://api.sms24h.org/stubs/handler_api?api_key=${encodeURIComponent(k)}&action=getBalance`);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const t = await r.text();
+    toast('Saldo: ' + t, '💰');
+  } catch (e) { toast('Erro: ' + e.message, '❌'); }
+}
 
-        // Confirmation before overwriting
-        if (!confirm('⚠️ Isso substituirá todos os dados atuais pelos dados do backup. Continuar?')) return;
+function exportBackup() {
+  const data = { db: getDB(), settings: getSettings(), exportedAt: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'laboratorio-bms-backup.json';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  toast('Backup baixado', '📤');
+}
 
-        saveDB(data.db);
-        saveSettings(data.settings);
-        // saveSettings already calls refreshHeaderStatus() internally
-
-        window.toast?.('✅ Dados restaurados!', '📤');
-
-        // Navigate to dashboard to show restored data
-        setTimeout(() => {
-          if (typeof window.go === 'function') window.go('dashboard');
-        }, 800);
-
-      } catch (err) {
-        console.error('Backup import failed:', err);
-        window.toast?.('❌ Arquivo inválido. Verifique o formato.', '⚠️');
-      }
-    };
-
-    reader.readAsText(file);
-  };
+async function importBackup(file) {
+  try {
+    const txt = await file.text();
+    const data = JSON.parse(txt);
+    if (data.db) { const { saveDB } = await import('../stores/data.js'); saveDB(data.db); }
+    if (data.settings) saveSettings(data.settings);
+    toast('Backup restaurado', '📥');
+    window.go('dashboard');
+  } catch (e) { toast('Arquivo inválido', '❌'); }
 }

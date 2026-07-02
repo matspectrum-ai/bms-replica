@@ -51,7 +51,7 @@ import { openModal, closeModal } from './widgets/modal.js';
 // LAYER 5: UTILS (formatting, clipboard, header status)
 // =============================================================================
 import { copyText } from './utils/clipboard.js';
-import { escapeHTML, onlyDigits } from './utils/string.js';
+import { escapeHTML, onlyDigits, fmtCNPJ, fmtMoney, fmtDate, formatBRPhone } from './utils/string.js';
 import { refreshHeaderStatus } from './utils/header.js';
 
 // =============================================================================
@@ -89,12 +89,17 @@ initAdmPanel();
 // =============================================================================
 window.go = go;
 window.toggleSidebar = toggleSidebar;
+window.VIEWS = VIEWS;
 window.closeModal = closeModal;
 window.copyText = copyText;
 window.escapeHTML = escapeHTML;
 window.onlyDigits = onlyDigits;
 window.toast = toast;
 window.openModal = openModal;
+window.fmtCNPJ = fmtCNPJ;
+window.fmtMoney = fmtMoney;
+window.fmtDate = fmtDate;
+window.formatBRPhone = formatBRPhone;
 
 // Phase 07-04: Logout function exposed for sidebar button
 window._logout = () => {

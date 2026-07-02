@@ -1,47 +1,36 @@
-// src/views/planilha.js
-// Planilha de Sites — 8-column spreadsheet with inline editing and CSV export
-// Phase 03-02 Task 2+3: Replaces stub with full data-driven implementation
-// Pattern: Post-Render Hook (RESEARCH.md §Pattern 5)
-//
-// Renders all saved sites as an 8-column table in reverse-chronological order.
-// Status dropdown changes site status inline with localStorage persistence.
-// Delete button removes row with confirmation dialog.
-// CSV export produces UTF-8 BOM semicolon-delimited file for Brazilian Excel.
-// All user data is escapeHTML'd before HTML interpolation (Pitfall 5 compliance).
-
-import { VIEWS } from '../router/index.js';
 import { getDB, saveDB } from '../stores/data.js';
-import { escapeHTML } from '../utils/string.js';
-import { fmtCNPJ, fmtDate, formatBRPhone } from '../utils/format.js';
+import { fmtCNPJ, fmtDate, onlyDigits } from '../utils/string.js';
+import { toast } from '../widgets/toast.js';
 
+let _initialized = false;
 export function initPlanilha() {
-  // Register static HTML shell generator
-  VIEWS.planilha = () => {
-    const db = getDB();
-    const count = (db.sites || []).length;
+  if (_initialized) return;
+  _initialized = true;
+  const R = window.VIEWS;
+  if (!R) return;
 
-    return `<div class="space-y-4">
-      <div class="glass rounded-3xl p-4 flex flex-wrap gap-4 items-center">
-        <div class="icon-cube amber" style="width:48px;height:48px;font-size:22px">📊</div>
-        <div class="flex-1">
-          <span class="font-display font-bold">Planilha de Sites</span>
-          <span class="text-slate-400 text-sm ml-2">Status de cada site publicado</span>
-        </div>
-        <span class="pill todo">${count} site${count !== 1 ? 's' : ''}</span>
-        <button class="btn-3d cyan sm" onclick="window.exportarCSV()">📥 Exportar CSV</button>
+  R.planilha = () => {
+    return `<div class="glass rounded-3xl p-5 mb-5 flex flex-wrap items-center gap-3">
+      <div class="icon-cube amber">📊</div>
+      <div class="flex-1 min-w-0">
+        <div class="font-display text-xl font-extrabold">Planilha de sites</div>
+        <div class="text-sm text-slate-400">Status, link, meta-tag e número.</div>
       </div>
-      <div class="glass rounded-2xl overflow-x-auto">
-        <table class="w-full text-sm">
-          <thead>
-            <tr class="border-b border-white/10 text-slate-400">
-              <th class="p-3 text-left font-medium">Empresa</th>
-              <th class="p-3 text-left font-medium">CNPJ</th>
-              <th class="p-3 text-left font-medium">Domínio / URL</th>
-              <th class="p-3 text-left font-medium">Tel Empresa</th>
-              <th class="p-3 text-left font-medium">Nosso Tel</th>
-              <th class="p-3 text-left font-medium">Status</th>
-              <th class="p-3 text-left font-medium">Atualizado</th>
-              <th class="p-3 text-center font-medium">Ações</th>
+      <button class="btn-3d success" onclick="exportCSV()">⬇️ Exportar CSV (Excel)</button>
+    </div>
+    <div class="glass rounded-2xl overflow-hidden">
+      <div class="overflow-x-auto scrollbar">
+        <table class="w-full text-sm min-w-[900px]">
+          <thead style="background:rgba(99,102,241,.1)">
+            <tr class="text-left">
+              <th class="p-3">Empresa</th>
+              <th class="p-3">CNPJ</th>
+              <th class="p-3">Domínio / URL</th>
+              <th class="p-3">Tel empresa</th>
+              <th class="p-3">Nosso tel</th>
+              <th class="p-3">Status</th>
+              <th class="p-3">Atualizado</th>
+              <th class="p-3 text-right">Ações</th>
             </tr>
           </thead>
           <tbody id="planilha-body"></tbody>
@@ -50,183 +39,72 @@ export function initPlanilha() {
     </div>`;
   };
 
-  // Post-render hook — runs AFTER innerHTML injection via router step 9
-  window.after_planilha = renderPlanilha;
+  window.after_planilha = () => renderPlanilha();
+  window.renderPlanilha = renderPlanilha;
   window.mudarStatus = mudarStatus;
-  window.deletarSite = deletarSite;
-  // window.exportarCSV defined below (Task 3)
+  window.removerSite = removerSite;
+  window.exportCSV = exportCSV;
 }
 
-/**
- * Post-render hook: reads sites from DB, reverses (newest first), renders rows.
- * Called by router (go) after innerHTML injection.
- */
 function renderPlanilha() {
   const db = getDB();
-  const sites = db.sites ? [...db.sites].reverse() : [];
-
   const body = document.getElementById('planilha-body');
-  if (!body) return;
-
-  if (sites.length === 0) {
-    body.innerHTML = `<tr><td colspan="8" class="p-8 text-center">
-      <div class="icon-cube purple" style="width:48px;height:48px;font-size:24px;margin:0 auto">📊</div>
-      <p class="text-slate-400 mt-3">Nenhum site publicado ainda</p>
-      <p class="text-slate-500 text-xs mt-1">Os sites aparecerão aqui após serem criados na Etapa 1</p>
-    </td></tr>`;
+  if (!db.sites.length) {
+    body.innerHTML = `<tr><td colspan="8" class="empty">Nenhum site ainda. <button class="text-cyan-300 underline" onclick="go('etapa1')">Criar primeiro →</button></td></tr>`;
     return;
   }
-
-  // Map original index for status/delete callbacks (sites are reversed)
-  body.innerHTML = sites.map((site, displayIndex) => {
-    const originalIndex = db.sites.length - 1 - displayIndex;
-    return renderSiteRow(site, originalIndex);
+  body.innerHTML = db.sites.slice().reverse().map(s => {
+    return `<tr class="border-t border-white/5">
+      <td class="p-3"><b>${s.fantasia || s.razao || '—'}</b></td>
+      <td class="p-3 text-xs">${fmtCNPJ(s.cnpj)}</td>
+      <td class="p-3">${s.url ? `<a class="text-cyan-300 underline" target="_blank" href="${s.url}">${s.dominio}</a>` : s.dominio}</td>
+      <td class="p-3 text-xs">${s.telefoneEmpresa || '—'}</td>
+      <td class="p-3 text-xs">${s.telefoneNosso || '—'}</td>
+      <td class="p-3"><select class="input" style="padding:.4rem .6rem;font-size:.8rem" onchange="mudarStatus('${s.cnpj}','${s.dominio}',this.value)">
+        ${['gerado', 'deploy', 'meta-tag', 'finalizado'].map(v => `<option value="${v}" ${s.status === v ? 'selected' : ''}>${v}</option>`).join('')}
+      </select></td>
+      <td class="p-3 text-xs">${fmtDate(s.atualizado)}</td>
+      <td class="p-3 text-right whitespace-nowrap">
+        <button class="btn-3d ghost sm" onclick="removerSite('${s.cnpj}','${s.dominio}')">🗑️</button>
+      </td>
+    </tr>`;
   }).join('');
 }
 
-/**
- * Renders a single table row for a site entry.
- * All user data is escapeHTML'd before HTML interpolation (Pitfall 5).
- * @param {object} s - Site object from DB
- * @param {number} index - Original index in db.sites array (pre-reverse)
- */
-function renderSiteRow(s, index) {
-  const empresa = escapeHTML(s.fantasia || s.razao || '—');
-  const cnpj = fmtCNPJ(s.cnpj || '');
-  const telEmpresa = formatBRPhone(s.telefoneEmpresa) || '—';
-  const telNosso = s.telefoneNosso ? formatBRPhone(s.telefoneNosso) : '';
-
-  // Domain/URL column
-  let dominioCell;
-  if (s.url) {
-    const safeUrl = escapeHTML(s.url);
-    dominioCell = `<a href="${safeUrl}" target="_blank" rel="noopener" class="text-cyan-400 underline">🔗 Abrir</a>`;
-  } else if (s.dominio) {
-    const safeDominio = escapeHTML(s.dominio);
-    dominioCell = `<span class="font-mono text-white">${safeDominio}</span>
-      <button class="btn-3d ghost xs ml-1" onclick="copyText('${safeDominio}')" title="Copiar domínio">📋</button>`;
-  } else {
-    dominioCell = '—';
-  }
-
-  // Phone columns
-  const telEmpresaCell = telEmpresa !== '—'
-    ? `<span class="font-mono text-white">${telEmpresa}</span>
-       <button class="btn-3d ghost xs ml-1" onclick="copyText('${escapeHTML(s.telefoneEmpresa || '')}')" title="Copiar">📋</button>`
-    : '—';
-
-  const telNossoCell = telNosso
-    ? `<span class="font-mono text-white">${telNosso}</span>
-       <button class="btn-3d ghost xs ml-1" onclick="copyText('${escapeHTML(s.telefoneNosso || '')}')" title="Copiar">📋</button>`
-    : '—';
-
-  // Status select with current value pre-selected
-  const currentStatus = s.status || 'criado';
-  const statusOptions = [
-    { value: 'deploy', label: 'Deploy' },
-    { value: 'criado', label: 'Criado' },
-    { value: 'erro', label: 'Erro' },
-    { value: 'finalizado', label: 'Finalizado' }
-  ];
-
-  const statusSelect = `<select class="input text-xs py-1 px-2" onchange="window.mudarStatus(${index}, this.value)">
-    ${statusOptions.map(opt =>
-      `<option value="${opt.value}"${currentStatus === opt.value ? ' selected' : ''}>${opt.label}</option>`
-    ).join('')}
-  </select>`;
-
-  const atualizado = fmtDate(s.atualizado) || '—';
-
-  return `<tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
-    <td class="p-3 text-white max-w-[180px] truncate" title="${empresa}">${empresa}</td>
-    <td class="p-3 font-mono text-white text-xs">${cnpj}</td>
-    <td class="p-3">${dominioCell}</td>
-    <td class="p-3">${telEmpresaCell}</td>
-    <td class="p-3">${telNossoCell}</td>
-    <td class="p-3">${statusSelect}</td>
-    <td class="p-3 text-slate-400 text-xs">${atualizado}</td>
-    <td class="p-3 text-center">
-      <button class="btn-3d danger sm" onclick="window.deletarSite(${index})" title="Remover site">🗑️</button>
-    </td>
-  </tr>`;
-}
-
-/**
- * Updates a site's status in the DB and re-renders the table.
- * @param {number} index - Index in db.sites array
- * @param {string} newStatus - New status value
- */
-function mudarStatus(index, newStatus) {
+function mudarStatus(cnpj, dominio, v) {
   const db = getDB();
-  if (!db.sites || !db.sites[index]) return;
-  db.sites[index].status = newStatus;
-  db.sites[index].atualizado = Date.now();
+  const s = db.sites.find(x => onlyDigits(x.cnpj) === onlyDigits(cnpj) && x.dominio === dominio);
+  if (!s) return;
+  s.status = v;
+  s.atualizado = Date.now();
   saveDB(db);
   renderPlanilha();
-  if (typeof window.toast !== 'undefined') window.toast('Status atualizado!', '✅');
+  toast('Status atualizado', '📌');
 }
 
-/**
- * Removes a site from the DB with confirmation.
- * @param {number} index - Index in db.sites array
- */
-function deletarSite(index) {
-  if (!confirm('Remover este site da planilha?')) return;
+function removerSite(cnpj, dominio) {
+  if (!confirm('Remover este site?')) return;
   const db = getDB();
-  if (!db.sites || !db.sites[index]) return;
-  db.sites.splice(index, 1);
+  db.sites = db.sites.filter(x => !(onlyDigits(x.cnpj) === onlyDigits(cnpj) && x.dominio === dominio));
   saveDB(db);
   renderPlanilha();
-  if (typeof window.toast !== 'undefined') window.toast('Site removido', '🗑️');
+  toast('Removido', '🗑️');
 }
 
-// =============================================================================
-// Task 3: CSV Export — UTF-8 BOM, semicolon-delimited, 10 columns, Blob download
-// RESEARCH.md lines 724-749
-// =============================================================================
-
-/**
- * Exports all sites from localStorage as a CSV file.
- * UTF-8 BOM for Excel encoding detection. Semicolon separator for Brazilian locale.
- * 10 columns matching Planilha display data. All values double-quoted with escaping.
- * Creates a Blob download as 'planilha-laboratorio.csv'.
- */
-window.exportarCSV = function exportarCSV() {
+function exportCSV() {
   const db = getDB();
-  const sites = db.sites || [];
-  const BOM = '\uFEFF'; // UTF-8 Byte Order Mark — required for Excel
-  const headers = [
-    'Empresa', 'Razão Social', 'CNPJ', 'Domínio', 'URL',
-    'Tel Empresa', 'Nosso Tel', 'Meta-tag', 'Status', 'Atualizado'
-  ];
-  const sep = ';'; // Semicolon for Brazilian Excel (comma is decimal separator in pt-BR)
-
-  let csv = BOM + headers.join(sep) + '\n';
-
-  for (const s of sites) {
-    const row = [
-      s.fantasia || '',
-      s.razao || '',
-      fmtCNPJ(s.cnpj || ''),
-      s.dominio || '',
-      s.url || '',
-      s.telefoneEmpresa || '',
-      s.telefoneNosso || '',
-      s.metatag || '',
-      s.status || '',
-      fmtDate(s.atualizado)
-    ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(sep);
-    csv += row + '\n';
-  }
-
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  if (!db.sites.length) { toast('Nada para exportar', '⚠️'); return; }
+  const rows = [['Empresa', 'Razao Social', 'CNPJ', 'Dominio', 'URL', 'Tel empresa', 'Nosso tel', 'Meta-tag', 'Status', 'Atualizado']];
+  db.sites.forEach(s => rows.push([s.fantasia || '', s.razao || '', fmtCNPJ(s.cnpj), s.dominio, s.url || '', s.telefoneEmpresa || '', s.telefoneNosso || '', s.metatag || '', s.status, new Date(s.atualizado).toLocaleString('pt-BR')]));
+  const csv = rows.map(r => r.map(c => `"${(c || '').toString().replace(/"/g, '""')}"`).join(';')).join('\n');
+  const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
+  a.href = url;
   a.download = 'planilha-laboratorio.csv';
+  document.body.appendChild(a);
   a.click();
-  URL.revokeObjectURL(a.href);
-
-  if (typeof window.toast !== 'undefined') window.toast('CSV exportado!', '📊');
-};
-
-
+  a.remove();
+  URL.revokeObjectURL(url);
+  toast('CSV exportado', '📥');
+}
