@@ -152,6 +152,18 @@ export function initAdmPanel() {
           </div>
         </div>
 
+        <!-- Section D: Device Binding Info -->
+        <div class="glass rounded-2xl p-5" style="background:rgba(15,23,55,.6);">
+          <h3 class="font-display text-lg mb-1">🔐 Dispositivo Vinculado</h3>
+          <p class="text-xs text-slate-400 mb-4">A conta <strong>cliente</strong> só funciona em um único dispositivo.</p>
+          <div id="adm-device-info" class="text-sm text-slate-300 mb-4">
+            <span class="text-slate-500">Carregando...</span>
+          </div>
+          <div id="adm-device-msg" class="hidden text-xs mb-3"></div>
+          <button id="adm-reset-device" class="btn-3d danger sm">Resetar vínculo de dispositivo</button>
+          <p class="text-xs text-slate-500 mt-3">⚠️ Resetar permite que o PRÓXIMO dispositivo que fizer login como <strong>cliente</strong> seja registrado. Após o novo registro, persista com: <code class="text-purple-300">netlify env:set BMS_CLIENTE_DEVICE '..."'</code></p>
+        </div>
+
       </div><!-- /adm-content -->
     </div>`;
   };
@@ -375,5 +387,63 @@ export function initAdmPanel() {
     loadIPs();
     loadAccounts();
     loadRequests();
+
+    // Device binding info
+    const deviceInfo = document.getElementById('adm-device-info');
+    const deviceMsg = document.getElementById('adm-device-msg');
+    const resetBtn = document.getElementById('adm-reset-device');
+
+    function showDeviceMsg(text, isError) {
+      if (!deviceMsg) return;
+      deviceMsg.textContent = text;
+      deviceMsg.classList.remove('hidden');
+      deviceMsg.style.color = isError ? '#fca5a5' : '#86efac';
+    }
+
+    async function loadDeviceInfo() {
+      if (!deviceInfo) return;
+      try {
+        const resp = await fetch('/.netlify/functions/admin-device', {
+          headers: { Authorization: 'Bearer ' + token }
+        });
+        const data = await resp.json();
+        if (data.deviceRegistered) {
+          deviceInfo.innerHTML = `<span class="text-green-400">✅ Dispositivo registrado</span>
+            <br><span class="text-xs text-slate-500">ID: <code class="text-purple-300">${data.deviceId}</code></span>`;
+        } else {
+          deviceInfo.innerHTML = `<span class="text-yellow-400">⚠️ Nenhum dispositivo registrado</span>
+            <br><span class="text-xs text-slate-500">Próximo login do cliente registrará o dispositivo.</span>`;
+        }
+      } catch (_) {
+        deviceInfo.innerHTML = '<span class="text-red-400">Erro ao carregar.</span>';
+      }
+    }
+
+    if (resetBtn) {
+      resetBtn.addEventListener('click', async () => {
+        if (!confirm('Resetar o vínculo de dispositivo da conta cliente?')) return;
+        resetBtn.disabled = true;
+        resetBtn.textContent = 'Resetando...';
+        try {
+          const resp = await fetch('/.netlify/functions/admin-device', {
+            method: 'POST',
+            headers: { Authorization: 'Bearer ' + token }
+          });
+          if (resp.ok) {
+            showDeviceMsg('Vínculo resetado. Próximo login do cliente registrará novo dispositivo.', false);
+            loadDeviceInfo();
+          } else {
+            showDeviceMsg('Erro ao resetar.', true);
+          }
+        } catch (_) {
+          showDeviceMsg('Erro de conexão.', true);
+        } finally {
+          resetBtn.disabled = false;
+          resetBtn.textContent = 'Resetar vínculo de dispositivo';
+        }
+      });
+    }
+
+    loadDeviceInfo();
   };}
 }

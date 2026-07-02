@@ -42,7 +42,7 @@ exports.handler = async function (event, context) {
         return {
           statusCode: 200,
           headers: CORS,
-          body: JSON.stringify({ token: CLIENTE.token, username: CLIENTE.username, isAdmin: false })
+          body: JSON.stringify({ token: CLIENTE.token, username: CLIENTE.username, isAdmin: false, deviceRegistered: true, deviceId: deviceId })
         };
       }
 
