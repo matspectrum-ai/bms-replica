@@ -1,4 +1,4 @@
-import { onlyDigits, calcAnos } from './string.js';
+import { onlyDigits, calcAnos } from '../utils/string.js';
 
 export function buildSiteHTML(d) {
   const fantasia = (d.fantasia || d.razao || 'Empresa').toUpperCase();
