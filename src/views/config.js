@@ -27,8 +27,8 @@ export function initConfig() {
         <input id="cfg_cf_account_manual" class="input mt-1 mb-3" placeholder="ex: a1b2c3d4e5f6..." value="${s.cf_account || ''}"/>
         ${accountInfo}
         <div class="flex gap-2 flex-wrap">
-          <button class="btn-3d success" onclick="salvarTokenCF()">💾 Auto-descobrir conta</button>
-          <button class="btn-3d cyan" onclick="salvarConfigCF()" ${!s.cf_account ? 'disabled' : ''}>💾 Salvar CF</button>
+          <button class="btn-3d success" onclick="salvarTokenCF()">🔍 Auto-descobrir conta</button>
+          <button class="btn-3d cyan" onclick="salvarConfigCF()">💾 Salvar Cloudflare</button>
           <button class="btn-3d green" onclick="testarCloudflare()" ${!s.cf_account ? 'disabled' : ''}>🧪 Testar Pages</button>
           <a class="btn-3d ghost" href="https://dash.cloudflare.com/profile/api-tokens" target="_blank">🔑 Criar token</a>
         </div>
@@ -172,15 +172,16 @@ function salvarAccountManual() {
 function salvarConfigCF() {
   const token = document.getElementById('cfg_cf_token')?.value?.trim();
   const account = document.getElementById('cfg_cf_account_manual')?.value?.trim();
+  if (!token && !account) { toast('Preencha ao menos um campo', '⚠️'); return; }
   const s = getSettings();
   if (token) s.cf_token = token;
   if (account) {
-    const changed = s.cf_account !== account;
     s.cf_account = account;
-    if (changed) s.cf_account_name = 'Conta ' + account.slice(0, 8);
+    s.cf_account_name = s.cf_account_name || 'Conta ' + account.slice(0, 8);
   }
   saveSettings(s);
   toast('Config Cloudflare salva', '☁️');
+  window.go('config');
 }
 
 async function testarCloudflare() {
