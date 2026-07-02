@@ -19,25 +19,24 @@ export function initConfig() {
       <div class="glass rounded-3xl p-6">
         <div class="flex items-start gap-3 mb-4">
           <div class="icon-cube cyan">☁️</div>
-          <div><div class="font-display text-xl font-bold">Cloudflare API</div><div class="text-sm text-slate-400">Cola só o token — a gente descobre o resto</div></div>
+          <div><div class="font-display text-xl font-bold">Cloudflare API</div><div class="text-sm text-slate-400">Cola o token e o Account ID</div></div>
         </div>
-        <label class="text-xs text-slate-400">API Token (precisa de permissão Cloudflare Pages:Edit)</label>
-        <input id="cfg_cf_token" class="input mt-1 mb-3" type="password" placeholder="cole o token aqui (cfut_... ou cfk_...)" value="${s.cf_token || ''}"/>
+        <label class="text-xs text-slate-400">API Token (Cloudflare Pages:Edit)</label>
+        <input id="cfg_cf_token" class="input mt-1 mb-3" type="password" placeholder="cfut_... ou cfk_..." value="${s.cf_token || ''}"/>
+        <label class="text-xs text-slate-400 mt-2">Account ID</label>
+        <input id="cfg_cf_account_manual" class="input mt-1 mb-3" placeholder="ex: a1b2c3d4e5f6..." value="${s.cf_account || ''}"/>
         ${accountInfo}
         <div class="flex gap-2 flex-wrap">
-          <button class="btn-3d success" onclick="salvarTokenCF()">💾 Salvar e descobrir conta</button>
-          <button class="btn-3d cyan" onclick="testarCloudflare()" ${!s.cf_account ? 'disabled' : ''}>🧪 Testar Pages</button>
+          <button class="btn-3d success" onclick="salvarTokenCF()">💾 Auto-descobrir conta</button>
+          <button class="btn-3d cyan" onclick="salvarConfigCF()" ${!s.cf_account ? 'disabled' : ''}>💾 Salvar CF</button>
+          <button class="btn-3d green" onclick="testarCloudflare()" ${!s.cf_account ? 'disabled' : ''}>🧪 Testar Pages</button>
           <a class="btn-3d ghost" href="https://dash.cloudflare.com/profile/api-tokens" target="_blank">🔑 Criar token</a>
         </div>
         <div id="cf-save-log" class="mt-3"></div>
-        <details class="mt-3"><summary class="text-sm text-cyan-300 cursor-pointer">Token sem permissão de listar contas? Cadastrar Account ID manual</summary>
-        <div class="text-sm text-slate-300 mt-2 space-y-2">
-          <input id="cfg_cf_account_manual" class="input" placeholder="ex: a1b2c3d4e5f6..." value="${s.cf_account || ''}"/>
-          <button class="btn-3d ghost sm mt-2" onclick="salvarAccountManual()">Salvar Account ID</button>
-          <p class="text-xs text-slate-400 mt-2">Pegue em <a class="text-cyan-300 underline" target="_blank" href="https://dash.cloudflare.com">dash.cloudflare.com</a> → canto direito da tela (em "API").</p>
-        </div></details>
-        <details class="mt-3"><summary class="text-sm text-cyan-300 cursor-pointer">Como criar um token novo?</summary>
-        <p class="text-sm text-slate-300 mt-2">Vai em <a class="text-cyan-300 underline" target="_blank" href="https://dash.cloudflare.com/profile/api-tokens">Profile → API Tokens</a> → Create Token → Custom Token. Permissões: <code>Account → Cloudflare Pages → Edit</code> e <code>Account → Account Settings → Read</code> (essa segunda é só pra autodescobrir o ID).</p></details>
+        <details class="mt-3"><summary class="text-sm text-cyan-300 cursor-pointer">Como conseguir o Account ID?</summary>
+        <p class="text-sm text-slate-300 mt-2">Entre em <a class="text-cyan-300 underline" target="_blank" href="https://dash.cloudflare.com">dash.cloudflare.com</a> → canto inferior direito, seção "API" → Account ID. Ou veja em <a class="text-cyan-300 underline" target="_blank" href="https://dash.cloudflare.com/profile/api-tokens">Profile → API Tokens</a>.</p></details>
+        <details class="mt-3"><summary class="text-sm text-cyan-300 cursor-pointer">Como criar um token?</summary>
+        <p class="text-sm text-slate-300 mt-2">Vai em <a class="text-cyan-300 underline" target="_blank" href="https://dash.cloudflare.com/profile/api-tokens">Profile → API Tokens</a> → Create Token → Custom Token. Permissão: <code>Account → Cloudflare Pages → Edit</code>.</p></details>
       </div>
 
       <div class="glass rounded-3xl p-6">
@@ -72,6 +71,7 @@ export function initConfig() {
 
   window.salvarConfig = salvarConfig;
   window.salvarTokenCF = salvarTokenCF;
+  window.salvarConfigCF = salvarConfigCF;
   window.escolherConta = escolherConta;
   window.trocarConta = trocarConta;
   window.salvarAccountManual = salvarAccountManual;
@@ -119,6 +119,8 @@ async function salvarTokenCF() {
       s.cf_account = contas[0].id;
       s.cf_account_name = contas[0].name;
       saveSettings(s);
+      const manualInput = document.getElementById('cfg_cf_account_manual');
+      if (manualInput) manualInput.value = contas[0].id;
       log.innerHTML = `<div class="glass rounded-xl p-3 text-sm neon" style="border-color:rgba(16,185,129,.4)">
         ✅ Conta detectada e salva: <b>${escapeHTML(contas[0].name)}</b><br>
         <span class="text-xs text-slate-400 font-mono">${contas[0].id}</span>
@@ -165,6 +167,20 @@ function salvarAccountManual() {
   saveSettings(s);
   toast('Account ID salvo', '💾');
   window.go('config');
+}
+
+function salvarConfigCF() {
+  const token = document.getElementById('cfg_cf_token')?.value?.trim();
+  const account = document.getElementById('cfg_cf_account_manual')?.value?.trim();
+  const s = getSettings();
+  if (token) s.cf_token = token;
+  if (account) {
+    const changed = s.cf_account !== account;
+    s.cf_account = account;
+    if (changed) s.cf_account_name = 'Conta ' + account.slice(0, 8);
+  }
+  saveSettings(s);
+  toast('Config Cloudflare salva', '☁️');
 }
 
 async function testarCloudflare() {
