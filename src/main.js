@@ -60,6 +60,13 @@ import { refreshHeaderStatus } from './utils/header.js';
 import { instalarProxy } from './proxy/index.js';
 
 // =============================================================================
+// GLOBAL EXPOSURE — MUST be before init calls (views use window.VIEWS)
+// =============================================================================
+window.go = go;
+window.toggleSidebar = toggleSidebar;
+window.VIEWS = VIEWS;
+
+// =============================================================================
 // POPULATE VIEWS REGISTRY
 // Each init function assigns its route renderer to the VIEWS object.
 // Matches original's progressive assignment pattern (RECON.md §4.4).
@@ -79,17 +86,6 @@ initRegister();
 initWaitlist();
 initAccessDenied();
 initAdmPanel();
-
-// =============================================================================
-// GLOBAL EXPOSURE FOR INLINE onclick HANDLERS
-// ES modules are module-scoped — inline onclick handlers in index.html
-// require these functions on window. Matches original line 2128.
-// 8 functions exposed: go, toggleSidebar, closeModal, copyText, escapeHTML,
-// onlyDigits, toast, openModal
-// =============================================================================
-window.go = go;
-window.toggleSidebar = toggleSidebar;
-window.VIEWS = VIEWS;
 window.closeModal = closeModal;
 window.copyText = copyText;
 window.escapeHTML = escapeHTML;

@@ -1,11 +1,12 @@
 functionsDirectory = "/home/matspectrum-ai/FABRICA DE BMS/netlify/functions"
 functionsDirectoryOrigin = "default"
+redirectsOrigin = "config"
 plugins = []
 headers = []
 
 [build]
 publish = "/home/matspectrum-ai/FABRICA DE BMS"
-publishOrigin = "default"
+publishOrigin = "config"
 functions = "/home/matspectrum-ai/FABRICA DE BMS/netlify/functions"
 
 [build.environment]
@@ -55,6 +56,30 @@ from = "/sms-api/*"
 to = "https://sms24h.org/:splat"
 status = 200.0
 force = false
+
+[redirects.query]
+
+[redirects.conditions]
+
+[redirects.headers]
+
+[[redirects]]
+from = "/cf-api/*"
+to = "https://api.cloudflare.com/client/v4/:splat"
+status = 200.0
+force = true
+
+[redirects.query]
+
+[redirects.conditions]
+
+[redirects.headers]
+
+[[redirects]]
+from = "/sms-api/*"
+to = "https://api.sms24h.org/stubs/handler_api/:splat"
+status = 200.0
+force = true
 
 [redirects.query]
 
