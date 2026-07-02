@@ -22,8 +22,21 @@ import { checkAuth, isAdmin, getToken } from '../auth/session.js';
 
 export function initAdmPanel() {
   VIEWS.adm = () => {
+    const pendingAlert = window._adminAlert;
+    const alertHtml = pendingAlert ? `<div class="glass rounded-2xl p-5 mb-6" style="border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.08);">
+      <div class="flex gap-4 items-start">
+        <div class="text-3xl shrink-0">🚨</div>
+        <div class="flex-1">
+          <h3 class="font-display text-lg" style="color:#fca5a5;">Alerta de Segurança</h3>
+          <p class="text-slate-300 mt-1 text-sm">${pendingAlert.message}</p>
+          <p class="text-xs text-slate-500 mt-1">${new Date(pendingAlert.timestamp).toLocaleString('pt-BR')}</p>
+        </div>
+      </div>
+    </div>` : '';
+
     return `<div class="space-y-6">
       <!-- Header -->
+      ${alertHtml}
       <div class="grad-card rounded-3xl p-6 sm:p-8 flex flex-wrap gap-6 items-center">
         <div class="icon-cube purple" style="width:72px;height:72px;font-size:36px;border-radius:20px;">🛡️</div>
         <div class="flex-1">

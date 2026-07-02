@@ -7,9 +7,8 @@
 // Unauthenticated users redirected to login; authenticated users boot normally
 
 // =============================================================================
-// LAYER 0: AUTH (IP gate + session — Phase 07)
+// LAYER 0: AUTH (session — Phase 07)
 // =============================================================================
-import { checkIpAccess } from './auth/ip-gate.js';
 import { checkAuth, logout } from './auth/session.js';
 
 // =============================================================================
@@ -123,43 +122,20 @@ window._logout = () => {
 (async function boot() {
   // Step 1: Auth Check (sync from localStorage)
   const auth = checkAuth();
-  const isAdminUser = auth.isAdmin;
 
-  // Step 2: IP Access Check (D-06) — skip for admin (mobile data)
-  if (!isAdminUser) {
-    const ipResult = await checkIpAccess();
-
-    if (!ipResult.allowed) {
-      // IP blocked — render access-denied screen directly (bypass router)
-      document.getElementById('sidebar').style.display = 'none';
-      document.getElementById('backdrop').style.display = 'none';
-      const header = document.querySelector('header');
-      if (header) header.style.display = 'none';
-
-      initAccessDenied();
-      document.getElementById('view').innerHTML = VIEWS['access-denied']();
-
-      if (typeof window['after_access-denied'] === 'function') {
-        window['after_access-denied']();
-      }
-
-      return;
-    }
-  }
-
-  // Step 3: If not authenticated, redirect to standalone login page
+  // Step 2: If not authenticated, redirect to standalone login page
   if (!auth.authenticated) {
     window.location.href = 'login.html';
     return;
   }
 
-  // Step 4: Show/hide sidebar elements based on auth state
+  // Step 3: Show/hide sidebar elements based on auth state
   const navAdm = document.getElementById('nav-adm');
   const navLogout = document.getElementById('nav-logout');
-  if (isAdminUser && navAdm) navAdm.classList.remove('hidden');
+  if (auth.isAdmin && navAdm) navAdm.classList.remove('hidden');
   if (auth.authenticated && navLogout) navLogout.classList.remove('hidden');
 
-  // Step 5: Authenticated — full normal bootstrap
+  // Step 4: Authenticated — full normal bootstrap
   instalarProxy();
   refreshHeaderStatus();
   go('dashboard');

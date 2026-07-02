@@ -13,6 +13,16 @@
 //   - STORAGE_KEY constant pattern
 
 const SESSION_KEY = 'bms_session';
+const DEVICE_KEY = 'bms_device_id';
+
+function getDeviceId() {
+  let id = localStorage.getItem(DEVICE_KEY);
+  if (!id) {
+    id = (crypto.randomUUID ? crypto.randomUUID() : 'device-' + Math.random().toString(36).substring(2, 15) + Date.now().toString(36));
+    try { localStorage.setItem(DEVICE_KEY, id); } catch (_) {}
+  }
+  return id;
+}
 
 /**
  * Authenticates user via the auth-login Netlify Function.
@@ -26,7 +36,7 @@ export async function login(username, password) {
   try {
     const response = await fetch('/.netlify/functions/auth-login', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-Device-Id': getDeviceId() },
       body: JSON.stringify({ username, password })
     });
 
@@ -36,14 +46,16 @@ export async function login(username, password) {
       const session = {
         token: body.token,
         username: body.username,
-        isAdmin: body.isAdmin || false
+        isAdmin: body.isAdmin || false,
+        alert: body.alert || null
       };
       try {
         localStorage.setItem(SESSION_KEY, JSON.stringify(session));
       } catch (e) {
-        // QuotaExceededError — data layer pattern from stores/data.js
         console.error('localStorage quota exceeded in login', e);
       }
+      // Expose alert globally for admin dashboard to pick up
+      if (session.alert) { window._adminAlert = session.alert; }
       return { success: true, username: body.username, isAdmin: session.isAdmin };
     } else {
       return { success: false, error: body.error || 'invalid_credentials' };

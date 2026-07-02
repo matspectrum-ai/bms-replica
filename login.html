@@ -120,6 +120,7 @@ loginBtn.addEventListener('click', async () => {
   } else {
     const msgs = {
       invalid_credentials: 'Usuário ou senha incorretos.',
+      device_changed: 'Dispositivo não autorizado. Esta conta só funciona em um único dispositivo. Entre em contato com o administrador.',
       network_error: 'Erro de conexão.'
     };
     showLoginError(msgs[result.error] || 'Erro ao fazer login.');
